@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner'
 
@@ -18,6 +18,9 @@ import { Label } from '@/components/ui/label'
 
 const Login = () => {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const from = searchParams.get('from') || '/dashboard';
+
 
     // useState handler
     const [email, setEmail] = useState('')
@@ -49,7 +52,7 @@ const Login = () => {
             // If the Login Successed give ( notification, save the token, and navigate the user to the dashboard URL )
             localStorage.setItem('token', data.token)
             toast.success('Welcome Back!')
-            router.push('/dashboard')
+            router.push(from)
 
     }catch(err: any) {
             setError(err.message || 'Something went wrong')
