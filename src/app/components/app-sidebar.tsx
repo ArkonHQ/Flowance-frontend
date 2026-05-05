@@ -85,8 +85,10 @@ const AppSidebar = () => {
             </SidebarContent>
 
             {/* Footer with user & theme toggle */}
+
             <SidebarFooter className="border-t p-3">
                 <div className="flex items-center justify-between">
+
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -95,7 +97,7 @@ const AppSidebar = () => {
                         </TooltipTrigger>
                         <TooltipContent>Your Profile</TooltipContent>
                     </Tooltip>
-
+                    {open &&
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button
@@ -110,7 +112,7 @@ const AppSidebar = () => {
                         </TooltipTrigger>
                         <TooltipContent>Toggle theme</TooltipContent>
                     </Tooltip>
-
+                    }{open &&
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -119,8 +121,10 @@ const AppSidebar = () => {
                         </TooltipTrigger>
                         <TooltipContent>Sign out</TooltipContent>
                     </Tooltip>
+                }
                 </div>
             </SidebarFooter>
+
         </Sidebar>
     );
 };
