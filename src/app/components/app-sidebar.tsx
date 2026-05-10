@@ -56,7 +56,7 @@ const AppSidebar = () => {
                 </div>
                 {open && (
                     <span className="text-lg font-semibold tracking-tight text-sidebar-primary">
-                        FreelanceHQ
+                        Main Dashboard
                     </span>
                 )}
             </SidebarHeader>

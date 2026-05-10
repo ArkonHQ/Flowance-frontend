@@ -7,45 +7,79 @@ import {
     AlertTriangle,
     DollarSign,
     Users,
-    TrendingUp,
+    TrendingUp, Check,
 } from "lucide-react";
 
-const stats = [
-    {
-        title: "Active Tasks",
-        value: "5",
-        subtext: "3 high priority",
-        icon: Clock,
-        color: "text-blue-500",
-        bg: "bg-blue-100 dark:bg-blue-950",
-    },
-    {
-        title: "Earnings (Month)",
-        value: "$2,450",
-        subtext: "+12% from last month",
-        icon: DollarSign,
-        color: "text-emerald-500",
-        bg: "bg-emerald-100 dark:bg-emerald-950",
-    },
-    {
-        title: "Clients",
-        value: "12",
-        subtext: "2 unpaid invoices",
-        icon: Users,
-        color: "text-purple-500",
-        bg: "bg-purple-100 dark:bg-purple-950",
-    },
-    {
-        title: "Overdue Tasks",
-        value: "1",
-        subtext: "Due 3 days ago",
-        icon: AlertTriangle,
-        color: "text-red-500",
-        bg: "bg-red-100 dark:bg-red-950",
-    },
-];
+import { useEffect, useState } from "react";
+
+import { getActiveTask,
+    getDelayedTask,
+    getCompletedTask,
+    getEarnings
+} from "@/lib/api";
 
 export default function DashboardPage() {
+    const [isActiveTask, setIsActiveTask] = useState<number | null >(null);
+    const [isCompleteTask, setIsCompleteTask] = useState<number | null>(null);
+    const [isOverdueTask, setIsOverdueTask] = useState<number | null>(null)
+    const [isEarningsData, setIsEarningsData] = useState<{ total: number } | null>(null);
+
+    useEffect(() => {
+        const loadDashboardData = async () => {
+            try{
+
+                const [active, completed, delayed, earningsData] = await Promise.all([
+                    getActiveTask(),
+                    getCompletedTask(),
+                    getDelayedTask(),
+                    getEarnings()
+                ])
+                setIsActiveTask(active.count)
+                setIsCompleteTask(completed.count)
+                setIsOverdueTask(delayed.count)
+                setIsEarningsData(earningsData)
+
+            }catch (err) {
+                console.log('Dashboard fetch error',err)
+            }
+        }
+        loadDashboardData()
+    }, [])
+
+    const stats = [
+        {
+            title: 'Active Tasks',
+            value: isActiveTask !== null ? isActiveTask.toString() : '...',
+            icon: Clock,
+            color: 'text-blue-500',
+            bg: 'bg-blue-100 dark:bg-blue-950',
+        },
+        {
+            title: 'Completed Tasks',
+            value: isCompleteTask !== null ? isCompleteTask.toString() : '...',
+            icon: Check,
+            text: 'text-green-100 dark:text-green-950',
+            bg: 'bg-green-100 dark:bg-green-950'
+
+        },
+        {
+            title: 'Delayed Tasks',
+            value: isOverdueTask !== null ? isOverdueTask.toString() : '...',
+            icon: AlertTriangle,
+            color: 'text-red-500',
+            bg: 'bg-red-100 dark:bg-red-950',
+        },
+        {
+            title: 'Earnings (Month)',
+            value: isEarningsData !== null ? `$${isEarningsData.total}` : '...',
+            icon: DollarSign,
+            color: 'text-emerald-500',
+            bg: 'bg-emerald-100 dark:bg-emerald-950',
+            subtext: '+302% from last month',
+        },
+    ]
+
+
     return (
         <div className="space-y-6 bg-red">
             <div>

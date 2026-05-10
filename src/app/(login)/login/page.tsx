@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner'
+import { z } from "zod"
 
 import { Button } from '@/components/ui/button'
 import {
@@ -14,6 +15,11 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
+const loginShcema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8)
+})
 
 
 const Login = () => {

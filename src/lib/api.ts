@@ -1,7 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5500'
 
 const fetchApi = async <T>(endpoint: string): Promise<T> => {
@@ -20,8 +18,26 @@ const fetchApi = async <T>(endpoint: string): Promise<T> => {
     return data
 }
 
-const getActiveTasks = () => {
-    return fetchApi<{success: boolean; count: number; data: any[] }>('api/v1/dashboard/active-tasks')
+const getActiveTask = () => {
+    return fetchApi<{success: boolean; count: number;  }>('api/v1/dashboard/active-tasks')
+}
+const getCompletedTask = () => {
+    return fetchApi<{success: boolean; count: number; }>('api/v1/dashboard/completed-tasks')
+}
+
+const getDelayedTask = () => {
+    return fetchApi<{success: boolean; count: number; }>('api/v1/dashboard/delayed-tasks')
+}
+
+const getEarnings = ( period: string = 'month' ) => {
+    return fetchApi<{success: boolean; total:number }>(`api/v1/dashboard/earnings?period=${period}`)
+}
+
+export {
+    getEarnings,
+    getActiveTask,
+    getCompletedTask,
+    getDelayedTask,
 }
 
 
