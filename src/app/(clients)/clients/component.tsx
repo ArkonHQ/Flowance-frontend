@@ -1,4 +1,4 @@
-'use clients'
+'use client'
 
 import Link from 'next/link'
 import { Client } from "@/lib/api/clients"
