@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ClientCard } from './component';
+import { ClientCard } from './components/ClientCard';
 import { PlusIcon } from 'lucide-react';
 import { getAllClients } from '@/lib/api/clients';
 import type { Client } from '@/lib/api/clients';
+import DeleteButton from './components/DeleteButton';
 
 const ClientPage = () => {
     const [clients, setClients] = useState<Client[]>([]);
