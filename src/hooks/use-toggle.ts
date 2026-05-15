@@ -1,4 +1,4 @@
-'use client'
+'use clients'
 
 import { useCallback, useState } from 'react'
 

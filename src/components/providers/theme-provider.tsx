@@ -1,5 +1,5 @@
 
-'use client'
+'use clients'
 
 
 import { ThemeProvider } from "next-themes";

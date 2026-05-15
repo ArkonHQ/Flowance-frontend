@@ -1,4 +1,4 @@
-"use client"
+"use clients"
 
 import * as React from "react"
 

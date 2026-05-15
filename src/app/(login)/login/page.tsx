@@ -1,25 +1,14 @@
 'use client';
 
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { toast } from 'sonner'
-import { z } from "zod"
-
-import { Button } from '@/components/ui/button'
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-
-const loginShcema = z.object({
-    email: z.string().email(),
-    password: z.string().min(8)
-})
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { signIn } from '@/lib/auth';
 
 
 const Login = () => {
@@ -41,27 +30,15 @@ const Login = () => {
 
         try {
             // Authentication the user data with the backend and wait a response
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/login`,
-                {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ email, password }),
-                }
-            )
+            const result = await signIn.email({email, password})
 
-                const data = await res.json()
-                if (!res.ok){
-                    throw new Error ( data.message ||'Failed Login')
-                }
+            if (result.error) throw new Error(result.error.message || 'Login failed');
 
-            // If the Login Successed give ( notification, save the token, and navigate the user to the dashboard URL )
-            localStorage.setItem('token', data.token)
-            toast.success('Welcome Back!')
+            toast.success(`Welcome back!`);
             router.push(from)
 
-    }catch(err: any) {
-            setError(err.message || 'Something went wrong')
+        }catch (err:any) {
+        setError(err.message || 'Oops! Something went wrong');
         }finally {
             setLoading(false)
         }

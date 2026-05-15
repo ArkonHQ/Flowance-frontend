@@ -1,24 +1,15 @@
-"use server"
 
-// lib/api/clients.ts
-// WHAT: All client-related DB/API calls using Server Actions
-// WHY: Centralize DB logic, easy to maintain
-// WHEN: Any component needs client data
-
-import { db } from "@/lib/db";
-import { clients } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
 export type Client = {
-    id: string;
+    id: number;
     name: string;
     email: string | null;
     company: string | null;
-    ownerId: string;
+    ownerId: number;
     createdAt: Date;
     updatedAt: Date;
+    deletedAt: Date | null;
 }
 
 export type ClientInsight = {
@@ -36,68 +27,67 @@ export type ClientInsight = {
     riskReason: string;
 }
 
-export type ClientWithInsights = Client & {
-    insights?: ClientInsight;
+// GET all clients
+export const getAllClients = async (): Promise<Client[]> => {
+    const res = await fetch(`${API_BASE}/clients`,
+        { credentials: "include" });
+    if (!res.ok) throw new Error(`Failed to fetch clients: ${res.status}`);
+    const data = await res.json();
+    return data.clients;
 }
 
-import { redirect } from "next/navigation";
-
-const requireAuth = async () => {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) {
-        redirect("/login");
-    }
-    return session;
+// GET single clients
+export const getClient = async (clientId: number): Promise<Client> => {
+    const res = await fetch(`${API_BASE}/clients/${clientId}`,
+        { credentials: "include" });
+    if (!res.ok) throw new Error(`Failed to fetch client: ${res.status}`);
+    const data = await res.json();
+    return data.client;
 }
 
-// GET all clients with insights
-export const getClients = async (): Promise<Client[]> => {
-    const session = await requireAuth();
-    const userClients = await db.select().from(clients).where(eq(clients.ownerId, session.user.id));
-    return userClients as Client[];
+// GET clients insights
+export const getClientInsight = async (clientId: number): Promise<ClientInsight> => {
+    const res = await fetch(`${API_BASE}/clients/${clientId}/insights`,
+        { credentials: "include"})
+    if (!res.ok) throw new Error(`Failed to fetch client insight: ${res.status}`);
+    const data = await res.json();
+    return data.insight
+
 }
 
-// GET single client with insights
-export const getOneClient = async (id: string): Promise<ClientWithInsights> => {
-    const session = await requireAuth();
-    const result = await db.select().from(clients).where(and(eq(clients.id, id), eq(clients.ownerId, session.user.id))).limit(1);
-    if (result.length === 0) throw new Error("Client not found");
-    return result[0] as ClientWithInsights;
+
+// POST create clients
+export const createClient = async (clientData: { name: string; email: string; company: string }): Promise<Client> => {
+    const res = await fetch(`${API_BASE}/clients`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(clientData),
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to create client: ${res.status}`);
+    const data = await res.json();
+    return data.client;
 }
 
-// GET pure insights without client data
-export const getInsightsOnly = async (id: string): Promise<ClientInsight> => {
-    const session = await requireAuth();
-    // TODO: implement insights logic
-    throw new Error("Insights not implemented yet");
+// PUT update clients
+export const updateClient = async (clientId: number, updates: Partial<Omit<Client, 'id' | 'ownerId'>>): Promise<Client> => {
+    const res = await fetch(`${API_BASE}/clients/${clientId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to update client: ${res.status}`);
+    const data = await res.json();
+    return data.client;
 }
 
-// POST Create client 
-export const createClient = async (data: {name: string, email?: string, company?: string}): Promise<Client> => {
-    const session = await requireAuth();
-    const newClient = await db.insert(clients).values({
-        id: crypto.randomUUID(),
-        name: data.name,
-        email: data.email,
-        company: data.company,
-        ownerId: session.user.id,
-    }).returning();
-    return newClient[0] as Client;
-}
-
-// PUT Update client
-export const updateClient = async (id: string, data: Partial<Pick<Client, 'name' | 'email' | 'company'>>) => {
-    const session = await requireAuth();
-    const updated = await db.update(clients)
-        .set(data)
-        .where(and(eq(clients.id, id), eq(clients.ownerId, session.user.id)))
-        .returning();
-    if (updated.length === 0) throw new Error("Failed to update client");
-    return updated[0] as Client;
-}
-
-// DELETE client
-export const deleteClient = async (id: string): Promise<void> => {
-    const session = await requireAuth();
-    await db.delete(clients).where(and(eq(clients.id, id), eq(clients.ownerId, session.user.id)));
+// DELETE clients
+export const deleteClient = async (clientId: number): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_BASE}/clients/${clientId}`, {
+        method: 'DELETE',
+        credentials: "include",
+    });
+    if (!res.ok) throw new Error(`Failed to delete client: ${res.status}`);
+    return { success: true };
 }

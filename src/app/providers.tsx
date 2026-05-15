@@ -1,4 +1,4 @@
-'use client'
+'use clients'
 
 import { ThemeProvider } from 'next-themes'
 import { TooltipProvider } from '@/components/ui/tooltip'

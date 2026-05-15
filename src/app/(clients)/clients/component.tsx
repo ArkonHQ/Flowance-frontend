@@ -1,4 +1,4 @@
-'use client'
+'use clients'
 
 import Link from 'next/link'
 import { Client } from "@/lib/api/clients"
@@ -7,7 +7,7 @@ import { Mail, Building2, MoreVertical } from 'lucide-react'
 
 interface ClientCard {
     client: Client
-    onDelete?: (id: string) => void
+    onDelete?: (id: number) => void
 }
 
 export const ClientCard = ({ client, onDelete }: ClientCard) => {
@@ -16,7 +16,7 @@ export const ClientCard = ({ client, onDelete }: ClientCard) => {
             <div className='p-6'>
                 {/* Header with name and menu */}
                 <div className='flex justify-between item-start mb-3'>
-                    <Link href={`/clients/${client.id}`} className='flex-1'>
+                    <Link href={`/freelance-command-center/src/app/(clients)/clients/${client.id}`} className='flex-1'>
                         <h3 className='text-lg font-semibold text-gray-900 hover:text-indigo-600 transition-colors'>
                             {client.name}
                         </h3>
@@ -76,7 +76,7 @@ export const ClientCard = ({ client, onDelete }: ClientCard) => {
                         Edit
                     </Link>
                     <Link
-                        href={`/clients/${client.id}`}
+                        href={`/freelance-command-center/src/app/(clients)/clients/${client.id}`}
                         className='text-sm text-blue-600 hover:text-blue-700'
                     >
                         Details
