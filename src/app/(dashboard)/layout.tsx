@@ -1,6 +1,6 @@
 'use client'
 
-import AppSidebar  from '../components/app-sidebar';
+import AppSidebar from '../components/app-sidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import React from "react";
 import AuthGuard from "@/app/components/auth-guard";

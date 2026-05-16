@@ -3,63 +3,167 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ClientCard } from './components/ClientCard';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon, SearchIcon, Users, AlertCircle } from 'lucide-react';
 import { getAllClients } from '@/lib/api/clients';
 import type { Client } from '@/lib/api/clients';
-import DeleteButton from './components/DeleteButton';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+};
 
 const ClientPage = () => {
-    const [clients, setClients] = useState<Client[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        getAllClients()
-            .then(setClients)
-            .catch((err) => setError(err.message))
-            .finally(() => setLoading(false));
-    }, []);
+  useEffect(() => {
+    getAllClients()
+      .then(setClients)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
-    if (loading) return <ClientsLoadingSkeleton />;
-    if (error) return <div className="text-red-500">{error}</div>;
+  const filteredClients = clients.filter(
+    (client) =>
+      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
+  if (error) {
     return (
-        <div className="container mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Clients</h1>
-                <Link href="/clients/new" className="btn-primary flex items-center gap-2">
-                    <PlusIcon className="w-4 h-4" />
-                    New Client
-                </Link>
-            </div>
-
-            {clients.length === 0 ? (
-                <div className="text-center py-12">
-                    <p className="text-gray-500">You haven't added any clients yet.</p>
-                    <Link href="/clients/new" className="mt-4 inline-block text-indigo-500">
-                        Add your first client
-                    </Link>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {clients.map((client) => (
-                        <ClientCard key={client.id} client={client} />
-                    ))}
-                </div>
-            )}
+      <div className="container mx-auto py-20 text-center space-y-4">
+        <div className="rounded-full bg-destructive/10 p-4 mx-auto w-fit">
+          <AlertCircle className="h-8 w-8 text-destructive" />
         </div>
+        <p className="text-destructive font-medium">Something went wrong: {error}</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Try again
+        </Button>
+      </div>
     );
-}
+  }
 
-// Loading skeleton UI
+  return (
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="container mx-auto py-8 px-4 md:px-6 space-y-6"
+    >
+      {/* Header */}
+      <motion.div
+        variants={itemVariants}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+      >
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-1.5 rounded-full bg-primary" />
+            <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Manage your client relationships
+          </p>
+        </div>
+        <Link href="/clients/new">
+          <Button className="gap-2 shadow-lg shadow-primary/20 hover:shadow-xl transition-shadow">
+            <PlusIcon className="h-4 w-4" />
+            New Client
+          </Button>
+        </Link>
+      </motion.div>
+
+      {/* Loading skeleton */}
+      {loading && <ClientsLoadingSkeleton />}
+
+      {/* Empty state */}
+      {!loading && clients.length === 0 && (
+        <motion.div variants={itemVariants} className="flex flex-col items-center justify-center py-20">
+          <div className="rounded-full bg-muted/60 p-6 mb-6 backdrop-blur-sm">
+            <Users className="h-12 w-12 text-muted-foreground" />
+          </div>
+          <h3 className="text-2xl font-semibold mb-2">No clients yet</h3>
+          <p className="text-muted-foreground mb-6 text-center max-w-md">
+            You haven’t added any clients. Start building your client list and
+            track projects effortlessly.
+          </p>
+          <Link href="/clients/new">
+            <Button className="gap-2">
+              <PlusIcon className="h-4 w-4" />
+              Add your first client
+            </Button>
+          </Link>
+        </motion.div>
+      )}
+
+      {/* Client grid */}
+      {!loading && filteredClients.length > 0 && (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          {filteredClients.map((client) => (
+            <motion.div key={client.id} variants={itemVariants}>
+              <ClientCard client={client} />
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+
+      {/* No search results */}
+      {!loading && clients.length > 0 && filteredClients.length === 0 && (
+        <motion.div variants={itemVariants} className="text-center py-16 space-y-3">
+          <SearchIcon className="mx-auto h-8 w-8 text-muted-foreground/60" />
+          <p className="text-lg font-medium">No clients match your search</p>
+          <Button variant="link" onClick={() => setSearchTerm('')}>
+            Clear search
+          </Button>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+};
+
+// ─── Loading Skeleton ─────────────────────────
 const ClientsLoadingSkeleton = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="animate-pulse">
-                <div className="h-32 bg-gray-300 rounded"></div>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {[1, 2, 3, 4, 5, 6].map((i) => (
+      <Card key={i} className="relative border border-border/40 bg-card/40 backdrop-blur-sm overflow-hidden pl-4">
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-muted" />
+        <CardContent className="p-5 space-y-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
             </div>
-        ))}
-    </div>
+          </div>
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-2/3" />
+          <div className="flex justify-between pt-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
 );
 
 export default ClientPage;

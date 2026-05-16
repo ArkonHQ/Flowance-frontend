@@ -2,87 +2,187 @@
 
 import Link from 'next/link'
 import { Client } from "@/lib/api/clients"
-import { Mail, Building2, MoreVertical } from 'lucide-react'
+import {
+  Mail,
+  Building2,
+  MoreHorizontal,
+  Calendar,
+  Pencil,
+  Trash2,
+  ExternalLink,
+} from 'lucide-react'
+import DeleteButton from './DeleteButton'
+import { motion } from 'framer-motion'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from '@/components/ui/button'
 
-
-interface ClientCard {
-    client: Client
-    onDelete?: (id: number) => void
+interface ClientCardProps {
+  client: Client
+  onDelete?: (id: number) => void
 }
 
-export const ClientCard = ({ client, onDelete }: ClientCard) => {
-    return (
-        <div className='bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow'>
-            <div className='p-6'>
-                {/* Header with name and menu */}
-                <div className='flex justify-between item-start mb-3'>
-                    <Link href={`/freelance-command-center/src/app/(clients)/clients/${client.id}`} className='flex-1'>
-                        <h3 className='text-lg font-semibold text-gray-900 hover:text-indigo-600 transition-colors'>
-                            {client.name}
-                        </h3>
-                    </Link>
+export const ClientCard = ({ client, onDelete }: ClientCardProps) => {
+  const initials = client.name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
 
+  // Subtle colour for the accent stripe – based on name (consistent across renders)
+  const accentColors = [
+    'bg-indigo-500',
+    'bg-emerald-500',
+    'bg-orange-500',
+    'bg-rose-500',
+    'bg-violet-500',
+  ]
+  const accentColor = accentColors[client.name.charCodeAt(0) % accentColors.length]
 
-                    {/* Dropdown menu */}
-                    <div className='relative group'>
-                        <button className='p-1 hover:bg-gray-100 rounded'>
-                            <MoreVertical className='w-4 h-4 text-gray-500 group-hover:text-gray-700 ' />
-                        </button> 
-                        <div className='absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden group-hover:block z-10'>
-                            <Link
-                                href={`/clients/${client.id}/edit`}
-                                className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                            >
-                                Edit
-                            </Link>
-                            <button
-                                onClick={() => onDelete?.(client.id)}
-                                className='block w-full text-left px-4 py-2 text-sm text-red-600 hover-bg-gray-100'
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                {/* Company info */}
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      whileHover={{ y: -2 }}
+      className="group"
+    >
+      <Card className="relative overflow-hidden border border-border/30 bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-lg transition-all duration-200 pl-4">
+        {/* Left accent stripe – clean and minimal */}
+        <div className={`absolute left-0 top-0 bottom-0 w-1 ${accentColor} rounded-l-lg`} />
+
+        <CardHeader className="pb-2 pt-5 pr-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <Avatar className="h-10 w-10 ring-1 ring-border/40 shadow-sm">
+                <AvatarFallback className="bg-muted text-muted-foreground font-medium text-sm">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <Link
+                  href={`/clients/${client.id}`}
+                  className="inline-block hover:text-primary transition-colors"
+                >
+                  <CardTitle className="text-base font-semibold truncate leading-snug">
+                    {client.name}
+                  </CardTitle>
+                </Link>
                 {client.company && (
-                    <div className="flex items-center gap-2 text-gray-600 text-sm mb-2">
-                        <Building2 className="w-4 h-4" />
-                        <span>{client.company}</span>
-                    </div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                    <Building2 className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{client.company}</span>
+                  </p>
                 )}
-
-                {/* Email */}
-                {client.email && (
-                    <div className='flex item-center gap-2 text-sm text-gray-500'>
-                        <Mail className='h-4 w-4'/>
-                        <span className='truncate'>
-                            {client.email} 
-                        </span>
-                    </div>
-                )}
-
-                {/* Craeted date */}
-                <div className='text-xs text-gray-500 mt-4'>
-                    Created: {new Date(client.createdAt).toLocaleDateString()}
-                </div>
-
-                {/* Edit and details links */}
-                <div className='flex justify-between item-center mt-4'>
-                    <Link
-                        href={`/clients/${client.id}/edit`}
-                        className='text-sm text-blue-600 hover:text-blue-700'
-                    >
-                        Edit
-                    </Link>
-                    <Link
-                        href={`/freelance-command-center/src/app/(clients)/clients/${client.id}`}
-                        className='text-sm text-blue-600 hover:text-blue-700'
-                    >
-                        Details
-                    </Link>
-                </div>
+              </div>
             </div>
-        </div>
-    )
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full hover:bg-muted/50 transition-colors"
+                  aria-label="Open client menu"
+                >
+                  <MoreHorizontal className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-44 bg-popover/90 backdrop-blur-md border-border/50 shadow-xl"
+              >
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/clients/${client.id}`}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    View details
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/clients/${client.id}/edit`}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Edit client
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-border/40" />
+                <DropdownMenuItem
+                  asChild
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <DeleteButton
+                    clientId={client.id}
+                    clientName={client.name}
+                    redirectAfterDelete={false}
+                  >
+                    <span className="flex items-center gap-2 text-destructive cursor-pointer w-full">
+                      <Trash2 className="h-4 w-4" />
+                      Delete client
+                    </span>
+                  </DeleteButton>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-2.5 pt-1 pr-5 pb-5">
+          {client.email && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Mail className="h-4 w-4 shrink-0" />
+              <span className="truncate">{client.email}</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              Created{' '}
+              {new Date(client.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+              })}
+            </span>
+          </div>
+
+          <Separator className="my-2! bg-border/30" />
+
+          <div className="flex items-center justify-between">
+            <Link
+              href={`/clients/${client.id}/edit`}
+              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              Edit
+            </Link>
+            <Link
+              href={`/clients/${client.id}`}
+              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              Details
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
 }
