@@ -110,7 +110,7 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
       </div>
 
       {/* Spans header */}
-      <div className='grid grid-cols-12 gap-4 py-2 text-xs font-normal text-gray-500 tracking-wider sticky'>
+      <div className='grid grid-cols-12 gap-4 py-2 px-5 text-xs font-normal text-gray-500 tracking-wider sticky top-0 bg-background/95 backdrop-blur-sm z-10'>
         <div className='col-span-4'>Client</div>
         <div className='col-span-2'>Status</div>
         <div className='col-span-2'>Total Projects</div>
@@ -124,7 +124,7 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        className="flex flex-col gap-3"
       >
         {filteredClients.map((client: Client) => (
           <motion.div key={client.id} variants={itemVariants}>

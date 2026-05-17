@@ -19,6 +19,7 @@ export type ClientInsight = {
     name: string;
     totalProjects: number;
     totalRevenue: number;
+    lastActivity: Date;
     status: 'active' | 'at-risk' | 'inactive' | 'vip';
     totalEarned: number;
     unpaidAmount: number;
