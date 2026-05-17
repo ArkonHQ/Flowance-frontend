@@ -2,7 +2,6 @@
 
 import { ClientInsight } from "@/lib/api/clients";
 import { AnalyticsIcon } from "@/components/icons/uil-analytics";
-import {registriesIndexSchema} from "shadcn/schema";
 
 interface Props {
     insights: ClientInsight;

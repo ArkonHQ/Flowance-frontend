@@ -1,27 +1,38 @@
-'use client'
+'use client';
 
-import { usePathname, useRouter} from 'next/navigation'
-import React, { useState, useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { useSession } from '@/lib/auth';
 
+const AuthGuard = ({ children }: { children: React.ReactNode }) => {
+    const router = useRouter();
+    const pathname = usePathname();
+    const { data: session, isPending } = useSession();
 
-const AuthGuard = ({ children }: {children: React.ReactNode}) => {
-
-    const router = useRouter()
-    const pathname= usePathname()
-    const [ready, setReady] = useState(false)
+    const isAuthPage = pathname === '/login' || pathname === '/signup';
 
     useEffect(() => {
-        const token = localStorage.getItem("token")
-        if (!token) {
-            router.replace(`/login?from=${encodeURIComponent(pathname)}`)
-        }else {
-            setReady(true)
+        if (!isPending && !session && !isAuthPage) {
+            router.replace(`/login?from=${encodeURIComponent(pathname)}`);
         }
-    }, [router, pathname])
+    }, [session, isPending, isAuthPage, router, pathname]);
 
+    if (isPending) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                    <p className="text-xs text-muted-foreground animate-pulse">Verifying session...</p>
+                </div>
+            </div>
+        );
+    }
 
-    if (!ready) return null
-    return <> {children} </>;
+    if (!session && !isAuthPage) {
+        return null;
+    }
 
-}
-export default AuthGuard
+    return <>{children}</>;
+};
+
+export default AuthGuard;

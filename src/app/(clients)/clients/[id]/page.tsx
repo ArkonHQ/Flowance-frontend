@@ -3,6 +3,7 @@ import { getClientInsight } from "@/lib/api/clients";
 import InsightsWidget from "@/app/(clients)/clients/components/InsightsWidget";
 import DeleteButton from "@/app/(clients)/clients/components/DeleteButton";
 import Link from "next/link";
+import { cookies } from "next/headers";
 
 interface PageProps {
     params: Promise<{ id: number }>
@@ -11,11 +12,13 @@ interface PageProps {
 export default async function ClientDetailPage ( { params }: PageProps ) {
     const { id } = await params;
     const clientId = Number(id)
-    const client = await getClient(clientId);
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+    const client = await getClient(clientId, cookieHeader);
     let insights = null
 
     try{
-        insights = await getClientInsight(clientId);
+        insights = await getClientInsight(clientId, cookieHeader);
     }catch (err: any) {
 
     }

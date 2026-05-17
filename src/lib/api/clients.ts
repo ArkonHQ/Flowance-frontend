@@ -31,31 +31,52 @@ export type ClientInsight = {
 }
 
 // GET all clients
-export const getAllClients = async (): Promise<Client[]> => {
-    const res = await fetch(`${API_BASE}/clients`,
-        { credentials: "include" });
+export const getAllClients = async (cookieHeader?: string): Promise<Client[]> => {
+    const headers: Record<string, string> = {};
+    if (cookieHeader) {
+        headers['Cookie'] = cookieHeader;
+    }
+    const res = await fetch(`${API_BASE}/clients`, {
+        headers,
+        credentials: "include"
+    });
     if (!res.ok) throw new Error(`Failed to fetch clients: ${res.status}`);
     const data = await res.json();
     return data.clients;
 }
 
 // GET single clients
-export const getClient = async (clientId: number): Promise<Client> => {
-    const res = await fetch(`${API_BASE}/clients/${clientId}`,
-        { credentials: "include" });
+export const getClient = async (clientId: number, cookieHeader?: string): Promise<Client> => {
+    const headers: Record<string, string> = {};
+    if (cookieHeader) {
+        headers['Cookie'] = cookieHeader;
+    }
+    const res = await fetch(`${API_BASE}/clients/${clientId}`, {
+        headers,
+        credentials: "include"
+    });
     if (!res.ok) throw new Error(`Failed to fetch client: ${res.status}`);
     const data = await res.json();
     return data.client;
 }
 
 // GET clients insights
-export const getClientInsight = async (clientId: number): Promise<ClientInsight> => {
-    const res = await fetch(`${API_BASE}/clients/${clientId}/insights`,
-        { credentials: "include"})
+export const getClientInsight = async (clientId?: number, cookieHeader?: string): Promise<any> => {
+    const headers: Record<string, string> = {};
+    if (cookieHeader) {
+        headers['Cookie'] = cookieHeader;
+    }
+    const url = clientId !== undefined
+        ? `${API_BASE}/clients/${clientId}/insights`
+        : `${API_BASE}/clients/insights`;
+
+    const res = await fetch(url, {
+        headers,
+        credentials: "include"
+    });
     if (!res.ok) throw new Error(`Failed to fetch client insight: ${res.status}`);
     const data = await res.json();
-    return data.insight
-
+    return data.insight;
 }
 
 

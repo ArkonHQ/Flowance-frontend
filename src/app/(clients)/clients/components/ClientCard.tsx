@@ -1,34 +1,6 @@
 'use client'
 
-import Link from 'next/link'
 import { Client, ClientInsight } from "@/lib/api/clients"
-import {
-  Mail,
-  Building2,
-  MoreHorizontal,
-  Calendar,
-  Pencil,
-  Trash2,
-  ExternalLink,
-} from 'lucide-react'
-import DeleteButton from './DeleteButton'
-import { motion } from 'framer-motion'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from '@/components/ui/button'
 
 interface ClientCardProps {
   client: Client
@@ -39,15 +11,6 @@ interface ClientCardProps {
 export const ClientCard = ({ client, insight }: ClientCardProps) => {
   const status = insight?.status || 'inactive'
   const totalProjects = insight?.totalProjects || 0
-  const totalRevenue = insight?.totalRevenue || 0
-  
-  const initials = client.name
-    .split(' ')
-    .map(word => word[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-
 
     const getStatusColor = (status: string) => {
       const statusColors: Record<string, string> = {
@@ -82,7 +45,7 @@ export const ClientCard = ({ client, insight }: ClientCardProps) => {
 
         {/* Total projects */}
         <div className='col-span-2 flex items-center justify-center'>
-          <span className={`text-sm font-medium text-outline-dotted-cool-gray-700 `}>
+          <span className="text-sm font-medium text-gray-700">
             {totalProjects}
           </span>
         </div>
