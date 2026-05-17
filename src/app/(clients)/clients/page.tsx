@@ -66,26 +66,42 @@ const ClientPage = () => {
       className="container mx-auto py-8 px-4 md:px-6 space-y-6"
     >
       {/* Header */}
-      <motion.div
-        variants={itemVariants}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-      >
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-1.5 rounded-full bg-primary" />
-            <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Manage your client relationships
-          </p>
+        <div className='flex items-end justify-between mb-6'>
+          
+        {/* Left side */}
+
+        <div className='flex flex-col gap-2'>
+          <h2 className='text-2xl font-bold'>All clients</h2>
+          <nav className='flex gap-20 text-sm font-medium text-gray-500 ml-8'>
+            <Link href={"/clients"} className='text-indigo-600 border-b-2 border-indigo-600 pb-1'>All</Link>
+            <Link href={"/clients?status=active"} className='hover:text-indigo-600'>Active</Link>
+            <Link href={"/clients?status=at-risk"} className='hover:text-indigo-600'>At Risk</Link>
+            <Link href={"/clients?status=inactive"} className='hover:text-indigo-600'>Inactive</Link>
+          </nav>
         </div>
-        <Link href="/clients/new">
-          <Button className="gap-2 shadow-lg shadow-primary/20 hover:shadow-xl transition-shadow">
-            <PlusIcon className="h-4 w-4" />
-            New Client
-          </Button>
-        </Link>
-      </motion.div>
+        {/* Right side */}
+        <div className='flex items-center gap-3'>
+          <div className='relative'>
+            <i data-lucide='search' className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400'></i>
+            <input
+              type="text"
+              placeholder="Search clients..."
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-64 text-sm text-gray-900 placeholder:text-gray-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all duration-200"
+            />
+          </div>
+          <div className='ml-16 flex items-center gap-3'>
+          <button className='flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200'>
+            <i data-lucide='filter' className='h-4 w-4 text-gray-400'></i>
+            Filters
+          </button>
+          <button className='flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200'>
+            <i data-lucide='download' className='h-4 w-4 text-gray-400'></i>
+            Export
+          </button>
+        </div>
+        </div>
+
+      </div>
 
       {/* Loading skeleton */}
       {loading && <ClientsLoadingSkeleton />}
