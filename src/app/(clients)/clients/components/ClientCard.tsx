@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Client } from "@/lib/api/clients"
+import { Client, ClientInsight } from "@/lib/api/clients"
 import {
   Mail,
   Building2,
@@ -32,10 +32,15 @@ import { Button } from '@/components/ui/button'
 
 interface ClientCardProps {
   client: Client
+  insight?: ClientInsight
   onDelete?: (id: number) => void
 }
 
-export const ClientCard = ({ client, onDelete }: ClientCardProps) => {
+export const ClientCard = ({ client, insight }: ClientCardProps) => {
+  const status = insight?.status || 'inactive'
+  const totalProjects = insight?.totalProjects || 0
+  const totalRevenue = insight?.totalRevenue || 0
+  
   const initials = client.name
     .split(' ')
     .map(word => word[0])
@@ -44,38 +49,51 @@ export const ClientCard = ({ client, onDelete }: ClientCardProps) => {
     .slice(0, 2)
 
 
+    const getStatusColor = (status: string) => {
+      const statusColors: Record<string, string> = {
+        'active': 'bg-green-100 text-green-700',
+        'at-risk': 'bg-yellow-100 text-yellow-700',
+        'inactive': 'bg-gray-100 text-gray-700',
+        'vip': 'bg-purple-100 text-purple-700',
+      }
+      return statusColors[status as keyof typeof statusColors] || statusColors.inactive
+    }
+
+
   return (
-      <div className='flex items-end justify-between mb-6'>
-        {/* Left side */}
-        <div className='flex items-end gap-6'>
-          <h2 className='text-2xl font-bold'>All clients</h2>
-          <nav className='flex gap-4 text-sm font-medium text-gray-500'>
-            <Link href={"/clients"} className='text-indigo-600 border-b-2 border-indigo-600 pb-1'>All</Link>
-            <Link href={"/clients?status=active"} className='hover:text-indigo-600'>Active</Link>
-            <Link href={"/clients?status=at-risk"} className='hover:text-indigo-600'>At Risk</Link>
-            <Link href={"/clients?status=inactive"} className='hover:text-indigo-600'>Inactive</Link>
-          </nav>
-        </div>
-        {/* Right side */}
-        <div className='flex items-center gap-3'>
-          <div className='relative'>
-            <i data-lucide='search' className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400'></i>
-            <input
-              type="text"
-              placeholder="Search clients..."
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-64 text-sm text-gray-900 placeholder:text-gray-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all duration-200"
-            />
+      <div className='grid grid-cols-12 gap-4 items-center px-4 py-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200'>
+        {/* Client name, email and  */}
+        <div className='col-span-4 flex items-center gap-3 min-w-0'>
+          <div className='h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm shrink-0'>
+            {client.name.slice(0, 2).toUpperCase()}
           </div>
-          <button className='flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200'>
-            <i data-lucide='filter' className='h-4 w-4 text-gray-400'></i>
-            Filters
-          </button>
-          <button className='flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200'>
-            <i data-lucide='download' className='h-4 w-4 text-gray-400'></i>
-            Export
-          </button>
+          <div className='min-w-0'>
+            <p className='text-sm font-semibold text-gray-900 truncate'>{client.name}</p>
+            <p className='text-xs text-gray-500 truncate'>{client.email}</p>
+          </div>
         </div>
 
+        {/* Status */}
+        <div className='col-span-2'>
+          <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+            {status}
+          </span>
+        </div>
+
+        {/* Total projects */}
+        <div className='col-span-2 flex items-center justify-center'>
+          <span className={`text-sm font-medium text-outline-dotted-cool-gray-700 `}>
+            {totalProjects}
+          </span>
+        </div>
+        
+        {/* Total value */}
+        <div className='col-span-2'></div>
+        
+        {/* Total revenue */}
+        <div className='col-span-2'></div>
+        <div className='col-span-1'></div>
+        <div className='col-span-1'></div>
       </div>
   )
 }

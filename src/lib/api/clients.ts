@@ -6,6 +6,7 @@ export type Client = {
     name: string;
     email: string | null;
     company: string | null;
+    status: 'active' | 'at-risk' | 'inactive' | 'vip';
     ownerId: number;
     createdAt: Date;
     updatedAt: Date;
@@ -17,6 +18,8 @@ export type ClientInsight = {
     ownerId: string;
     name: string;
     totalProjects: number;
+    totalRevenue: number;
+    status: 'active' | 'at-risk' | 'inactive' | 'vip';
     totalEarned: number;
     unpaidAmount: number;
     avgPaymentDelayDays: number;

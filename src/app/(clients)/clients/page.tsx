@@ -10,6 +10,10 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
+import { ExportIcon } from '@/components/icons/mi-export';
+import { Filter1Icon } from '@/components/icons/mi-filter-1';
+import { Search } from 'lucide-react';
+
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -72,17 +76,19 @@ const ClientPage = () => {
 
         <div className='flex flex-col gap-2'>
           <h2 className='text-2xl font-bold'>All clients</h2>
-          <nav className='flex gap-20 text-sm font-medium text-gray-500 ml-8'>
+          <nav className='flex gap-20 mt-8 text-sm font-medium text-gray-500 ml-8'>
             <Link href={"/clients"} className='text-indigo-600 border-b-2 border-indigo-600 pb-1'>All</Link>
             <Link href={"/clients?status=active"} className='hover:text-indigo-600'>Active</Link>
             <Link href={"/clients?status=at-risk"} className='hover:text-indigo-600'>At Risk</Link>
             <Link href={"/clients?status=inactive"} className='hover:text-indigo-600'>Inactive</Link>
+            <Link href={"/clients?status=vip"} className='hover:text-indigo-600'>VIP</Link>
           </nav>
         </div>
+
         {/* Right side */}
         <div className='flex items-center gap-3'>
           <div className='relative'>
-            <i data-lucide='search' className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400'></i>
+            <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400'/>
             <input
               type="text"
               placeholder="Search clients..."
@@ -90,17 +96,24 @@ const ClientPage = () => {
             />
           </div>
           <div className='ml-16 flex items-center gap-3'>
-          <button className='flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200'>
-            <i data-lucide='filter' className='h-4 w-4 text-gray-400'></i>
-            Filters
+          <button className='flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium hover:bg-gray-200 hover:text-indigo-600 transition-all duration-200'>
+            <Filter1Icon className='h-4 w-4'/> Filters
           </button>
-          <button className='flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors duration-200'>
-            <i data-lucide='download' className='h-4 w-4 text-gray-400'></i>
-            Export
+          <button className='flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium hover:bg-gray-200 hover:text-indigo-600 transition-all duration-200'>
+            <ExportIcon className='h-4 w-4'/> Export
           </button>
         </div>
         </div>
+      </div>
 
+      {/* Spans header */}
+      <div className='grid grid-cols-12 gap-4 py-2 text-xs font-sm text-gray-500 tracking-wider sticky'>
+        <div className='col-span-4'>Client</div>
+        <div className='col-span-2'>Status</div>
+        <div className='col-span-2'>Total Projects</div>
+        <div className='col-span-2'>Total Revenue</div>
+        <div className='col-span-1'>Last Activity</div>
+        <div className='col-span-1'></div>
       </div>
 
       {/* Loading skeleton */}
