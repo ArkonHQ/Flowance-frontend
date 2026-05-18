@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ClientCard } from '@/app/(clients)/clients/components/ClientCard';
-import { PlusIcon, SearchIcon, Users, Search } from 'lucide-react';
+import { PlusIcon, Users, Search } from 'lucide-react';
 import type { Client, ClientInsight } from '@/lib/api/clients';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -34,8 +34,9 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
   let statusFilteredClients = initialClients;
   if (statusFilter && statusFilter !== 'all') {
     statusFilteredClients = initialClients.filter(client => {
-      const insight = insightMap.get(client.id);
-      return insight?.status === statusFilter;
+      const insight = insightMap.get(Number(client.id));
+      const currentStatus = (insight?.status || 'active').toLowerCase();
+      return currentStatus === statusFilter.toLowerCase();
     });
   }
 
@@ -130,7 +131,7 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
           <motion.div key={client.id} variants={itemVariants}>
             <ClientCard
               client={client}
-              insight={insightMap.get(client.id)}
+              insight={insightMap.get(Number(client.id))}
             />
           </motion.div>
         ))}
