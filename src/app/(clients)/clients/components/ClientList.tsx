@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ClientCard } from '@/app/(clients)/clients/components/ClientCard';
 import { PlusIcon, Users, Search } from 'lucide-react';
@@ -8,7 +8,11 @@ import type { Client, ClientInsight } from '@/lib/api/clients';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ExportIcon } from '@/components/icons/mi-export';
-import { Filter1Icon } from '@/components/icons/mi-filter-1';
+import { SearchIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { SortDescIcon } from 'lucide-react';
+import { PaginationFooter } from './ClientBottom';
+
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -28,7 +32,9 @@ interface ClientPageProps {
 
 const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   // 1. Apply status filter from URL
   let statusFilteredClients = initialClients;
@@ -47,6 +53,18 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
       client.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // 3. Apply pagination to the ALREADY filtered list
+  const totalPages = Math.ceil(filteredClients.length / pageSize);
+  const paginatedClients = filteredClients.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   // If no clients at all
   if (initialClients.length === 0) {
@@ -74,7 +92,7 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="container mx-auto py-8 px-4 md:px-6 space-y-6"
+      className="container mx-auto py-8 px-4 md:px-6 space-y-6 pb-28"
     >
       {/* Header – unchanged */}
       <div className='flex items-end justify-between mb-6'>
@@ -101,7 +119,7 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
           </div>
           <div className='ml-16 flex items-center gap-3'>
             <button className='flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium hover:bg-gray-200 hover:text-indigo-600 transition-all duration-200'>
-              <Filter1Icon className='h-4 w-4'/> Filters
+              <SortDescIcon className='h-4 w-4'/> Sort
             </button>
             <button className='flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium hover:bg-gray-200 hover:text-indigo-600 transition-all duration-200'>
               <ExportIcon className='h-4 w-4'/> Export
@@ -127,7 +145,7 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
         animate="visible"
         className="flex flex-col gap-3"
       >
-        {filteredClients.map((client: Client) => (
+        {paginatedClients.map((client: Client) => (
           <motion.div key={client.id} variants={itemVariants}>
             <ClientCard
               client={client}
@@ -147,6 +165,22 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
           </Button>
         </motion.div>
       )}
+
+      {/* Pagination footer */}
+      {filteredClients.length > 0 && (
+        <div className='fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-200 px-6 py-4 z-20'>
+          <div className="max-w-7xl mx-auto">
+            <PaginationFooter
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredClients.length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        </div>
+      )}
+
     </motion.div>
   );
 };

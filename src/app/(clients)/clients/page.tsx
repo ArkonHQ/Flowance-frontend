@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import type { Client } from '@/lib/api/clients';
 
 
+
 export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const { status } = await searchParams;
   const cookieStore = await cookies();
