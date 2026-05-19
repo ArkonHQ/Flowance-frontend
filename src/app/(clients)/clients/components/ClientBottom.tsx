@@ -75,8 +75,8 @@ export const PaginationFooter = ({ currentPage, totalPages, totalItems, pageSize
                             className={cn(
                                 ' h-8 w-8 rounded-lg text-sm font-medium',
                                 page === currentPage
-                                ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
-                                : 'text-gray-600 hover:bg-gray-100'
+                                ? 'bg-indigo-50 text-indigo-600 border-indigo-800 hover:bg-indigo-100'
+                                : 'text-gray-600 hover:bg-gray-400'
                             )}
                             onClick={() => onPageChange(page)}
                             >

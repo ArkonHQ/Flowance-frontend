@@ -16,7 +16,7 @@ export type Client = {
 export type ClientInsight = {
     id: string;
     ownerId: string;
-    clientId: string;
+    clientId: number;
     name: string;
     totalProjects: number;
     totalRevenue: number;

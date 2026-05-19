@@ -12,6 +12,8 @@ import { SearchIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SortDescIcon } from 'lucide-react';
 import { PaginationFooter } from './ClientBottom';
+import { QuickOverview } from './QuickOverview'; // Import QuickOverview
+import InsightsWidget from './InsightsWidget';
 
 
 const containerVariants = {
@@ -61,6 +63,21 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
     currentPage * pageSize
   );
 
+  // --- Aggregate Stats for Dashboard ---
+  const allInsights = Array.from(insightMap.values());
+  
+  const totalClients = initialClients.length;
+  const activeClients = initialClients.filter(c => 
+    (insightMap.get(Number(c.id))?.status || 'active') === 'active'
+  ).length;
+  
+  const totalRevenue = allInsights.reduce((sum, i) => sum + (i.totalEarned || 0), 0);
+  const pendingPayments = allInsights.reduce((sum, i) => sum + (i.unpaidAmount || 0), 0);
+  const totalProjectsCount = allInsights.reduce((sum, i) => sum + (i.totalProjects || 0), 0);
+  const avgProjectValue = totalProjectsCount > 0 ? Math.round(totalRevenue / totalProjectsCount) : 0;
+
+
+
   // Reset to first page when search changes
   useEffect(() => {
     setCurrentPage(1);
@@ -88,12 +105,22 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
   }
 
   return (
+    <div className='flex flex-col items-center justify-center min-h-screen w-full'> {/* Removed py-20 to allow widgets to sit higher */}
+ 
     <motion.div
       initial="hidden"
       animate="visible"
       variants={containerVariants}
       className="container mx-auto py-8 px-4 md:px-6 space-y-6 pb-28"
     >
+
+      <QuickOverview
+        totalClients={totalClients}
+        activeClients={activeClients}
+        totalRevenue={totalRevenue}
+        pendingPayments={pendingPayments}
+        avgProjectValue={avgProjectValue}
+      />
       {/* Header – unchanged */}
       <div className='flex items-end justify-between mb-6'>
         <div className='flex flex-col gap-2'>
@@ -180,8 +207,8 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
           </div>
         </div>
       )}
-
     </motion.div>
+    </div>
   );
 };
 

@@ -58,7 +58,11 @@ export const ClientCard = ({ client, insight }: ClientCardProps) => {
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900 truncate">{client.name}</p>
+          <Link href={`/clients/${client.id}`}>
+            <p className="text-sm font-semibold text-gray-900 truncate hover:text-indigo-600 transition-colors">
+              {client.name}
+            </p>
+          </Link>
           <p className="text-xs text-gray-500 truncate">{client.email}</p>
         </div>
       </div>
