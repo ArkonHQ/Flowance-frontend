@@ -40,7 +40,8 @@ const getStatusColor = (status: string) => {
 }
 
 export const ClientCard = ({ client, insight }: ClientCardProps) => {
-  const status = insight?.status || 'active'
+  const rawStatus = client.status || 'active'
+  const status = rawStatus.replace('_', '-').toLowerCase()
   const totalProjects = insight?.totalProjects ?? 0
   const totalRevenue = insight?.totalRevenue ?? '$0'
   const lastActivity = insight?.lastActivity || 'No activity yet'

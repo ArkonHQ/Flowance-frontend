@@ -12,7 +12,7 @@ import { SearchIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SortDescIcon } from 'lucide-react';
 import { PaginationFooter } from './ClientBottom';
-import { QuickOverview } from './QuickOverview'; // Import QuickOverview
+import { QuickOverview } from './QuickOverview'
 import InsightsWidget from './InsightsWidget';
 
 
@@ -43,7 +43,8 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
   if (statusFilter && statusFilter !== 'all') {
     statusFilteredClients = initialClients.filter(client => {
       const insight = insightMap.get(Number(client.id));
-      const currentStatus = (insight?.status || 'active').toLowerCase();
+      const rawStatus = client.status || 'inactive';
+      const currentStatus = rawStatus.replace('_', '-').toLowerCase();
       return currentStatus === statusFilter.toLowerCase();
     });
   }
@@ -67,9 +68,11 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
   const allInsights = Array.from(insightMap.values());
   
   const totalClients = initialClients.length;
-  const activeClients = initialClients.filter(c => 
-    (insightMap.get(Number(c.id))?.status || 'active') === 'active'
-  ).length;
+  const activeClients = initialClients.filter(c => {
+    const rawStatus = c.status || 'inactive';
+    const status = rawStatus.replace('_', '-').toLowerCase();
+    return status === 'active';
+  }).length;
   
   const totalRevenue = allInsights.reduce((sum, i) => sum + (i.totalEarned || 0), 0);
   const pendingPayments = allInsights.reduce((sum, i) => sum + (i.unpaidAmount || 0), 0);
@@ -113,14 +116,14 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
       variants={containerVariants}
       className="container mx-auto py-8 px-4 md:px-6 space-y-6 pb-28"
     >
+          <QuickOverview
+            totalClients={totalClients}
+            activeClients={activeClients}
+            totalRevenue={totalRevenue}
+            pendingPayments={pendingPayments}
+            avgProjectValue={avgProjectValue}
+          />
 
-      <QuickOverview
-        totalClients={totalClients}
-        activeClients={activeClients}
-        totalRevenue={totalRevenue}
-        pendingPayments={pendingPayments}
-        avgProjectValue={avgProjectValue}
-      />
       {/* Header – unchanged */}
       <div className='flex items-end justify-between mb-6'>
         <div className='flex flex-col gap-2'>

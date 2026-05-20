@@ -20,7 +20,7 @@ export type ClientInsight = {
     name: string;
     totalProjects: number;
     totalRevenue: number;
-    lastActivity: Date;
+    lastActivity: string;
     status: 'active' | 'at-risk' | 'inactive' | 'vip';
     totalEarned: number;
     unpaidAmount: number;
@@ -40,7 +40,8 @@ export const getAllClients = async (cookieHeader?: string): Promise<Client[]> =>
     }
     const res = await fetch(`${API_BASE}/clients`, {
         headers,
-        credentials: "include"
+        credentials: "include",
+        cache: "no-store"
     });
     if (!res.ok) throw new Error(`Failed to fetch clients: ${res.status}`);
     const data = await res.json();
@@ -74,7 +75,8 @@ export const getClientInsight = async (clientId?: number, cookieHeader?: string)
 
     const res = await fetch(url, {
         headers,
-        credentials: "include"
+        credentials: "include",
+        cache: "no-store"
     });
     if (!res.ok) throw new Error(`Failed to fetch client insight: ${res.status}`);
     const data = await res.json();

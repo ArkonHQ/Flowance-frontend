@@ -16,8 +16,11 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  AlertCircle,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
 // ────────────────────────────────────────────────
 // Types
@@ -211,4 +214,36 @@ export const QuickOverview = ({
       })}
     </motion.div>
   )
+
+
+  // Skeleton
+function QuickOverviewSkeleton() {
+  return (
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-8">
+      {Array(5).fill(0).map((_, i) => (
+        <Card key={i} className="p-4 border border-border/30">
+          <Skeleton className="h-4 w-20 mb-2" />
+          <Skeleton className="h-8 w-16 mb-2" />
+          <Skeleton className="h-4 w-24" />
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+// Error
+function ErrorMessage({ message }: { message: string }) {
+  return (
+    <div className="text-center py-8 space-y-4">
+      <div className="rounded-full bg-destructive/10 p-4 mx-auto w-fit">
+        <AlertCircle className="h-8 w-8 text-destructive" />
+      </div>
+      <p className="text-destructive font-medium">Failed to load dashboard stats</p>
+      <p className="text-sm text-muted-foreground">{message}</p>
+      <Button variant="outline" onClick={() => window.location.reload()}>
+        Retry
+      </Button>
+    </div>
+  )
+}
 }
