@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { DollarSign, Briefcase, Clock, FileText, CheckCircle, LucideCircleDollarSign } from 'lucide-react'
-import { KPIStatCard } from './KPIStatCard'
+import { StatCard } from '@/components/ui/StatCard'
 
 interface KPIStatsRowProps {
   totalRevenue: number
@@ -42,7 +42,7 @@ export function KPIStatsRow({
       animate="visible"
       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"
     >
-      <KPIStatCard
+      <StatCard
         title='Total Revenue'
         value={`$${totalRevenue.toLocaleString()}`}
         icon={DollarSign}
@@ -55,7 +55,7 @@ export function KPIStatsRow({
           label: 'vs last month'
         }}
       />
-      <KPIStatCard
+      <StatCard
         title='Active Projects'
         value={`${activeProjects}`}
         icon={Briefcase}
@@ -68,7 +68,7 @@ export function KPIStatsRow({
           label: 'vs last month'
         }}
       />
-      <KPIStatCard
+      <StatCard
         title='Total Hours'
         value={totalHours.toFixed(1)}
         icon={Clock}
@@ -81,7 +81,7 @@ export function KPIStatsRow({
           label: 'vs last month'
         }}
       />
-      <KPIStatCard
+      <StatCard
         title='Pending Invoices'
         value={`${pendingInvoices}`}
         icon={FileText}
@@ -94,7 +94,7 @@ export function KPIStatsRow({
           label: 'vs last month'
         }}
       />
-      <KPIStatCard
+      <StatCard
         title='Tasks Completed'
         value={`${tasksCompletedThisWeek}`}
         icon={CheckCircle}
@@ -107,7 +107,7 @@ export function KPIStatsRow({
           label: 'vs last month'
         }}
       />
-      <KPIStatCard
+      <StatCard
         title='Unpaid Amount'
         value={`$${unpaidAmount.toLocaleString()}`}
         icon={LucideCircleDollarSign}

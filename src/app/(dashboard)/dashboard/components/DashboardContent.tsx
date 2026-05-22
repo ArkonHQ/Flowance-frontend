@@ -4,7 +4,6 @@ import { DashboardData, MonthlyHealthMetric } from "@/lib/api/dashboard"
 import { useState, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { HeaderBar } from "./HeaderBar"
-import { KPIStatCard } from "./KPIStatCard"
 import { KPIStatsRow } from "./KPIStatsRow"
 import { RevenueOverviewCard } from "./RevenueOverviewCard"
 import { TopClientsCard } from "./TopClientsCard"
@@ -12,6 +11,7 @@ import { TimeTrackingCard } from "./TimeTrackingCard"
 import { ProjectHealthCard } from "./ProjectHealthCard"
 import { TasksDueCard } from "./TaskDueCard"
 import { QuickActionsCard } from "./QuickActionsCard"
+import UpcomingTasks from "./UpcomingTasks"
 
 
 interface DashboardContentProps {
@@ -22,10 +22,11 @@ interface DashboardContentProps {
   sourceData: any[]
   weeklyHours: any[]
   pieData: any[]
+  userName?: string
 }
 
 
-export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trends, topClients, sourceData, weeklyHours, pieData }: DashboardContentProps) => {
+export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trends, topClients, sourceData, weeklyHours, pieData, userName }: DashboardContentProps) => {
   
   // Period can be changed by header HeaderBar date picker
   const [selectPeriod, setSelectPeriod] = useState<string>("current")
@@ -48,7 +49,7 @@ export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trend
   
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 space-y-8 pb-20">
-      <HeaderBar onPeriodChange={setSelectPeriod} />
+      <HeaderBar onPeriodChange={setSelectPeriod} userName={userName} />
 
       {loading ? (
         <div className="flex h-[60vh] w-full items-center justify-center">
@@ -77,6 +78,9 @@ export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trend
                 weeklyHours={weeklyHours}          
                 trends={trends.totalRevenue}
               />
+              <UpcomingTasks
+                upcomingTasks={dashboard.upcomingTasks}
+              />
             </div>
             <div className="lg:col-span-4 space-y-6">
               <TopClientsCard clients={topClients} />
@@ -93,8 +97,8 @@ export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trend
               />
               <TasksDueCard tasks={dashboard.upcomingTasks} />
               <QuickActionsCard />
-            </div>
           </div>
+        </div>
         </>
       )}
     </div>

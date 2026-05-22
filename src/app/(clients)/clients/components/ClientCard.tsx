@@ -23,6 +23,8 @@ import {
 } from "lucide-react"
 import DeleteButton from './DeleteButton'
 import { cn } from '@/lib/utils'
+
+
 interface ClientCardProps {
   client: Client
   insight?: ClientInsight

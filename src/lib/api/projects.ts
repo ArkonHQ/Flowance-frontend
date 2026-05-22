@@ -13,6 +13,7 @@ export type Project = {
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;
+    progress: number
 }   
 
 // GET all projects
@@ -23,7 +24,7 @@ export const getAllProjects = async (): Promise<Project[]> => {
     if (!res.ok) throw new Error(`Failed to fetch projects: ${res.status}`);
     const data = await res.json();
     return data.projects;
-}       
+} 
 
 // GET single project
 export const getProject = async (projectId: number): Promise<Project> => {

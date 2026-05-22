@@ -3,9 +3,16 @@
 import { Calendar, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { motion } from 'framer-motion'
+import { useSession } from '@/lib/auth'
 
+interface HeaderBarProps {
+  onPeriodChange: (period: string) => void
+  userName?: string
+}
 
-export function HeaderBar({onPeriodChange}: {onPeriodChange: (period: string) => void}) {
+export function HeaderBar({ onPeriodChange, userName = "Freelancer" }: HeaderBarProps) {
+  const { data: session } = useSession()
+  const displayName = session?.user?.name ?? userName
 
   return (
     <motion.div
@@ -23,7 +30,7 @@ export function HeaderBar({onPeriodChange}: {onPeriodChange: (period: string) =>
           </h1>
         </div>
         <p className="text-sm text-muted-foreground ml-[18px]">
-          Welcome back! Here’s your freelance performance overview.
+          Welcome back, <span className="font-semibold text-foreground">{displayName}</span>! Here’s your freelance performance overview.
         </p>
       </div>
 
