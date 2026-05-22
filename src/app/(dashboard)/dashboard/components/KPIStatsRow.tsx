@@ -1,0 +1,113 @@
+'use client'
+
+import { motion } from 'framer-motion'
+import { DollarSign, Briefcase, Clock, FileText, CheckCircle } from 'lucide-react'
+import { KPIStatCard } from './KPIStatCard'
+import { isPolarCoordinate } from 'recharts/types/util/types'
+
+interface KPIStatsRowProps {
+  totalRevenue: number
+  activeProjects: number
+  totalHours: number
+  pendingInvoices: number
+  tasksCompletedThisWeek: number
+  unpaidAmount: number
+  trends: {
+    totalHours: number
+    activeProjects: number
+    tasksCompletedThisWeek: number
+    totalRevenue: number
+    pendingInvoices: number
+    unpaidAmount: number
+  }
+}
+
+const container = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
+}
+
+export function KPIStatsRow({
+  totalRevenue,
+  activeProjects,
+  totalHours,
+  pendingInvoices,
+  tasksCompletedThisWeek,
+  unpaidAmount,
+  trends,
+}: KPIStatsRowProps) {
+  return (
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="visible"
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"
+    >
+      <KPIStatCard
+        title='Total Revenue'
+        value={`$${totalRevenue.toLocaleString()}`}
+        icon={DollarSign}
+        color='text-emerald-500'
+        gradient="from-emerald-500 to-teal-500"
+        bg="bg-emerald-100/70 dark:bg-emerald-950/40"
+        trend={{
+          value: trends.totalRevenue,
+          isPositive: trends.totalRevenue >= 0,
+          label: 'vs last month'
+        }}
+      />
+      <KPIStatCard
+        title='Active Projects'
+        value={`${activeProjects}`}
+        icon={Briefcase}
+        color='text-blue-500'
+        bg='bg-blue-100/70 dark:bg-blue-950/40'
+        gradient="from-blue-500 to-indigo-500"
+        trend={{
+          value: trends.activeProjects,
+          isPositive: trends.activeProjects >= 0,
+          label: 'vs last month'
+        }}
+      />
+      <KPIStatCard
+        title='Total Hours'
+        value={totalHours.toFixed(1)}
+        icon={Clock}
+        color='text-orange-500'
+        bg='bg-orange-100/70 dark:bg-orange-950/40'
+        gradient="from-orange-500 to-red-500"
+        trend={{
+          value: trends.totalHours,
+          isPositive: trends.totalHours >= 0,
+          label: 'vs last month'
+        }}
+      />
+      <KPIStatCard
+        title='Pending Invoices'
+        value={`${pendingInvoices}`}
+        icon={FileText}
+        color='text-red-500'
+        bg='bg-red-100/70 dark:bg-red-950/40'
+        gradient='from-red-500 to-pink-500'
+        trend={{
+          value: trends.pendingInvoices,
+          isPositive: trends.pendingInvoices >= 0,
+          label: 'vs last month'
+        }}
+      />
+      <KPIStatCard
+        title='Tasks Completed'
+        value={`${tasksCompletedThisWeek}`}
+        icon={CheckCircle}
+        color='text-emerald-500'
+        bg='bg-emerald-100/70 dark:bg-emerald-950/40'
+        gradient='from-emerald-700 to-teal-950'
+        trend={{
+          value: trends.tasksCompletedThisWeek,
+          isPositive: trends.tasksCompletedThisWeek >= 0,
+          label: 'vs last month'
+        }}
+      />
+    </motion.div>
+  )
+}

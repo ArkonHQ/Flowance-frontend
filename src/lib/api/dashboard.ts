@@ -4,7 +4,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 export type MonthlyHealthMetric = {
     month: string
     active_count: number
-    active_ids: number
+    active_ids: number[]
     new_clients: number
     churn_rate: number | null
     active_count_change: number
@@ -15,9 +15,10 @@ export interface DashboardData {
     activeProject: number
     totalHours: number
     pendingInvoices: number
+    unpaidAmount: number
     projectProgress: Array<{ id: number, name: string, progress: number }>
     recentActivity: Array<{ type: string, description: string, createdAt: string}>
-    upcomingTasks: Array<{ id: number, title: string, deadline: string, projectName: string }>
+    upcomingTasks: Array<{ id: number, title: string, deadline: string, projectName: string, priority: 'High' | 'Medium' | 'Low' }>
     atRiskProjects: Array<{ id: number, name: string, progress: number }>
     deadlines: Array<{ type: string, title: string, deadline: string }>
     mostActiveMember: { name: string, taskCount: number } | null
@@ -64,14 +65,13 @@ export const getMonthlyHealthMetric = async (cookieHeader?: string): Promise<Mon
     });
 
     if (!res.ok) {
-
         if (res.status === 401) {
             throw new Error("Unauthorized")
         }
-
-        throw new Error(`Failed to fetch metrics: ${res.status}`);
+        // Return empty array on any other error rather than crashing the page
+        return []
     }
 
     const data = await res.json()
-    return data.metrics
+    return (data.metrics ?? []) as MonthlyHealthMetric[]
 }
