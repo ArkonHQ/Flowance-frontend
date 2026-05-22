@@ -31,22 +31,22 @@ export const KPIStatCard = ({ title, value, icon: Icon, bg, gradient, trend, col
         {/* Card Header */}
         <CardHeader className="flex flex-row items-center justify-between pb-2 pt-5">
           <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-          <div className={`rounded-full p-2 ${bg}`}>
-            <Icon className={`w-4 h-4 ${color}`} />
+          <div className={`rounded-2xl p-2.5 ${bg} shadow-sm border border-white/5`}>
+            <Icon className={`w-5 h-5 ${color}`} strokeWidth={2.5} />
           </div>
         </CardHeader>
 
         {/* Card Content */}
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2"> 
           <div className="text-2xl font-bold tracking-tight">{value}</div>
           {trend && (
             <div className="flex items-center gap-1.5">
               {trend.isPositive ? (
-                <TrendingUp className="h-4 w-4 text-green-600" />
+                <TrendingUp className="h-4 w-4 text-green-600" strokeWidth={2.5} />
               ) : trend.value === 0 ? (
-                <Minus className="h-4 w-4 text-gray-400" />
+                <Minus className="h-4 w-4 text-gray-400" strokeWidth={2.5} />
               ) : (
-                <TrendingDown className="h-4 w-4 text-red-600" />
+                <TrendingDown className="h-4 w-4 text-red-600" strokeWidth={2.5} />
               )}
               <span className={`text-sm font-medium ${trend.isPositive ? 'text-green-600' : trend.value === 0 ? 'text-gray-400' : 'text-red-600'}`}>
                 {trend.value > 0 ? '+' : '-'}{trend.value}% {trend.label}

@@ -30,13 +30,13 @@ export function RevenueOverviewCard({ totalRevenue, sourceData, weeklyHours, tre
           <div className="flex items-center gap-2 mt-1">
             <span className="text-2xl font-bold">${totalRevenue.toLocaleString()}</span>
             <span className={`text-xs font-semibold ${trendColorClass} px-1.5 py-0.5 rounded flex items-center gap-0.5`}>
-              <TrendIcon className="h-3 w-3" /> {Math.abs(trends ?? 0).toFixed(2)}%
+              <TrendIcon className="h-3.5 w-3.5" strokeWidth={2.5} /> {Math.abs(trends ?? 0).toFixed(2)}%
             </span>
             <span className="text-[10px] text-muted-foreground">vs last month</span>
           </div>
         </div>
         <Button variant="outline" size="sm" className="h-7 text-[10px] px-2 rounded-lg">
-          This Week <ChevronDown className="h-2.5 w-2.5 ml-1" />
+          Last 30 Days <ChevronDown className="h-2.5 w-2.5 ml-1" />
         </Button>
       </CardHeader>
       <CardContent>

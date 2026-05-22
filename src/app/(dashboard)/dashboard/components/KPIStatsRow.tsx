@@ -1,9 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { DollarSign, Briefcase, Clock, FileText, CheckCircle } from 'lucide-react'
+import { DollarSign, Briefcase, Clock, FileText, CheckCircle, LucideCircleDollarSign } from 'lucide-react'
 import { KPIStatCard } from './KPIStatCard'
-import { isPolarCoordinate } from 'recharts/types/util/types'
 
 interface KPIStatsRowProps {
   totalRevenue: number
@@ -105,6 +104,19 @@ export function KPIStatsRow({
         trend={{
           value: trends.tasksCompletedThisWeek,
           isPositive: trends.tasksCompletedThisWeek >= 0,
+          label: 'vs last month'
+        }}
+      />
+      <KPIStatCard
+        title='Unpaid Amount'
+        value={`$${unpaidAmount.toLocaleString()}`}
+        icon={LucideCircleDollarSign}
+        color='text-yellow-500'
+        bg='bg-yellow-100/70 dark:bg-yellow-950/40'
+        gradient='from-yellow-500 to-yellow-700'
+        trend={{
+          value: trends.unpaidAmount,
+          isPositive: trends.unpaidAmount >= 0,
           label: 'vs last month'
         }}
       />

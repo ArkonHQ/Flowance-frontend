@@ -23,7 +23,7 @@ export function HeaderBar({onPeriodChange}: {onPeriodChange: (period: string) =>
           </h1>
         </div>
         <p className="text-sm text-muted-foreground ml-[18px]">
-          Welcome back,! Here’s your freelance performance overview.
+          Welcome back! Here’s your freelance performance overview.
         </p>
       </div>
 
@@ -32,11 +32,17 @@ export function HeaderBar({onPeriodChange}: {onPeriodChange: (period: string) =>
         <Button
           variant="outline"
           size="sm"
-          className="h-10 px-4 text-sm font-medium bg-card/40 backdrop-blur-sm border-border/40 hover:bg-card/60 hover:border-border/60 transition-all duration-200 rounded-xl flex items-center gap-2"
+          className="h-11 px-5 text-sm font-medium bg-card/40 backdrop-blur-sm border-border/40 hover:bg-card/60 hover:border-border/60 transition-all duration-200 rounded-xl flex items-center gap-2.5 shadow-sm"
         >
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span>May 12 – May 19, 2024</span>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          <Calendar className="h-5 w-5 text-primary" strokeWidth={2.5} />
+          <span>
+            {new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {
+              new Date().toLocaleDateString('en-US', { 
+                month: 'short', day: 'numeric', year: 'numeric' 
+              })
+            }
+          </span>
+          <ChevronDown className="h-4 w-4 text-muted-foreground/70" />
         </Button>
       </div>
     </motion.div>

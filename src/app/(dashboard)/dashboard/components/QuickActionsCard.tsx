@@ -54,12 +54,12 @@ export function QuickActionsCard() {
           <Button
             key={action.label}
             variant="outline"
-            className={`h-11 justify-start gap-2.5 text-xs font-bold border-border/40 rounded-xl group transition-all duration-200 ${action.hoverBg} ${action.hoverBorder}`}
+            className={`h-14 justify-start gap-3 text-xs font-bold border-border/40 rounded-xl group transition-all duration-200 ${action.hoverBg} ${action.hoverBorder} shadow-sm`}
           >
             <div
-              className={`h-7 w-7 rounded-lg ${action.bg} ${action.color} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}
+              className={`h-9 w-9 rounded-xl ${action.bg} ${action.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-all duration-300 shadow-sm`}
             >
-              <action.icon className="h-4 w-4" />
+              <action.icon className="h-5 w-5" strokeWidth={2.5} />
             </div>
             {action.label}
           </Button>

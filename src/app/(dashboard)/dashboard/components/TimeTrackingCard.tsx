@@ -15,8 +15,8 @@ interface TimeTrackingCardProps {
 
 export function TimeTrackingCard({
   totalHours,
-  trendPercent = 12.5,
-  trendLabel = 'vs last 7 days',
+  trendPercent = 0,
+  trendLabel = 'vs last month',
   weeklyHours,
 }: TimeTrackingCardProps) {
   const [mounted, setMounted] = useState(false)
@@ -36,18 +36,18 @@ export function TimeTrackingCard({
             </span>
             {trendPercent > 0 ? (
             <span className="text-xs font-semibold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              <TrendingUp className="h-3 w-3" />
+              <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.5} />
               +{trendPercent}%
             </span>
 
             ) :  trendPercent === 0 ? (
             <span className="text-xs font-semibold text-muted-foreground bg-muted/10 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              <Minus className="h-3 w-3" />
+              <Minus className="h-3.5 w-3.5" strokeWidth={2.5} />
               0%
             </span>
             ) : (
             <span className="text-xs font-semibold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              <TrendingDown className="h-3 w-3" />
+              <TrendingDown className="h-3.5 w-3.5" strokeWidth={2.5} />
               -{trendPercent}%
             </span>
             
