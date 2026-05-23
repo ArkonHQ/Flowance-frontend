@@ -1,6 +1,10 @@
+import { cookies } from 'next/headers'
 import { getAllProjects, Project } from "@/lib/api/projects"
 import { ProjectPageContent } from "../components/ProjectPageContent"
-import { cookies } from "next/headers"
+
+export const metadata = {
+  title: 'Projects | Command Center',
+}
 
 const ProjectsPage = async () => {
   const cookieStore = await cookies()

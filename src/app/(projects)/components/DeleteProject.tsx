@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { deleteClient } from '@/lib/api/clients';
+import { deleteProject } from '@/lib/api/projects';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -36,13 +36,13 @@ export default function DeleteButton({
   const handleDelete = async () => {
     setLoading(true);
     try {
-      await deleteClient(projectId);
+      await deleteProject(projectId);
       toast.success(`${projectName} deleted`, {
-        description: 'The client and all associated data have been removed.',
+        description: 'The project and all associated data have been removed.',
         icon: <Trash2 className="h-4 w-4 text-white" />,
       });
       if (redirectAfterDelete) {
-        router.push('/clients');
+        router.push('/projects');
       } else {
         router.refresh();
       }
