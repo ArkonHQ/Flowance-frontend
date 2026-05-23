@@ -1,4 +1,3 @@
-// components/projects/ProjectStatsBar.tsx
 import { StatCard } from '@/components/ui/StatCard'
 import { Briefcase, CheckCircle, AlertTriangle, Clock } from 'lucide-react'
 

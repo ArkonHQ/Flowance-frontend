@@ -2,7 +2,7 @@
 
 import StatCard from "@/app/(dashboard)/dashboard/components/StatCard"
 import { motion } from "framer-motion"
-import { Briefcase, PlugIcon, Plus, PlusIcon, Search, Pause, XCircle } from "lucide-react"
+import { Briefcase, PlugIcon, PlusIcon, Search, Pause, XCircle, CheckIcon } from "lucide-react"
 import { useState } from "react"
 import { ProjectRow } from "./ProjectRow"
 import { Button } from "@/components/ui/button"
@@ -33,7 +33,7 @@ export const ProjectPageContent = ({ initialProjects, stats }: Props) => {
         <div>
           <h2 className="text-2xl font-bold">Projects</h2>
         </div>
-        <Link href={'/projects/new'}>
+        <Link href={'projects/new'}>
          <Button className="gap-2">
           <PlusIcon className="h-4 w-4" />
           New Project
@@ -42,7 +42,7 @@ export const ProjectPageContent = ({ initialProjects, stats }: Props) => {
       </div>
 
       {/* Stats Bar  */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard
           title="Total Projects"
           value={stats.total.toString()} 
@@ -55,17 +55,17 @@ export const ProjectPageContent = ({ initialProjects, stats }: Props) => {
           title="Active"
           value={stats.active.toString()} 
           icon={PlugIcon}
-          color="text-emerald-500"
-          bg="bg-emerald-100/70 dark:bg-emerald-600/40"
-          gradient="from-emerald-500 to-teal-500"
+          color="text-blue-500"
+          bg="bg-blue-100/70 dark:bg-blue-600/40"
+          gradient="from-blue-500 to-cyan-500"
          />
         <StatCard 
           title="Completed"
           value={stats.completed.toString()} 
-          icon={PlugIcon}
-          color="text-blue-500"
-          bg="bg-blue-100/70 dark:bg-blue-600/40"
-          gradient="from-blue-500 to-cyan-500"
+          icon={CheckIcon}
+          color="text-emerald-500"
+          bg="bg-emerald-100/70 dark:bg-emerald-600/40"
+          gradient="from-emerald-500 to-teal-500"
          />
         <StatCard 
           title="On Hold"

@@ -1,5 +1,6 @@
 import { Client } from "./clients";
 
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
 export type Project = {
@@ -17,19 +18,31 @@ export type Project = {
 }   
 
 // GET all projects
-export const getAllProjects = async (): Promise<Project[]> => {
+export const getAllProjects = async (cookieHeader?: string): Promise<Project[]> => {
+
+    const headers: Record<string, string> ={'Content-Type': 'application/json'}
+    if (cookieHeader) headers['Cookie'] = cookieHeader;
+    
+
     const res = await fetch(`${API_BASE}/projects`, {
-        credentials: "include",
-    });
+        headers,
+        credentials: 'include'
+    })
+
     if (!res.ok) throw new Error(`Failed to fetch projects: ${res.status}`);
     const data = await res.json();
     return data.projects;
 } 
 
 // GET single project
-export const getProject = async (projectId: number): Promise<Project> => {
-    const res = await fetch(`${API_BASE}/projects/${projectId}`, {
-        credentials: "include",
+export const getProject = async (projectId: number, cookieHeader?: string): Promise<Project> => {
+    const headers: Record<string, string> = {'Content-Type': 'application/json'}
+    if (cookieHeader) headers['Cookie'] = cookieHeader
+    
+    
+    const res = await fetch(`${API_BASE}/projects/${projectId}`,{
+        headers,
+        credentials: 'include'
     });
     if (!res.ok) throw new Error(`Failed to fetch project: ${res.status}`);
     const data = await res.json();
@@ -37,12 +50,16 @@ export const getProject = async (projectId: number): Promise<Project> => {
 }
 
 // POST create project
-export const createProject = async (projectData: { title: string, status: Project['status'], clientId: number }): Promise<Project> => {
+export const createProject = async (projectData: { title: string, status: Project['status'], clientId: number }, cookieHeader?: string): Promise<Project> => {
+    const headers: Record<string, string> = {'Content-Type': 'application/json'}
+    if (cookieHeader) headers['Cookie'] = cookieHeader
+    
+    
     const res = await fetch(`${API_BASE}/projects`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(projectData),
-        credentials: "include",
     });
     if (!res.ok) throw new Error(`Failed to create project: ${res.status}`);
     const data = await res.json();
@@ -50,12 +67,16 @@ export const createProject = async (projectData: { title: string, status: Projec
 }
 
 // PUT update project
-export const updateProject = async (projectId: number, updates: Partial<Omit<Project, 'id' | 'ownerId'>>): Promise<Project> => {
+export const updateProject = async (projectId: number, updates: Partial<Omit<Project, 'id' | 'ownerId'>>, cookieHeader?: string): Promise<Project> => {
+    const headers: Record<string, string> = {'Content-Type': 'application/json'}
+    if (cookieHeader) headers['Cookie'] = cookieHeader
+    
+    
     const res = await fetch(`${API_BASE}/projects/${projectId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(updates),
-        credentials: "include",
     });
     if (!res.ok) throw new Error(`Failed to update project: ${res.status}`);
     const data = await res.json();
@@ -63,10 +84,15 @@ export const updateProject = async (projectId: number, updates: Partial<Omit<Pro
 }
 
 // DELETE project
-export const deleteProject = async (projectId: number): Promise<{ success: boolean }> => {
+export const deleteProject = async (projectId: number, cookieHeader?: string): Promise<{ success: boolean }> => {
+    const headers: Record<string, string> = {'Content-Type': 'application/json'}
+    if (cookieHeader) headers['Cookie'] = cookieHeader
+    
+    
     const res = await fetch(`${API_BASE}/projects/${projectId}`, {
         method: 'DELETE',
-        credentials: "include",
+        headers,
+        credentials: 'include',
     });
     if (!res.ok) throw new Error(`Failed to delete project: ${res.status}`);
     return { success: true };

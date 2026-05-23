@@ -1,9 +1,11 @@
 import { getAllProjects, Project } from "@/lib/api/projects"
 import { ProjectPageContent } from "../components/ProjectPageContent"
+import { cookies } from "next/headers"
 
 const ProjectsPage = async () => {
-  const project: Project[] = await getAllProjects()
-  
+  const cookieStore = await cookies()
+  const cookieHeader = cookieStore.toString()
+  const project: Project[] = await getAllProjects(cookieHeader)
 
   // Compute stats
   const total = project.length
