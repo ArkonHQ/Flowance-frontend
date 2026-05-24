@@ -19,6 +19,7 @@ import DeleteButton from "./DeleteProject"
 
 interface ProjectRowProps {
   project: Project
+  clientName?: string
   onDelete: (id: number) => void 
 }
 
@@ -33,12 +34,12 @@ const getStatusColor = (status: string) => {
   return colors[status] || colors.planning;
 };
 
-const formatDate = (date: Date | String) => {
+const formatDate = (date: Date | string) => {
   if (!date) return 'N/A'
   return new Date(date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'})
 }
 
-export const ProjectRow = ({ project, onDelete }: ProjectRowProps) => {
+export const ProjectRow = ({ project, clientName }: ProjectRowProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const statusDisplay = project.status.replace('_', ' ')
 
@@ -58,7 +59,7 @@ export const ProjectRow = ({ project, onDelete }: ProjectRowProps) => {
       {/* Description - col-span-3 */}
       <div className="col-span-3 text-sm text-muted-foreground truncate">
         <span className="text-xs font-medium text-gray-400 mr-1">Client:</span>
-        {project.client?.name ?? 'No client'}
+        {project.client?.name ?? clientName ?? 'No client'}
       </div>
 
       {/* Progress - col-span-2 */}

@@ -11,16 +11,20 @@ import type { Project } from '@/lib/api/projects'
 
 interface Props {
   initialProjects: Project[]
+  clientNames: Record<number, string>
   stats: { total: number; active: number; completed: number ; onHold: number; cancelled: number; }
 }
 
-export const ProjectPageContent = ({ initialProjects, stats }: Props) => {
+export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Props) => {
   const [searchTerm, setSearchTerm] = useState('')
 
-  const filtered = initialProjects.filter(p => 
-    p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.client?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filtered = initialProjects.filter(p => {
+    const clientName = p.client?.name ?? clientNames[p.clientId] ?? ''
+    return (
+      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      clientName.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  })
 
   return (
     <motion.div
@@ -100,7 +104,7 @@ export const ProjectPageContent = ({ initialProjects, stats }: Props) => {
 
         <div className="space-y-2">
           {filtered.map((project) => (
-            <ProjectRow key={project.id} project={project} onDelete={() => {}}/>
+            <ProjectRow key={project.id} project={project} clientName={clientNames[project.clientId]} onDelete={() => {}}/>
           ))}
         </div>
       </div>

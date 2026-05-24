@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Briefcase, FileText, Clock, ListTodo } from 'lucide-react'
+import Link from 'next/link'
 
 export function QuickActionsCard() {
   const actions = [
@@ -13,6 +14,7 @@ export function QuickActionsCard() {
       bg: 'bg-indigo-500/10',
       hoverBg: 'hover:bg-indigo-500/5',
       hoverBorder: 'hover:border-indigo-500/40',
+      href: '/projects/new'
     },
     {
       label: 'Create Invoice',
@@ -21,6 +23,7 @@ export function QuickActionsCard() {
       bg: 'bg-emerald-500/10',
       hoverBg: 'hover:bg-emerald-500/5',
       hoverBorder: 'hover:border-emerald-500/40',
+      href: 'invoices/new'
     },
     {
       label: 'Log Time',
@@ -37,6 +40,7 @@ export function QuickActionsCard() {
       bg: 'bg-violet-500/10',
       hoverBg: 'hover:bg-violet-500/5',
       hoverBorder: 'hover:border-violet-500/40',
+      href: 'tasks/new'
     },
   ]
 
@@ -51,6 +55,7 @@ export function QuickActionsCard() {
 
       <CardContent className="grid grid-cols-2 gap-2.5">
         {actions.map((action) => (
+          <Link href={`${action.href}`} >
           <Button
             key={action.label}
             variant="outline"
@@ -63,6 +68,7 @@ export function QuickActionsCard() {
             </div>
             {action.label}
           </Button>
+          </Link>
         ))}
       </CardContent>
     </Card>
