@@ -19,7 +19,7 @@ import DeleteButton from "./DeleteProject"
 
 interface ProjectRowProps {
   project: Project
-  onDelete: (id: number) => void
+  onDelete: (id: number) => void 
 }
 
 const getStatusColor = (status: string) => {

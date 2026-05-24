@@ -17,6 +17,8 @@ export type Project = {
     progress: number
 }   
 
+// keep API helpers minimal and consistent
+
 // GET all projects
 export const getAllProjects = async (cookieHeader?: string): Promise<Project[]> => {
 
@@ -38,8 +40,7 @@ export const getAllProjects = async (cookieHeader?: string): Promise<Project[]> 
 export const getProject = async (projectId: number, cookieHeader?: string): Promise<Project> => {
     const headers: Record<string, string> = {'Content-Type': 'application/json'}
     if (cookieHeader) headers['Cookie'] = cookieHeader
-    
-    
+
     const res = await fetch(`${API_BASE}/projects/${projectId}`,{
         headers,
         credentials: 'include'

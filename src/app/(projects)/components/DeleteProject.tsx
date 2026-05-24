@@ -60,7 +60,7 @@ export default function DeleteButton({
         {children || (
           <Button variant="destructive" className="gap-2 w-full">
             <Trash2 className="h-4 w-4" />
-            Delete Client
+            Delete Project
           </Button>
         )}
       </DialogTrigger>
@@ -78,8 +78,7 @@ export default function DeleteButton({
             </DialogTitle>
             <DialogDescription className="text-center text-sm leading-relaxed">
               This action <strong className="text-foreground">cannot be undone</strong>. It will
-              permanently remove this client and all associated data — projects, invoices, and
-              tasks.
+              permanently remove this project and all associated data.
             </DialogDescription>
           </DialogHeader>
 
@@ -106,7 +105,7 @@ export default function DeleteButton({
               ) : (
                 <>
                   <Trash2 className="h-4 w-4" />
-                  Delete Client
+                  Delete Project
                 </>
               )}
               {/* Subtle pulse ring when idle */}
