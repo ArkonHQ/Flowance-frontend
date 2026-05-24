@@ -1,8 +1,11 @@
+import { Project } from "./projects"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
 export type Task =  {
     id: number,
+    progress: number
+    project: Project | null,
     title: string,
     status: 'todo' | 'in_progress' | 'done' | 'delayed' | 'cancelled',
     priority: 'low' | 'medium' | 'high',
@@ -15,9 +18,15 @@ export type Task =  {
     deletedAt: Date | null
 }
 
-export const getAllTasks = async (): Promise<Task[]> => {
+export const getAllTasks = async ( cookieHeader?: string ): Promise<Task[]> => {
+
+    const headers: Record<string, string> ={'Content-Type': 'application/json'}
+    if (cookieHeader) headers['Cookie'] = cookieHeader;
+    
+
     const res = await fetch(`${API_BASE}/tasks`, {
         method: 'GET',
+        headers,
         credentials: 'include'
     })
     if (!res.ok) throw new Error (`Failed to fetch tasks: ${res.status}`)
