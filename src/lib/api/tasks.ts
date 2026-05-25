@@ -5,12 +5,12 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 export type Task =  {
     id: number,
     progress: number
-    project: Project | null,
+    project: Project,
     title: string,
     description: string | null,
     status: 'todo' | 'in_progress' | 'done' | 'delayed' | 'cancelled',
     priority: 'low' | 'medium' | 'high',
-    deadline: Date,
+    deadline: Date | string,
     completedAt: Date | null,
     projectId: number,
     ownerId: string,
@@ -53,7 +53,7 @@ export const getTask = async (taskId: number, cookieHeader?: string): Promise<Ta
     return data.task
 }
 
-export const createTask = async (taskData: {title: string, status: Task['status'], priority: Task['priority'], deadline: Date, projectId: number }, cookieHeader?: string): Promise<Task> => {
+export const createTask = async (taskData: {title: string, status: Task['status'], priority: Task['priority'], deadline: Date | string, projectId: number }, cookieHeader?: string): Promise<Task> => {
     
     const headers: Record<string, string> = {'Content-Type': 'application/json'}
     if (cookieHeader) headers['Cookie'] = cookieHeader

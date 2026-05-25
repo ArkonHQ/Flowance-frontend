@@ -22,6 +22,10 @@ export const handleCreateProject = async (prevState: CreateProjectState | null, 
   const status = typeof statusRaw === 'string' && validStatusValues.includes(statusRaw as any)
     ? statusRaw as typeof validStatusValues[number]
     : null
+  const deadlineRaw = formData.get('deadline') 
+  const deadline = deadlineRaw ? new Date(deadlineRaw as string) : new Date()
+  const budgetRaw = formData.get('budget')
+  const budget = budgetRaw ? Number(budgetRaw) : 0
 
   // Validation
   if (!title || title.trim().length < 3) return { error: 'Title must be at least 3 characters' }
@@ -30,7 +34,7 @@ export const handleCreateProject = async (prevState: CreateProjectState | null, 
 
   try{
 
-    await createProject({title, clientId, status}, cookieHeader)
+    await createProject({title, clientId, status, deadline, budget}, cookieHeader)
 
   }catch (err: any) {
     return { error: err.message || 'Something went wrong'  }

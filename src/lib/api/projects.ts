@@ -8,6 +8,8 @@ export type Project = {
     client: Client;
     title: string;
     description: string;
+    deadline: Date | string;
+    budget: number;
     status: 'planning' | 'active' | 'completed' | 'on_hold' | 'cancelled'
     clientId: number;
     ownerId: string;
@@ -51,7 +53,7 @@ export const getProject = async (projectId: number, cookieHeader?: string): Prom
 }
 
 // POST create project
-export const createProject = async (projectData: { title: string, status: Project['status'], clientId: number }, cookieHeader?: string): Promise<Project> => {
+export const createProject = async (projectData: { title: string, status: Project['status'], clientId: number, deadline: Date | string, budget: number }, cookieHeader?: string): Promise<Project> => {
     const headers: Record<string, string> = {'Content-Type': 'application/json'}
     if (cookieHeader) headers['Cookie'] = cookieHeader
     
