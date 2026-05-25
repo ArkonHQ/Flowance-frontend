@@ -7,6 +7,7 @@ export type Task =  {
     progress: number
     project: Project | null,
     title: string,
+    description: string | null,
     status: 'todo' | 'in_progress' | 'done' | 'delayed' | 'cancelled',
     priority: 'low' | 'medium' | 'high',
     deadline: Date,
@@ -35,9 +36,14 @@ export const getAllTasks = async ( cookieHeader?: string ): Promise<Task[]> => {
     return data.tasks
 }
 
-export const getTask = async (taskId: number): Promise<Task> => {
+export const getTask = async (taskId: number, cookieHeader?: string): Promise<Task> => {
+    const headers: Record<string, string> = {'Content-Type': 'application/json'}
+    if (cookieHeader) headers['Cookie'] = cookieHeader
+
+
     const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
         credentials: 'include',
+        headers,
         method: 'GET'
     })
 
@@ -47,10 +53,14 @@ export const getTask = async (taskId: number): Promise<Task> => {
     return data.task
 }
 
-export const createTask = async (taskData: {title: string, status: Task['status'], priority: Task['priority'], deadline: Date, projectId: number } ): Promise<Task> => {
+export const createTask = async (taskData: {title: string, status: Task['status'], priority: Task['priority'], deadline: Date, projectId: number }, cookieHeader?: string): Promise<Task> => {
+    
+    const headers: Record<string, string> = {'Content-Type': 'application/json'}
+    if (cookieHeader) headers['Cookie'] = cookieHeader
+    
     const res = await fetch(`${API_BASE}/tasks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(taskData),
         credentials: "include",
     });
@@ -59,10 +69,13 @@ export const createTask = async (taskData: {title: string, status: Task['status'
     return data.task;
 }
 
-export const updateTask = async (taskId: number, updates: Partial<Omit<Task, 'id' | 'ownerId'>>): Promise<Task> => {
+export const updateTask = async (taskId: number, updates: Partial<Omit<Task, 'id' | 'ownerId'>>, cookieHeader?: string): Promise<Task> => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (cookieHeader) headers['Cookie'] = cookieHeader
+
     const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(updates),
         credentials: "include",
     });
@@ -71,9 +84,13 @@ export const updateTask = async (taskId: number, updates: Partial<Omit<Task, 'id
     return data.task;
 }
 
-export const deleteTask = async (taskId: number): Promise<{ success: boolean }> => {
+export const deleteTask = async (taskId: number, cookieHeader?: string): Promise<{ success: boolean }> => {
+    const headers: Record<string, string> = {'Content-Type': 'application/json'}
+    if (cookieHeader) headers['Cookie'] = cookieHeader
+
     const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
         method: 'DELETE',
+        headers,
         credentials: "include",
     });
     if (!res.ok) throw new Error(`Failed to delete task: ${res.status}`);

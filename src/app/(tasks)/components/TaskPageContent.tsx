@@ -1,10 +1,10 @@
 'use client'
 import { motion } from "framer-motion";
 import { Task } from "@/lib/api/tasks"
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, XCircle, Clock, AlertCircle, Search } from "lucide-react";
+import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, XCircle, Clock, AlertCircle, Search, FilterX } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { Input } from "@/components/ui/input";
 import { TaskCardRow } from "./TaskCardRow";
@@ -16,22 +16,32 @@ interface Props {
 }
 
 export const TaskPageContent = ({ initialTask, stats }: Props) => {
-  const [searchTerm, setSearchTerm] = useState('')
+  const [tasks, setTasks] = useState<Task[]>(initialTask);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const filtered = initialTask.filter(t => {
-    const projectName = t.project?.title.toLowerCase() ?? ''
-    return (
-      t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      projectName.includes(searchTerm.toLowerCase())
-    )
-  })
+  const filtered = useMemo(() => {
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return tasks;
+
+    return tasks.filter(t => {
+      const projectName = t.project?.title.toLowerCase() ?? '';
+      return (
+        t.title.toLowerCase().includes(term) ||
+        projectName.includes(term)
+      );
+    });
+  }, [tasks, searchTerm]);
+
+  const handleDelete = (id: number) => {
+    setTasks(prev => prev.filter(t => t.id !== id));
+  };
 
   return (
     <motion.div
       initial="hidden"
       animate="visible"
       variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } } }
-      className="container mx-auto py-8 px-4 md:px-6 space-y-6"
+      className="container mx-auto py-8 px-4 md:px-6 space-y-8"
       >
 
       {/* Header */}
@@ -39,7 +49,7 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
         <div>
           <h2 className="text-2xl font-bold">Tasks</h2>
         </div>
-        <Link href={'tasks/new'}>
+        <Link href='/tasks/new'>
           <Button className="gap-2">
             <PlusIcon className="h-4 w-4" />
             New Task
@@ -109,26 +119,52 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
 
       {/* Search and List Section */}
       <div className="space-y-4">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            type="text"
-            placeholder="Search for tasks..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full flex h-10 rounded-md border border-input bg-background px-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        {tasks.length > 0 && (
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              type="text"
+              placeholder="Search for tasks..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 transition-all focus:ring-2 focus:ring-primary/20"
             />
-        </div>
-        <div className="space-y-2">
-          {filtered.map((task) => (
-            <TaskCardRow key={task.id} task={task} onDelete={() => history.back()} />
-          ))}
-        </div>
+          </div>
+        )}
+
+        {tasks.length === 0 ? (
+          <div className="py-20 text-center border-2 border-dashed border-border/20 rounded-2xl bg-card/20 backdrop-blur-sm">
+            <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Briefcase className="h-6 w-6 text-muted-foreground/50" />
+            </div>
+            <h3 className="text-lg font-medium">No tasks yet</h3>
+            <p className="text-muted-foreground mt-1">No tasks have been created yet.</p>
+            <Link href='/tasks/new' className="inline-block mt-4">
+              <Button variant='outline' className="dark:bg-gray-950 bg-white/20 backdrop-blur-md border hover:bg-indigo-400 transition-all">
+                <PlusIcon className="h-4 w-4 mr-2" />
+                Create Task
+              </Button>
+            </Link>
+          </div>
+        ) : filtered.length === 0 ? (
+            <div className="py-20 text-center border-2 border-dashed border-border/20 rounded-2xl bg-card/20 backdrop-blur-sm">
+              <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <FilterX className="h-6 w-6 text-muted-foreground/50" />
+              </div>
+              <h3 className="text-lg font-medium">No tasks match your search</h3>
+              <p className="text-muted-foreground mt-1">Try adjusting your search for &quot;{searchTerm}&quot;</p>
+              <Button variant="link" onClick={() => setSearchTerm('')} className="mt-2 text-primary">
+                Clear search
+              </Button>
+            </div>
+        ) : (
+          <div className="grid gap-3">
+            {filtered.map((task) => (
+              <TaskCardRow key={task.id} task={task} onDelete={handleDelete} />
+            ))}
+          </div>
+        )}
       </div>
-      
-      
-      </motion.div>
+    </motion.div>
   )
-
-
 }

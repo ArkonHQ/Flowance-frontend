@@ -1,0 +1,102 @@
+'use client'
+
+import { useActionState } from "react"
+import { handleCreateTask } from "../tasks/new/action"
+import { Project } from "@/lib/api/projects"
+import { CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert } from "@/components/ui/alert"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { SelectItem, SelectTrigger, SelectValue, Select, SelectContent } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+
+
+
+interface TaskFormProps {
+  projects: Project[]
+}
+
+export const TaskForm = ({ projects }: TaskFormProps) => {
+
+  const [state, formAction, isPending] = useActionState(handleCreateTask, null)
+
+
+  return (
+    <div className="relative overflow-hidden border border-border/30 bg-card/50 backdrop-blur-md shadow-sm rounded-xl">
+      <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-indigo-500 to-blue-500" />
+      <div className="p-6">
+        <CardHeader className="px-0 pt-0 pb-6">
+          <CardTitle className="text-xl font-semibold">Task Details</CardTitle>
+        </CardHeader>
+        <form action={formAction} className="space-y-6">
+          {state?.error && (
+            <Alert
+              variant={'destructive'}>
+                {state.error}
+              </Alert>
+          )}
+
+          {/* Title */}
+          <div className="space-y-2">
+            <Label htmlFor="title">Task Title</Label>
+            <Input 
+              id="title"
+              name="title"
+              placeholder="e.g. "
+              required
+              className="bg-card/70"
+                />
+          </div>
+
+          {/* Project */}
+          <div className="space-y-2">
+            <Label htmlFor="projectId">Project</Label>
+            <Select name="projectId" required>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={String(p.id)}>
+                    {p.title}
+                  </SelectItem>
+                ))}
+                </SelectContent>
+              </Select>
+          </div>
+          
+          {/* Status */}
+
+          <div className="space-y-2 ">
+            <Label htmlFor="status">
+              <Select name="status">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" /> 
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">To Do</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="delayed">Delayed</SelectItem>
+                </SelectContent>
+              </Select>
+            </Label>
+          </div>
+          <div className="flex items-center gap-4 pt-2">
+            <Button 
+              type="submit"
+              disabled={isPending}
+              className="gap-2"
+              >
+                {isPending ? 'Creating...' : 'Create Task'}
+                </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+
+
+
+}

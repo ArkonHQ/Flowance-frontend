@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { deleteProject } from '@/lib/api/projects';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -15,11 +14,13 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Loader2, Trash2, AlertTriangle } from 'lucide-react';
+import { deleteTask } from '@/lib/api/tasks';
 
 interface Props {
   taskId: number
   taskName: string;
   redirectAfterDelete?: boolean;
+  onDeleted?: (id: number) => void;
   children?: React.ReactNode;
 }
 
@@ -27,6 +28,7 @@ export default function DeleteButton({
   taskId,
   taskName,
   redirectAfterDelete = true,
+  onDeleted,
   children,
 }: Props) {
   const router = useRouter();
@@ -36,13 +38,18 @@ export default function DeleteButton({
   const handleDelete = async () => {
     setLoading(true);
     try {
-      await deleteProject(taskId);
+      await deleteTask(taskId);
       toast.success(`${taskName} deleted`, {
-        description: 'The project and all associated data have been removed.',
+        description: 'The task and its history have been removed.',
         icon: <Trash2 className="h-4 w-4 text-white" />,
       });
+
+      if (onDeleted) {
+        onDeleted(taskId);
+      }
+
       if (redirectAfterDelete) {
-        router.push('/projects');
+        router.push('/tasks');
       } else {
         router.refresh();
       }
@@ -60,7 +67,7 @@ export default function DeleteButton({
         {children || (
           <Button variant="destructive" className="gap-2 w-full">
             <Trash2 className="h-4 w-4" />
-            Delete Project
+            Delete Task
           </Button>
         )}
       </DialogTrigger>
@@ -78,7 +85,7 @@ export default function DeleteButton({
             </DialogTitle>
             <DialogDescription className="text-center text-sm leading-relaxed">
               This action <strong className="text-foreground">cannot be undone</strong>. It will
-              permanently remove this project and all associated data.
+              permanently remove this task.
             </DialogDescription>
           </DialogHeader>
 
@@ -105,7 +112,7 @@ export default function DeleteButton({
               ) : (
                 <>
                   <Trash2 className="h-4 w-4" />
-                  Delete Project
+                  Delete Task
                 </>
               )}
               {/* Subtle pulse ring when idle */}
