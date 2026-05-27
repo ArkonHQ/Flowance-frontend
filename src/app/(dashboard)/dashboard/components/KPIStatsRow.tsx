@@ -90,7 +90,7 @@ export function KPIStatsRow({
         gradient='from-red-500 to-pink-500'
         trend={{
           value: trends.pendingInvoices,
-          isPositive: trends.pendingInvoices >= 0,
+          isPositive: trends.pendingInvoices <= 0,
           label: 'vs last month'
         }}
       />

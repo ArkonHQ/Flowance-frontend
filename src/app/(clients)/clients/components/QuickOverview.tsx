@@ -61,11 +61,11 @@ export const QuickOverview = ({
   totalRevenue,
   pendingPayments,
   avgProjectValue,
-  totalClientsTrend = 0,
-  activeClientsTrend = 0,
-  totalRevenueTrend = 0,
-  pendingPaymentsTrend = 0,
-  avgProjectValueTrend = 0,
+  totalClientsTrend,
+  activeClientsTrend,
+  totalRevenueTrend,
+  pendingPaymentsTrend,
+  avgProjectValueTrend,
 }: QuickOverviewProps) => {
   const stats: StatItem[] = [
     {
@@ -76,7 +76,7 @@ export const QuickOverview = ({
       bg: 'bg-indigo-100 dark:bg-indigo-950',
       gradient: 'from-indigo-500 to-blue-500',
       trend: {
-        percentage: totalClientsTrend,
+        percentage: totalClientsTrend || 0,
         label: 'vs last month',
       },
     },
@@ -88,7 +88,7 @@ export const QuickOverview = ({
       bg: 'bg-green-100 dark:bg-green-950',
       gradient: 'from-green-500 to-emerald-500',
       trend: {
-        percentage: activeClientsTrend,
+        percentage: activeClientsTrend || 0,
         label: 'vs last month',
       },
     },
@@ -100,7 +100,7 @@ export const QuickOverview = ({
       bg: 'bg-emerald-100 dark:bg-emerald-950',
       gradient: 'from-emerald-500 to-teal-500',
       trend: {
-        percentage: totalRevenueTrend,
+        percentage: totalRevenueTrend || 0,
         label: 'vs last month',
       },
     },
@@ -112,7 +112,7 @@ export const QuickOverview = ({
       bg: 'bg-orange-100 dark:bg-orange-950',
       gradient: 'from-orange-500 to-amber-500',
       trend: {
-        percentage: pendingPaymentsTrend,
+        percentage: pendingPaymentsTrend || 0,
         label: 'vs last month',
       },
     },
@@ -124,7 +124,7 @@ export const QuickOverview = ({
       bg: 'bg-purple-100 dark:bg-purple-950',
       gradient: 'from-purple-500 to-pink-500',
       trend: {
-        percentage: avgProjectValueTrend,
+        percentage: avgProjectValueTrend || 0,
         label: 'vs last month',
       },
     },

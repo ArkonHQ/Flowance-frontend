@@ -74,4 +74,5 @@ export const getMonthlyHealthMetric = async (cookieHeader?: string): Promise<Mon
 
     const data = await res.json()
     return (data.metrics ?? []) as MonthlyHealthMetric[]
+
 }

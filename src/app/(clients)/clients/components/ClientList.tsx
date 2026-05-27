@@ -11,9 +11,9 @@ import { ExportIcon } from '@/components/icons/mi-export';
 import { SearchIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SortDescIcon } from 'lucide-react';
-import { PaginationFooter } from './ClientBottom';
 import { QuickOverview } from './QuickOverview'
 import InsightsWidget from './InsightsWidget';
+import { PaginationFooter } from '@/app/components/PaginationFooter';
 
 
 const containerVariants = {
@@ -64,6 +64,9 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
     currentPage * pageSize
   );
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
   // --- Aggregate Stats for Dashboard ---
   const allInsights = Array.from(insightMap.values());
   
@@ -198,14 +201,15 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
 
       {/* Pagination footer */}
       {filteredClients.length > 0 && (
-        <div className='fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-200 px-6 py-4 z-20'>
-          <div className="max-w-7xl mx-auto">
+        <div className='fixed bottom-0 left-0 right-0 bg-background/80 dark:bg-card/80 backdrop-blur-md border-t border-border px-6 py-4 z-20 lg:left-64'>
+          <div className="max-w-7xl mx-auto w-full">
             <PaginationFooter
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={filteredClients.length}
               pageSize={pageSize}
-              onPageChange={setCurrentPage}
+              onChangePage={handlePageChange}
+              label='Clients'
             />
           </div>
         </div>

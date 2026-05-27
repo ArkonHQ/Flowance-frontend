@@ -8,6 +8,8 @@ import { ProjectRow } from "./ProjectRow"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import type { Project } from '@/lib/api/projects'
+import { PaginationFooter } from "@/app/components/PaginationFooter"
+
 
 interface Props {
   initialProjects: Project[]
@@ -17,8 +19,10 @@ interface Props {
 
 export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Props) => {
   const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
 
-  const filtered = initialProjects.filter(p => {
+const filtered = initialProjects.filter(p => {
     const clientName = p.client?.name ?? clientNames[p.clientId] ?? ''
     return (
       p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -26,12 +30,24 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
     )
   })
 
+  const totalItems = filtered.length
+  const totalPages = Math.ceil(totalItems / pageSize)
+  const paginatedProjects = filtered.slice((currentPage - 1) * pageSize,
+    currentPage * pageSize)
+
+    const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  
+
   return (
+
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-      className="container mx-auto py-8 px-4 md:px-6 space-y-6">
+      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} // Added pb-28 to make space for the fixed footer
+      className="container mx-auto py-8 px-4 md:px-6 space-y-6 pb-28">
       {/* Header */}
       <div className="flex items-end justify-between">
         <div>
@@ -103,10 +119,24 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
         </div>
 
         <div className="space-y-2">
-          {filtered.map((project) => (
+          {paginatedProjects.map((project) => (
             <ProjectRow key={project.id} project={project} clientName={clientNames[project.clientId]} onDelete={() => {}}/>
           ))}
         </div>
+        {filtered.length > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-background/80 dark:bg-card/80 backdrop-blur-md border-t border-border px-6 py-4 z-30 lg:left-64">
+            <div className="max-w-7xl mx-auto w-full">
+          <PaginationFooter 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onChangePage={handlePageChange}
+            label='projects'
+          />
+          </div>
+          </div>
+          )}
       </div>
     </motion.div>
   )

@@ -79,8 +79,8 @@ export const getClientInsight = async (clientId?: number, cookieHeader?: string)
         cache: "no-store"
     });
     if (!res.ok) throw new Error(`Failed to fetch client insight: ${res.status}`);
-    const data = await res.json();
-    return data.insight;
+    const data = await res.json()
+    return data.insight
 }
 
 

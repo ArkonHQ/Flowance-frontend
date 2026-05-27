@@ -8,6 +8,8 @@ import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, XCircle, Clock, A
 import { StatCard } from "@/components/ui/StatCard";
 import { Input } from "@/components/ui/input";
 import { TaskCardRow } from "./TaskCardRow";
+import { PaginationFooter } from "@/app/components/PaginationFooter";
+
 
 
 interface Props {
@@ -18,6 +20,10 @@ interface Props {
 export const TaskPageContent = ({ initialTask, stats }: Props) => {
   const [tasks, setTasks] = useState<Task[]>(initialTask);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+
 
   const filtered = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
@@ -32,6 +38,19 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
     });
   }, [tasks, searchTerm]);
 
+  const totalItems = filtered.length;
+  const totalPages = Math.ceil(totalItems / pageSize)
+  const paginatedTasks = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  // Reset to first page when search changes
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const handleDelete = (id: number) => {
     setTasks(prev => prev.filter(t => t.id !== id));
   };
@@ -40,8 +59,8 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } } }
-      className="container mx-auto py-8 px-4 md:px-6 space-y-8"
+      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+      className="container mx-auto py-8 px-4 md:px-6 space-y-8 pb-28"
       >
 
       {/* Header */}
@@ -159,9 +178,23 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
             </div>
         ) : (
           <div className="grid gap-3">
-            {filtered.map((task) => (
+            {paginatedTasks.map((task) => (
               <TaskCardRow key={task.id} task={task} onDelete={handleDelete} />
             ))}
+          </div>
+        )}
+        {filtered.length > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-background/80 dark:bg-card/80 backdrop-blur-md border-t border-border px-6 py-4 z-20 lg:left-64">
+            <div className="max-w-7xl mx-auto w-full">
+              <PaginationFooter 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                onChangePage={handlePageChange}
+                label='tasks'
+              />
+            </div>
           </div>
         )}
       </div>

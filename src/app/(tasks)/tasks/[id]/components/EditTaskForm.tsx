@@ -126,7 +126,7 @@ export const EditTaskForm = ({ task, project}: props) => {
                         <SelectContent>
                           <SelectItem value="todo">To Do</SelectItem>
                           <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="done">Done</SelectItem>
                           <SelectItem value="cancelled">Cancelled</SelectItem>
                           <SelectItem value="delayed">Delayed</SelectItem>
                         </SelectContent>

@@ -65,7 +65,7 @@ const formatDate = (date: Date | string | undefined | null) => {
 export const TaskCardRow = ({ task, onDelete }: TaskCardRowProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
 
-  const statusDisplay = (task.status || "").replace(/_/g, " ")
+  const statusDisplay = (task.status).replace(/_/g, " ")
   const title = task.title ?? "Untitled task"
 
   return (
