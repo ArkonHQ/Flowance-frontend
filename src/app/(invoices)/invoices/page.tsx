@@ -15,7 +15,7 @@ const InvoicesPage = async () => {
 
 
   return (
-    <div className='container mx-auto space-y-0 flex items-center'>
+    <div className='container mx-auto space-y-0 flex items-center justify-center'>
       <InvoicesContent initialInvoices={invoice} />
     </div>
   )

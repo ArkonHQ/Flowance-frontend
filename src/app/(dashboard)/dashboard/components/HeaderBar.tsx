@@ -22,15 +22,11 @@ export function HeaderBar({ onPeriodChange, userName = "Freelancer" }: HeaderBar
     >
       {/* Left side: welcome message */}
       <div className="space-y-1">
-        <div className="flex items-center gap-3">
-          {/* Small decorative accent line (like your page headers) */}
-          <div className="h-8 w-1.5 rounded-full bg-primary" />
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-            Command Center
-          </h1>
-        </div>
-        <p className="text-sm text-muted-foreground ml-[18px]">
-          Welcome back, <span className="font-semibold text-foreground">{displayName}</span>! Here’s your freelance performance overview.
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Command Center
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Welcome back, <span className="font-medium text-foreground">{displayName}</span>. Here’s your freelance performance overview.
         </p>
       </div>
 
@@ -39,17 +35,17 @@ export function HeaderBar({ onPeriodChange, userName = "Freelancer" }: HeaderBar
         <Button
           variant="outline"
           size="sm"
-          className="h-11 px-5 text-sm font-medium bg-card/40 backdrop-blur-sm border-border/40 hover:bg-card/60 hover:border-border/60 transition-all duration-200 rounded-xl flex items-center gap-2.5 shadow-sm"
+          className="h-9 px-3 text-xs font-medium bg-card hover:bg-muted border-border transition-colors rounded-md flex items-center gap-2 shadow-xs"
         >
-          <Calendar className="h-5 w-5 text-primary" strokeWidth={2.5} />
-          <span>
+          <Calendar className="h-3.5 w-3.5 text-muted-foreground/80" strokeWidth={1.5} />
+          <span className="text-muted-foreground">
             {new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {
               new Date().toLocaleDateString('en-US', { 
                 month: 'short', day: 'numeric', year: 'numeric' 
               })
             }
           </span>
-          <ChevronDown className="h-4 w-4 text-muted-foreground/70" />
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60" strokeWidth={1.5} />
         </Button>
       </div>
     </motion.div>

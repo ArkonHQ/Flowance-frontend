@@ -50,20 +50,20 @@ const AppSidebar = () => {
     return (
         <Sidebar collapsible="icon">
             {/* Header with logo */}
-            <SidebarHeader className="flex flex-row items-center gap-2 px-4 py-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                    <Command className="h-4 w-4 text-primary-foreground" />
+            <SidebarHeader className="flex flex-row items-center gap-2.5 px-4 py-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card">
+                    <Command className="h-4 w-4 text-primary" strokeWidth={2} />
                 </div>
                 {open && (
-                    <span className="text-lg font-semibold tracking-tight text-sidebar-primary">
-                        Main Dashboard
+                    <span className="text-sm font-semibold tracking-tight text-foreground">
+                        Command Center
                     </span>
                 )}
             </SidebarHeader>
 
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
+                    <SidebarGroupLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">Workspace</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {mainItems.map((item) => (
@@ -71,8 +71,9 @@ const AppSidebar = () => {
                                     <SidebarMenuButton
                                         asChild
                                         isActive={pathname === item.url}
+                                        className="text-[13px] font-medium text-muted-foreground transition-all duration-200 hover:bg-secondary/60 hover:text-foreground data-[active=true]:bg-secondary data-[active=true]:text-foreground data-[active=true]:font-semibold"
                                     >
-                                        <Link href={item.url} className="flex items-center gap-3">
+                                        <Link href={item.url} className="flex items-center gap-2.5">
                                             <item.icon className="h-4 w-4" />
                                             {open && <span>{item.title}</span>}
                                         </Link>
@@ -86,12 +87,12 @@ const AppSidebar = () => {
 
             {/* Footer with user & theme toggle */}
 
-            <SidebarFooter className="border-t p-3">
+            <SidebarFooter className="border-sidebar-border/30 border-t p-3">
                 <div className="flex items-center justify-between">
 
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
                                 <User className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>
@@ -103,7 +104,7 @@ const AppSidebar = () => {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
+                                className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                             >
                                 <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -115,7 +116,7 @@ const AppSidebar = () => {
                     }{open &&
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
                                 <LogOut className="h-4 w-4" />
                             </Button>
                         </TooltipTrigger>

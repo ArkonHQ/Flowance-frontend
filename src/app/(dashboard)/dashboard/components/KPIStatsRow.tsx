@@ -8,7 +8,7 @@ interface KPIStatsRowProps {
   totalRevenue: number
   activeProjects: number
   totalHours: number
-  pendingInvoices: number
+  unpaidInvoices: number
   tasksCompletedThisWeek: number
   unpaidAmount: number
   trends: {
@@ -16,7 +16,7 @@ interface KPIStatsRowProps {
     activeProjects: number
     tasksCompletedThisWeek: number
     totalRevenue: number
-    pendingInvoices: number
+    unpaidInvoices: number
     unpaidAmount: number
   }
 }
@@ -30,7 +30,7 @@ export function KPIStatsRow({
   totalRevenue,
   activeProjects,
   totalHours,
-  pendingInvoices,
+  unpaidInvoices,
   tasksCompletedThisWeek,
   unpaidAmount,
   trends,
@@ -82,15 +82,15 @@ export function KPIStatsRow({
         }}
       />
       <StatCard
-        title='Pending Invoices'
-        value={`${pendingInvoices}`}
+        title='Unpaid Invoices'
+        value={`${unpaidInvoices}`}
         icon={FileText}
         color='text-red-500'
         bg='bg-red-100/70 dark:bg-red-950/40'
         gradient='from-red-500 to-pink-500'
         trend={{
-          value: trends.pendingInvoices,
-          isPositive: trends.pendingInvoices <= 0,
+          value: trends.unpaidInvoices,
+          isPositive: trends.unpaidInvoices <= 0,
           label: 'vs last month'
         }}
       />
@@ -116,7 +116,6 @@ export function KPIStatsRow({
         gradient='from-yellow-500 to-yellow-700'
         trend={{
           value: trends.unpaidAmount,
-          isPositive: trends.unpaidAmount >= 0,
           label: 'vs last month'
         }}
       />

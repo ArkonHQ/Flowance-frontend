@@ -8,7 +8,7 @@ import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, XCircle, Clock, A
 import { StatCard } from "@/components/ui/StatCard";
 import { Input } from "@/components/ui/input";
 import { TaskCardRow } from "./TaskCardRow";
-import { PaginationFooter } from "@/app/components/PaginationFooter";
+import { PaginationFooter } from "@/app/components/pagination-footer";
 
 
 

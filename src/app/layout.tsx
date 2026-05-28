@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/sidebar';
 import AuthGuard from './components/auth-guard';
 import AppSidebar from './components/app-sidebar';
-import { GlobalSearch } from './components/GlobalSearch';
+import { GlobalSearch } from './components/global-search';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { useSession } from '@/lib/auth';

@@ -105,7 +105,7 @@ export const PaginationFooter = ({ currentPage, totalPages, totalItems, pageSize
               size='icon'
               className={cn('h-8 w-8 rounded-lg text-sm font-medium border border-transparent',
                 page === currentPage
-                  ? 'bg-indigo-50 text-indigo-600 border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-500/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50'
+                  ? 'bg-accent text-accent-foreground border-accent hover:bg-accent/80 hover:text-accent-foreground transition-colors'
                   : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               )}
               onClick={() => handlePageClick(page)}

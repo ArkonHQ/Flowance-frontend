@@ -45,7 +45,9 @@ export const ClientCard = ({ client, insight }: ClientCardProps) => {
   const rawStatus = client.status || 'active'
   const status = rawStatus.replace('_', '-').toLowerCase()
   const totalProjects = insight?.totalProjects ?? 0
-  const totalRevenue = insight?.totalRevenue ?? '$0'
+  const totalRevenue = insight?.totalEarned 
+    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(insight.totalEarned)
+    : '$0.00'
   const lastActivity = insight?.lastActivity || 'No activity yet'
 
   const [isOpen, setIsOpen] = useState(false)

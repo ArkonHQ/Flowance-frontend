@@ -8,7 +8,7 @@ import { ProjectRow } from "./ProjectRow"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import type { Project } from '@/lib/api/projects'
-import { PaginationFooter } from "@/app/components/PaginationFooter"
+import { PaginationFooter } from "@/app/components/pagination-footer"
 
 
 interface Props {
@@ -46,7 +46,7 @@ const filtered = initialProjects.filter(p => {
     <motion.div
       initial="hidden"
       animate="visible"
-      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} // Added pb-28 to make space for the fixed footer
+      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
       className="container mx-auto py-8 px-4 md:px-6 space-y-6 pb-28">
       {/* Header */}
       <div className="flex items-end justify-between">

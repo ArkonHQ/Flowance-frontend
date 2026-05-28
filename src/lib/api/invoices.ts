@@ -1,5 +1,3 @@
-import { Client } from "./clients"
-import { Project } from "./projects"
 
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
@@ -20,28 +18,34 @@ export type Invoice = {
 }
 
 export const getAllInvoices = async (cookieHeader?: string) => {
-  
-  const headers: Record<string, string> = {'Content-Type': 'application/json'}
-  if(cookieHeader) headers['Cookie'] = cookieHeader
-  
-  const res = await fetch(`${API_BASE}/invoices`, {
-    headers,
-    credentials: 'include',
-    method: 'GET'
-  })
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' } 
+  if (cookieHeader) headers['Cookie'] = cookieHeader 
 
-  if(!res.ok) throw new Error((`Failed to fetch invoices: ${res.status}`))
+    const res = await fetch(`${API_BASE}/invoice`, {
+      headers,
+      credentials: 'include',
+      method: 'GET',
+      cache: 'no-store',
+    }) 
 
-  const data = await res.json()
-  return data.invoice
-}
+  if (!res.ok) {
+    if (res.status === 404) {
+      // If endpoint not found return empty array
+      return [] as Invoice[] 
+    }
+    throw new Error(`Failed to fetch invoices: ${res.status}`) 
+  }
+
+  const data = await res.json() 
+  return data.data?.invoices ?? data.invoices ?? data.invoice ?? data 
+} 
 
 export const getInvoice = async (invoiceId: number, cookieHeader?: string) => {
   
   const headers: Record<string, string> = {'Content-Type': 'application/json'}
   if(cookieHeader) headers['Cookie'] = cookieHeader
 
-  const res = await fetch(`${API_BASE}/invoices/${invoiceId}`, {
+  const res = await fetch(`${API_BASE}/invoice/${invoiceId}`, {
     headers,
     credentials: 'include',
     method: 'GET'
@@ -50,24 +54,24 @@ export const getInvoice = async (invoiceId: number, cookieHeader?: string) => {
   if (!res.ok) throw new Error (`Failed to fetch invoice: ${res.status}`)
 
   const data = await res.json()
-  return data.invoice
+  return data.data?.invoice ?? data.invoice
 }
 
 export const createInvoice = async (invoiceData: {amount: number, status: Invoice['status'], clientId: number, projectId: number, paidAt: Date | null, dueDate: Date | null}, cookieHeader?:string) => {
-  const headers: Record<string, string> = {'Content-Type': 'application/json'}
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (cookieHeader) headers['Cookie'] = cookieHeader
 
-  const res = await fetch(`${API_BASE}/invoices/new`, {
-    credentials: 'include',
-    headers,
-    body: JSON.stringify(invoiceData),
-    method: 'POST'
-  })
+  const res = await fetch(`${API_BASE}/invoice`, {
+      credentials: 'include',
+      headers,
+      body: JSON.stringify(invoiceData),
+      method: 'POST'
+    })
 
   if(!res.ok) throw new Error(`Failed to create invoice: ${res.status}`)
 
   const data = await res.json()
-  return data.invoice
+  return data.data?.invoice ?? data.invoice
 }
 
 export const updateInvoice = async (invoiceId: number, updates: Partial<Omit<Invoice, 'id' | 'ownerId'>>, cookieHeader?: string) => {
@@ -75,11 +79,11 @@ export const updateInvoice = async (invoiceId: number, updates: Partial<Omit<Inv
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if(cookieHeader) headers['Cookie'] = cookieHeader
 
-  const res = await fetch(`${API_BASE}/invoices/edit`, {
+  const res = await fetch(`${API_BASE}/invoice/${invoiceId}`, {
     credentials: 'include',
     method: 'PUT',
     headers,
-    body: JSON.stringify(invoiceId)
+    body: JSON.stringify(updates)
   })
 
   if (!res.ok) throw new Error (`Failed to edit invoice: ${res.status}`)
@@ -93,7 +97,7 @@ export const deleteInvoice = async (invoiceId: number, cookieHeader?: string) =>
   const headers: Record <string, string> = { 'Content-Type': 'application/json' }
   if(cookieHeader) headers['Cookie'] = cookieHeader
 
-  const res = await fetch (`${API_BASE}/invoices/${invoiceId}`, {
+  const res = await fetch (`${API_BASE}/invoice/${invoiceId}`, {
     credentials:'include',
     method: 'DELETE',
     headers

@@ -76,3 +76,42 @@ export const getMonthlyHealthMetric = async (cookieHeader?: string): Promise<Mon
     return (data.metrics ?? []) as MonthlyHealthMetric[]
 
 }
+
+export interface LastMonthKPIs {
+    totalRevenue: number
+    activeProjects: number
+    totalHours: number
+    pendingInvoices: number
+    tasksCompleted: number
+    unpaidAmount: number
+}
+
+export async function getLastMonthKPIs(cookieHeader?: string): Promise<LastMonthKPIs> {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+    };
+
+    if (cookieHeader) {
+        headers['Cookie'] = cookieHeader;
+    }
+
+    const res = await fetch(`${API_BASE}/dashboard/trends`, {
+        credentials: "include",
+        headers,
+    });
+
+    if (!res.ok) {
+        // Return zeros on error so dashboard still renders
+        return {
+            totalRevenue: 0,
+            activeProjects: 0,
+            totalHours: 0,
+            pendingInvoices: 0,
+            tasksCompleted: 0,
+            unpaidAmount: 0,
+        }
+    }
+
+    const data = await res.json()
+    return data.lastMonth as LastMonthKPIs
+}

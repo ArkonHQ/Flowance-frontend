@@ -67,6 +67,12 @@ export const QuickOverview = ({
   pendingPaymentsTrend,
   avgProjectValueTrend,
 }: QuickOverviewProps) => {
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(val);
+
   const stats: StatItem[] = [
     {
       title: 'Total Clients',
@@ -94,7 +100,7 @@ export const QuickOverview = ({
     },
     {
       title: 'Total Revenue',
-      value: `$${totalRevenue.toLocaleString()}`,
+      value: formatCurrency(totalRevenue),
       icon: DollarSign,
       color: 'text-emerald-500',
       bg: 'bg-emerald-100 dark:bg-emerald-950',
@@ -106,7 +112,7 @@ export const QuickOverview = ({
     },
     {
       title: 'Pending Payments',
-      value: `$${pendingPayments.toLocaleString()}`,
+      value: formatCurrency(pendingPayments),
       icon: Clock,
       color: 'text-orange-500',
       bg: 'bg-orange-100 dark:bg-orange-950',
@@ -118,7 +124,7 @@ export const QuickOverview = ({
     },
     {
       title: 'Avg. Project Value',
-      value: `$${avgProjectValue.toLocaleString()}`,
+      value: formatCurrency(avgProjectValue),
       icon: Briefcase,
       color: 'text-purple-500',
       bg: 'bg-purple-100 dark:bg-purple-950',

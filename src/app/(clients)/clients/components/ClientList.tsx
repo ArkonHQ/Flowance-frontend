@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { SortDescIcon } from 'lucide-react';
 import { QuickOverview } from './QuickOverview'
 import InsightsWidget from './InsightsWidget';
-import { PaginationFooter } from '@/app/components/PaginationFooter';
+import { PaginationFooter } from '@/app/components/pagination-footer';
 
 
 const containerVariants = {
@@ -201,7 +201,7 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
 
       {/* Pagination footer */}
       {filteredClients.length > 0 && (
-        <div className='fixed bottom-0 left-0 right-0 bg-background/80 dark:bg-card/80 backdrop-blur-md border-t border-border px-6 py-4 z-20 lg:left-64'>
+        <div className='fixed bottom-0 left-0 right-0 bg-background/80 dark:bg-card/80 backdrop-blur-md border-t border-border px-6 py-4 z-20 lg:left-[16rem] group-data-[state=collapsed]/sidebar-wrapper:lg:left-[3rem] transition-[left] duration-200 ease-linear'>
           <div className="max-w-7xl mx-auto w-full">
             <PaginationFooter
               currentPage={currentPage}
