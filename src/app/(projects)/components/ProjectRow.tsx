@@ -59,7 +59,13 @@ export const ProjectRow = ({ project, clientName }: ProjectRowProps) => {
       {/* Description - col-span-3 */}
       <div className="col-span-3 text-sm text-muted-foreground truncate">
         <span className="text-xs font-medium text-gray-400 mr-1">Client:</span>
-        {project.client?.name ?? clientName ?? 'No client'}
+        {project.clientId ? (
+          <Link href={`/clients/${project.clientId}`} className="hover:underline hover:text-primary transition-colors cursor-pointer text-foreground font-medium">
+            {project.client?.name ?? clientName ?? `Client ${project.clientId}`}
+          </Link>
+        ) : (
+          project.client?.name ?? clientName ?? 'No client'
+        )}
       </div>
 
       {/* Progress - col-span-2 */}
