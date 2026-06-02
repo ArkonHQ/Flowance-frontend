@@ -21,7 +21,7 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
   const [tasks, setTasks] = useState<Task[]>(initialTask);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 7;
 
 
 
@@ -38,7 +38,7 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
     });
   }, [tasks, searchTerm]);
 
-  const totalItems = filtered.length;
+  const totalItems = filtered.length
   const totalPages = Math.ceil(totalItems / pageSize)
   const paginatedTasks = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 

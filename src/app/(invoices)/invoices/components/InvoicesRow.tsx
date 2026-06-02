@@ -8,6 +8,7 @@ import { MoreHorizontal, Eye, Pencil, FileDown, Trash2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import DeleteButton from "./DeleteButton"
+import { cn } from "@/lib/utils"
 
 
 
@@ -17,6 +18,8 @@ interface InvoicesRowProps {
   isSelected: boolean
   onDelete: (id: number) => void
   onToggle: (id: number) => void
+  clientName: string
+  projectName: string
 }
 
 const getStatusColors = (status: string) => {
@@ -43,7 +46,7 @@ const formatDate = (date: string | Date | undefined | null) => {
 }
 
 
-export const InvoicesRow = ({invoice, onDelete, onToggle, isSelected}: InvoicesRowProps ) => {
+export const InvoicesRow = ({invoice, onDelete, onToggle, isSelected, clientName, projectName}: InvoicesRowProps ) => {
 
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const displayStatus = (invoice.status || 'draft').replace(/_/g, ' ')
@@ -60,18 +63,18 @@ export const InvoicesRow = ({invoice, onDelete, onToggle, isSelected}: InvoicesR
         </div>
 
         {/* Invoice columns */} 
-        <div className="col-div-1 flex items-center justify-center text-sm font-bold text-primary">
+        <div className="col-span-1 flex items-center justify-center text-sm font-bold text-primary">
           #{invoice.id}
         </div>
 
         {/* Client name column */}
-        <div className="col-span-2 flex items-center justify-start text-sm font-medium">
-          Client {invoice.clientId}
+        <div className="col-span-2 flex items-center justify-start text-sm font-medium truncate">
+          {clientName}
         </div>
 
          {/* Project name columns */}
-         <div className="col-span-2 flex items-center justify-start text-sm text-muted-foreground">
-          Project {invoice.projectId}
+         <div className="col-span-2 flex items-center justify-start text-sm text-muted-foreground truncate">
+          {projectName}
         </div>
 
           {/* Invoice date column */}
@@ -97,15 +100,27 @@ export const InvoicesRow = ({invoice, onDelete, onToggle, isSelected}: InvoicesR
         </div>
 
         {/* Action column */}
-        <div className="col-span-1 flex items-center justify-center">
-          <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-            <DropdownMenuTrigger asChild >
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                <MoreHorizontal className="h-4 w-4 text-muted-foreground"/>
-              </Button>
-            </DropdownMenuTrigger> 
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+       <div className="col-span-1 flex justify-end">
+              <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className={cn(
+                      'h-8 w-8 rounded-full',
+                      isOpen ? 'bg-gray-200 text-indigo-600' : 'text-gray-400'
+                    )}
+                    variant="ghost"
+                    size="icon"
+                  >
+                    <MoreHorizontal
+                      className={cn(
+                        'h-4 w-4 transition-transform duration-200',
+                        isOpen ? 'rotate-0 text-indigo-600' : 'rotate-90 text-gray-400'
+                      )}
+                    />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
                 <Eye className="h-4 w-4" />
                 View details
               </DropdownMenuItem>

@@ -1,15 +1,41 @@
 'use client'
 
 import { Invoice } from '@/lib/api/invoices'
-import React, { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { InvoicesRow } from './InvoicesRow'
+import { PaginationFooter } from '@/app/components/pagination-footer'
 
 interface Props  {
   initialInvoices: Invoice []
+  clients: { id: number; name: string }[]
+  projects: { id: number; title: string }[]
 }
 
-export const InvoicesContent = ({ initialInvoices }: Props) => {
+export const InvoicesContent = ({ initialInvoices, clients, projects }: Props) => {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const pageSize = 7
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const totalPages = Math.ceil(initialInvoices.length / pageSize)
+  const paginatedInvoices = initialInvoices.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  )
+
+  const clientMap = useMemo(() => 
+    new Map(clients.map(c => [c.id, c.name])),
+    [clients]
+  )
+
+  const projectMap = useMemo(() => 
+    new Map(projects.map(p => [p.id, p.title])),
+    [projects]
+  )
+
+  const handleOnChange = (page: number) => {
+    setCurrentPage(page)
+    setSelectedIds(new Set())
+  }
 
   const handleToggle = (id: number) => {
     setSelectedIds(prev => {
@@ -21,7 +47,7 @@ export const InvoicesContent = ({ initialInvoices }: Props) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto w-full px-4 py-8">
+    <div className="max-w-7xl mx-auto w-full px-4 py-8 pb-28">
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-end px-2">
           <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
@@ -44,15 +70,28 @@ export const InvoicesContent = ({ initialInvoices }: Props) => {
 
           {/* Rows */}
           <div className='flex flex-col gap-3'>
-            {initialInvoices.map((invoice) => (
-              <InvoicesRow 
-                key={invoice.id} 
-                invoice={invoice} 
-                isSelected={selectedIds.has(invoice.id)}
-                onToggle={handleToggle}
-                onDelete={(id) => console.log('Delete requested for invoice:', id)} 
-              />
-            ))}
+            {paginatedInvoices.map((invoice) => {
+              return (
+                <InvoicesRow 
+                  key={invoice.id} 
+                  invoice={invoice} 
+                  clientName={clientMap.get(invoice.clientId) || `Client ${invoice.clientId}`}
+                  projectName={projectMap.get(invoice.projectId) || `Project ${invoice.projectId}`}
+                  isSelected={selectedIds.has(invoice.id)}
+                  onToggle={handleToggle}
+                  onDelete={(id) => console.log('Delete requested for invoice:', id)} 
+                />
+              );
+            })}
+
+            <PaginationFooter 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={initialInvoices.length}
+              pageSize={pageSize}
+              onChangePage={handleOnChange}
+              label='Invoices'
+            />
           </div>
         </div>
       </div>
