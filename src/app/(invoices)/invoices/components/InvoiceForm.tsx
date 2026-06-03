@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { handleCreateInvoice } from '../new/action';
@@ -29,8 +29,9 @@ export const InvoiceForm = ({ clients, projects }: InvoiceFormProps) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="primary" className="rounded-full">
-          Create Invoice
+        <Button variant="default" className="rounded-full gap-2 font-bold px-4 shadow-sm hover:shadow-md transition-all">
+          <Plus className="h-4 w-4" />
+          <span>Create Invoice</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg bg-card/80 backdrop-blur-xl border-border/40 shadow-2xl p-0 gap-0 overflow-hidden rounded-xl">

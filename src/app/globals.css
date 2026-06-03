@@ -164,6 +164,8 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+
+  --grid-template-columns-15: repeat(15, minmax(0, 1fr));
 }
 
 

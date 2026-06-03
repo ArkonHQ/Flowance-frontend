@@ -116,6 +116,7 @@ export function KPIStatsRow({
         gradient='from-yellow-500 to-yellow-700'
         trend={{
           value: trends.unpaidAmount,
+          isPositive: trends.unpaidAmount <= 0,
           label: 'vs last month'
         }}
       />

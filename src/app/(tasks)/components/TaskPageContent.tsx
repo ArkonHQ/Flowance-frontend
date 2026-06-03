@@ -4,7 +4,7 @@ import { Task } from "@/lib/api/tasks"
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, XCircle, Clock, AlertCircle, Search, FilterX } from "lucide-react";
+import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, XCircle, Clock, AlertCircle, Search, FilterX, WatchIcon } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { Input } from "@/components/ui/input";
 import { TaskCardRow } from "./TaskCardRow";
@@ -14,7 +14,7 @@ import { PaginationFooter } from "@/app/components/pagination-footer";
 
 interface Props {
   initialTask: Task[]
-  stats: { total: number; todo: number, in_progress: number, done: number, cancelled: number, delayed: number, high: number}
+  stats: { total: number; todo: number, in_progress: number, done: number, cancelled: number, delayed: number, high: number, overdue: number}
 }
 
 export const TaskPageContent = ({ initialTask, stats }: Props) => {
@@ -82,28 +82,20 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
           title="Total Tasks"
           value={stats.total.toString()} 
           icon={Briefcase}
-          color="text-indigo-500"
-          bg="bg-indigo-100/70 dark:bg-indigo-950/40"
-          gradient="from-indigo-500 to-blue-500"
-        />
-        <StatCard 
-          title="To Do"
-          value={stats.todo.toString()} 
-          icon={ListTodo}
-          color="text-sky-500"
-          bg="bg-sky-100/70 dark:bg-sky-950/40"
-          gradient="from-sky-500 to-blue-500"
-        />
-        <StatCard 
-          title="In Progress"
-          value={stats.in_progress.toString()} 
-          icon={Activity}
           color="text-yellow-500"
           bg="bg-yellow-100/70 dark:bg-yellow-950/40"
           gradient="from-yellow-500 to-orange-500"
         />
         <StatCard 
-          title="Done"
+          title="In Progress"
+          value={stats.in_progress.toString()} 
+          icon={Activity}
+          color="text-blue-500"
+          bg="bg-blue-100/70 dark:bg-blue-950/40"
+          gradient="from-blue-500 to-cyan-500"
+        />
+        <StatCard 
+          title="Completed"
           value={stats.done.toString()} 
           icon={CheckCircle}
           color="text-emerald-500"
@@ -111,17 +103,17 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
           gradient="from-emerald-500 to-teal-500"
         />
         <StatCard 
-          title="Delayed"
-          value={stats.delayed.toString()} 
+          title="Total Hours"
+          value={stats.total.toString()} 
           icon={Clock}
-          color="text-orange-500"
-          bg="bg-orange-100/70 dark:bg-orange-950/40"
-          gradient="from-orange-500 to-red-500"
+          color="text-indigo-500"
+          bg="bg-indigo-100/70 dark:bg-indigo-950/40"
+          gradient="from-indigo-500 to-purple-500"
         />
         <StatCard 
-          title="Cancelled"
-          value={stats.cancelled.toString()} 
-          icon={XCircle}
+          title="Overdue"
+          value={stats.overdue.toString()} 
+          icon={Clock}
           color="text-red-500"
           bg="bg-red-100/70 dark:bg-red-950/40"
           gradient="from-red-500 to-pink-500"

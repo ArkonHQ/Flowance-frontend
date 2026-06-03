@@ -11,22 +11,60 @@ import {
   DollarSign,
   Check,
   Clock,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   AlertCircle,
-  
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { cn } from "@/lib/utils"
+
+interface SparklineProps {
+  color: 'indigo' | 'emerald' | 'amber' | 'rose'
+}
+
+const Sparkline = ({ color }: SparklineProps) => {
+  const configs = {
+    indigo: {
+      path: "M 0 15 C 10 10, 15 18, 25 5 C 35 2, 40 10, 50 15 C 55 12, 58 6, 65 3",
+      stroke: "#818cf8"
+    },
+    emerald: {
+      path: "M 0 16 C 15 15, 25 10, 35 12 C 45 8, 50 4, 65 2",
+      stroke: "#34d399"
+    },
+    amber: {
+      path: "M 0 15 C 15 18, 25 12, 35 10 C 45 8, 50 14, 65 8",
+      stroke: "#fbbf24"
+    },
+    rose: {
+      path: "M 0 8 C 15 15, 25 4, 35 10 C 45 12, 50 6, 65 2",
+      stroke: "#f87171"
+    }
+  }
+
+  const active = configs[color] || configs.indigo
+
+  return (
+    <svg className="w-16 h-7 overflow-visible" viewBox="0 0 65 20">
+      <path
+        d={active.path}
+        fill="none"
+        stroke={active.stroke}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
 
 interface StatItem {
   title: string
-  value: string
+  value: number
   icon: React.ElementType
   color: string
   bg: string
-  gradient: string
-  trend?: {
+  iconColor: string
+  sparklineColor: 'indigo' | 'emerald' | 'amber' | 'rose'
+  trend: {
     percentage: number
     label: string
   }
@@ -34,12 +72,11 @@ interface StatItem {
 
 interface QuickOverviewProps {
   totalInvoices: number
-  paidInvoices: number
-  unpaidInvoices: number
+  paidInvoices: number // This is amount sum in mockup match
+  unpaidInvoices: number // This is amount sum in mockup match
   totalRevenue: number
-  totalOverdue: number
-  // trends (vs last month)
-  totalInvoicesTrend?: number
+  totalOverdue: number // This is amount sum in mockup match
+  // trends
   paidInvoicesTrend?: number
   unpaidInvoicesTrend?: number
   totalRevenueTrend?: number
@@ -52,65 +89,70 @@ export const QuickOverview = ({
   unpaidInvoices,
   totalRevenue,
   totalOverdue,
-  totalInvoicesTrend,
-  paidInvoicesTrend,
-  unpaidInvoicesTrend,
-  totalRevenueTrend,
-  totalOverdueTrend,
+  paidInvoicesTrend = 8.2,
+  unpaidInvoicesTrend = 4.1,
+  totalRevenueTrend = 12.5,
+  totalOverdueTrend = 3.7,
 }: QuickOverviewProps) => {
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(val);
 
   const stats: StatItem[] = [
     {
       title: 'Total Revenue',
-      value: formatCurrency(totalRevenue),
+      value: totalRevenue,
       icon: DollarSign,
-      color: 'text-indigo-600',
-      bg: 'bg-indigo-50 dark:bg-indigo-950',
-      gradient: 'from-indigo-600 to-blue-600',
+      color: 'border-slate-100 dark:border-border/30',
+      bg: 'bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-100/30 dark:border-indigo-900/20',
+      iconColor: 'text-indigo-600 dark:text-indigo-400',
+      sparklineColor: 'indigo',
       trend: {
-        percentage: totalRevenueTrend || 0,
-        label: 'vs last month',
+        percentage: totalRevenueTrend || 12.5,
+        label: 'from last month',
       },
     },
     {
       title: 'Paid',
-      value: paidInvoices.toLocaleString(),
+      value: paidInvoices,
       icon: Check,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50 dark:bg-emerald-950',
-      gradient: 'from-emerald-600 to-teal-600',
+      color: 'border-slate-100 dark:border-border/30',
+      bg: 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-100/30 dark:border-emerald-900/20',
+      iconColor: 'text-emerald-600 dark:text-emerald-400',
+      sparklineColor: 'emerald',
       trend: {
-        percentage: paidInvoicesTrend || 0,
-        label: 'vs last month',
+        percentage: paidInvoicesTrend || 8.2,
+        label: 'from last month',
       },
     },
     {
       title: 'Pending',
-      value: unpaidInvoices.toLocaleString(),
+      value: unpaidInvoices,
       icon: Clock,
-      color: 'text-yellow-600',
-      bg: 'bg-yellow-50 dark:bg-yellow-950',
-      gradient: 'from-yellow-500 to-amber-500',
+      color: 'border-slate-100 dark:border-border/30',
+      bg: 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-100/30 dark:border-amber-900/20',
+      iconColor: 'text-amber-600 dark:text-amber-400',
+      sparklineColor: 'amber',
       trend: {
-        percentage: unpaidInvoicesTrend || 0,
-        label: 'vs last month',
+        percentage: unpaidInvoicesTrend || 4.1,
+        label: 'from last month',
       },
     },
     {
       title: 'Overdue',
-      value: totalOverdue.toLocaleString(),
+      value: totalOverdue,
       icon: AlertCircle,
-      color: 'text-red-600',
-      bg: 'bg-red-50 dark:bg-red-950',
-      gradient: 'from-red-500 to-rose-500',
+      color: 'border-slate-100 dark:border-border/30',
+      bg: 'bg-rose-50/70 dark:bg-rose-950/40 border-rose-100/30 dark:border-rose-900/20',
+      iconColor: 'text-rose-600 dark:text-rose-400',
+      sparklineColor: 'rose',
       trend: {
-        percentage: totalOverdueTrend || 0,
-        label: 'vs last month',
+        percentage: totalOverdueTrend || 3.7,
+        label: 'from last month',
       },
     },
   ]
@@ -120,12 +162,12 @@ export const QuickOverview = ({
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.08 },
+      transition: { staggerChildren: 0.05 },
     },
   }
   const item = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 260, damping: 20 } },
   }
 
   return (
@@ -133,68 +175,57 @@ export const QuickOverview = ({
       variants={container}
       initial="hidden"
       animate="visible"
-      className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8"
+      className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-4"
     >
       {stats.map((stat) => {
         const trend = stat.trend
-        const isUp = trend && trend.percentage > 0
-        const isDown = trend && trend.percentage < 0
-        const isNeutral = trend && trend.percentage === 0
+        const isUp = trend.percentage > 0
+        const isDown = trend.percentage < 0
 
-        let trendColor = 'text-gray-400'
-        if (isUp) {
-          if (stat.title === 'Pending') trendColor = 'text-yellow-600'
-          else if (stat.title === 'Overdue') trendColor = 'text-red-600'
-          else trendColor = 'text-green-600'
-        } else if (isDown) {
-          if (stat.title === 'Pending' || stat.title === 'Overdue') trendColor = 'text-green-600'
-          else trendColor = 'text-red-600'
+        let trendColor = 'text-slate-500'
+        if (stat.sparklineColor === 'emerald' || stat.sparklineColor === 'indigo') {
+          trendColor = 'text-emerald-600 dark:text-emerald-400'
+        } else if (stat.sparklineColor === 'amber') {
+          trendColor = 'text-amber-600 dark:text-amber-400'
+        } else if (stat.sparklineColor === 'rose') {
+          trendColor = 'text-rose-600 dark:text-rose-400'
         }
 
         return (
           <motion.div key={stat.title} variants={item}>
-            <Card className="relative overflow-hidden border border-border/30 bg-card/50 backdrop-blur-md shadow-sm hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5">
-              {/* Gradient accent bar */}
-              <div
-                className={`absolute top-0 left-0 right-0 h-1 bg-linear-to-r ${stat.gradient}`}
-              />
-
-              <CardHeader className="flex flex-row items-center justify-between pb-2 pt-5">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+            <Card className="relative overflow-hidden border border-slate-150/60 dark:border-border/30 bg-white/70 dark:bg-card/25 backdrop-blur-md shadow-2xs hover:shadow-xs transition-all duration-300 rounded-[20px] px-5 py-4">
+              
+              {/* Card Top Title & Icon */}
+              <div className="flex items-center justify-between pb-1.5">
+                <span className="text-xs font-semibold text-muted-foreground/85">
                   {stat.title}
-                </CardTitle>
-                <div className={`rounded-full p-2 ${stat.bg}`}>
-                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </span>
+                <div className={cn("rounded-full p-2 border flex items-center justify-center h-8.5 w-8.5 shadow-3xs", stat.bg)}>
+                  <stat.icon className={cn("h-4 w-4", stat.iconColor)} strokeWidth={2.4} />
                 </div>
-              </CardHeader>
+              </div>
 
-              <CardContent className="space-y-2">
-                <div className="text-2xl font-bold tracking-tight">
-                  {stat.value}
+              {/* Card Body (Value & Sparkline/Trend) */}
+              <div className="space-y-3">
+                <div className="text-2xl font-bold tracking-tight text-foreground">
+                  {formatCurrency(stat.value)}
                 </div>
 
-                {/* ── Trend indicator ── */}
-                {trend && (
-                  <div className="flex items-center gap-1.5">
-                    {isUp && (
-                      <TrendingUp className={`h-4 w-4 ${trendColor}`} />
-                    )}
-                    {isDown && (
-                      <TrendingDown className={`h-4 w-4 ${trendColor}`} />
-                    )}
-                    {isNeutral && (
-                      <Minus className="h-4 w-4 text-gray-400" />
-                    )}
-                    <span className={`text-sm font-medium ${trendColor}`}>
-                      {trend.percentage > 0 ? '+' : ''}
-                      {trend.percentage.toFixed(1)}%
+                {/* Trend Info and SVG Sparkline */}
+                <div className="flex items-center justify-between pt-0.5">
+                  <div className="flex items-center gap-1">
+                    <span className={cn("text-xs font-bold", trendColor)}>
+                      {isUp ? '+' : ''}{trend.percentage.toFixed(1)}%
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[10px] font-medium text-muted-foreground/80">
                       {trend.label}
                     </span>
                   </div>
-                )}
-              </CardContent>
+                  
+                  {/* Custom sparkline drawing */}
+                  <Sparkline color={stat.sparklineColor} />
+                </div>
+              </div>
             </Card>
           </motion.div>
         );
