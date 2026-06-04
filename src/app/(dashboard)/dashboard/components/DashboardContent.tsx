@@ -1,6 +1,6 @@
 'use client'
 
-import { DashboardData, MonthlyHealthMetric } from "@/lib/api/dashboard"
+import { DashboardData, MonthlyHealthMetric, getDashboard } from "@/lib/api/dashboard"
 import { useState, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { HeaderBar } from "./HeaderBar"
@@ -29,22 +29,72 @@ interface DashboardContentProps {
 export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trends, topClients, sourceData, weeklyHours, pieData, userName }: DashboardContentProps) => {
   
   // Period can be changed by header HeaderBar date picker
-  const [selectPeriod, setSelectPeriod] = useState<string>("current")
+  const [selectPeriod, setSelectPeriod] = useState<string>("all")
   const [dashboard, setDashboard] = useState(initialDashboard)
   const [loading, setLoading] = useState(false)
-  
-  // Simulate data fetching when period changes to make the dashboard feel "real"
-  useEffect(() => {
-    if (selectPeriod !== "current") {
-      setLoading(true)
-      const timer = setTimeout(() => {
-        setLoading(false)
-        // const newData = await fetchDashboardData(selectPeriod);
-        // setDashboard(newData);
-      }, 800)
-      return () => clearTimeout(timer)
+
+  const getPeriodLabel = (period: string) => {
+    switch (period) {
+      case '7days':
+        return 'Last Week'
+      case '30days':
+        return 'Last Month'
+      case '90days':
+        return 'Last 90 Days'
+      case 'thisyear':
+        return 'This Year'
+      default:
+        return 'All Time'
     }
-  }, [selectPeriod])
+  }
+
+  const getTrendLabel = (period: string) => {
+    switch (period) {
+      case '7days':
+        return 'vs last Week'
+      case '30days':
+        return 'vs last Month'
+      case '90days':
+        return 'vs last 90 Days'
+      case 'thisyear':
+        return 'vs this Year'
+      default:
+        return 'vs all Time'
+    }
+  }
+
+  const periodLabel = getPeriodLabel(selectPeriod)
+  const trendLabel = getTrendLabel(selectPeriod)
+
+  useEffect(() => {
+    if (selectPeriod === 'all') {
+      setDashboard(initialDashboard)
+      return
+    }
+
+    setLoading(true)
+    let active = true
+
+    const loadDashboard = async () => {
+      try {
+        const newData = await getDashboard(undefined, selectPeriod)
+        if (active) {
+          setDashboard(newData)
+        }
+      } catch (error) {
+        console.error('Failed to load dashboard for period:', selectPeriod, error)
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadDashboard()
+    return () => {
+      active = false
+    }
+  }, [selectPeriod, initialDashboard])
   
   
   return (
@@ -67,7 +117,8 @@ export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trend
             unpaidInvoices={dashboard.pendingInvoices}
             tasksCompletedThisWeek={dashboard.tasksCompletedThisWeek}
             unpaidAmount={dashboard.unpaidAmount}
-            trends={trends}        
+            trends={trends}
+            trendLabel={trendLabel}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -75,8 +126,10 @@ export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trend
               <RevenueOverviewCard
                 totalRevenue={dashboard.totalRevenue}
                 sourceData={sourceData}
-                weeklyHours={weeklyHours}          
+                weeklyHours={weeklyHours}
                 trends={trends.totalRevenue}
+                periodLabel={periodLabel}
+                trendLabel={trendLabel}
               />
               <UpcomingTasks
                 upcomingTasks={dashboard.upcomingTasks}
@@ -88,6 +141,7 @@ export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trend
                 totalHours={dashboard.totalHours}
                 weeklyHours={weeklyHours}
                 trendPercent={trends.totalHours}
+                trendLabel={trendLabel}
               />
             </div>
             <div className="lg:col-span-3 space-y-6">

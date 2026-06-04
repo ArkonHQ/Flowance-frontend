@@ -16,6 +16,7 @@ interface StatCardProps {
     value: number
     isPositive: boolean
     label: string
+    suffix?: string
   }
 }
 
@@ -49,7 +50,7 @@ export const StatCard = ({ title, value, icon: Icon, bg, gradient, trend, color 
                 <TrendingDown className="h-4 w-4 text-red-600" strokeWidth={2.5} />
               )}
               <span className={`text-sm font-medium ${trend.isPositive ? 'text-green-600' : trend.value === 0 ? 'text-gray-400' : 'text-red-600'}`}>
-                {trend.value > 0 ? '+' : '-'}{trend.value}% {trend.label}
+                {trend.value > 0 ? '+' : trend.value < 0 ? '-' : ''}{Math.abs(trend.value)}{trend.suffix ?? '%'} {trend.label}
               </span>
             </div>
           )}

@@ -13,7 +13,7 @@ const computeTrends = (dashboard: DashboardData, lastMonth: LastMonthKPIs) => {
 
   return {
     totalRevenue: pct(dashboard.totalRevenue, lastMonth.totalRevenue),
-    activeProjects: pct(dashboard.activeProject, lastMonth.activeProjects),
+    activeProjects: dashboard.activeProject - lastMonth.activeProjects,
     totalHours: pct(dashboard.totalHours, lastMonth.totalHours),
     unpaidInvoices: pct(dashboard.pendingInvoices, lastMonth.pendingInvoices),
     tasksCompletedThisWeek: pct(dashboard.tasksCompletedThisWeek, lastMonth.tasksCompleted),

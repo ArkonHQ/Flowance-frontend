@@ -27,14 +27,20 @@ export interface DashboardData {
 }
 
 
-export async function getDashboard(cookieHeader?: string): Promise<DashboardData> {
+export async function getDashboard(cookieHeader?: string, period?: string): Promise<DashboardData> {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
     };
     if (cookieHeader) {
         headers['Cookie'] = cookieHeader;
     }
-    const res = await fetch(`${API_BASE}/dashboard`, {
+
+    const url = new URL(`${API_BASE}/dashboard`)
+    if (period) {
+        url.searchParams.set('period', period)
+    }
+
+    const res = await fetch(url.toString(), {
         credentials: "include",
         headers,
     });

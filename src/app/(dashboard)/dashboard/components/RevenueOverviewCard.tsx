@@ -11,10 +11,12 @@ interface RevenueOverviewCardProps {
   totalRevenue: number
   sourceData: { name: string, value: number, percentage: string, color: string } []
   weeklyHours: { name:string, revenue: number }[]
-  trends?: number  
+  trends?: number
+  periodLabel?: string
+  trendLabel?: string
 }
 
-export function RevenueOverviewCard({ totalRevenue, sourceData, weeklyHours, trends }: RevenueOverviewCardProps) {
+export function RevenueOverviewCard({ totalRevenue, sourceData, weeklyHours, trends, periodLabel = 'Last 30 Days', trendLabel = 'vs last month' }: RevenueOverviewCardProps) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
   
@@ -32,11 +34,11 @@ export function RevenueOverviewCard({ totalRevenue, sourceData, weeklyHours, tre
             <span className={`text-xs font-semibold ${trendColorClass} px-1.5 py-0.5 rounded flex items-center gap-0.5`}>
               <TrendIcon className="h-3.5 w-3.5" strokeWidth={2.5} /> {Math.abs(trends ?? 0).toFixed(2)}%
             </span>
-            <span className="text-[10px] text-muted-foreground">vs last month</span>
+            <span className="text-[10px] text-muted-foreground">{trendLabel}</span>
           </div>
         </div>
         <Button variant="outline" size="sm" className="h-7 text-[10px] px-2 rounded-lg">
-          Last 30 Days <ChevronDown className="h-2.5 w-2.5 ml-1" />
+          {periodLabel} <ChevronDown className="h-2.5 w-2.5 ml-1" />
         </Button>
       </CardHeader>
       <CardContent>

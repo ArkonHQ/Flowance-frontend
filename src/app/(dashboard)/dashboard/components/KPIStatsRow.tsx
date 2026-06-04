@@ -19,6 +19,7 @@ interface KPIStatsRowProps {
     unpaidInvoices: number
     unpaidAmount: number
   }
+  trendLabel?: string
 }
 
 const container = {
@@ -34,6 +35,7 @@ export function KPIStatsRow({
   tasksCompletedThisWeek,
   unpaidAmount,
   trends,
+  trendLabel = 'vs last month',
 }: KPIStatsRowProps) {
   return (
     <motion.div
@@ -52,7 +54,7 @@ export function KPIStatsRow({
         trend={{
           value: trends.totalRevenue,
           isPositive: trends.totalRevenue >= 0,
-          label: 'vs last month'
+          label: trendLabel
         }}
       />
       <StatCard
@@ -65,12 +67,13 @@ export function KPIStatsRow({
         trend={{
           value: trends.activeProjects,
           isPositive: trends.activeProjects >= 0,
-          label: 'vs last month'
+          label: trendLabel,
+          suffix: ' projects'
         }}
       />
       <StatCard
         title='Total Hours'
-        value={totalHours.toFixed(1)}
+        value={totalHours.toFixed(1).concat(' hrs')}
         icon={Clock}
         color='text-orange-500'
         bg='bg-orange-100/70 dark:bg-orange-950/40'
@@ -78,7 +81,7 @@ export function KPIStatsRow({
         trend={{
           value: trends.totalHours,
           isPositive: trends.totalHours >= 0,
-          label: 'vs last month'
+          label: trendLabel
         }}
       />
       <StatCard
@@ -91,7 +94,7 @@ export function KPIStatsRow({
         trend={{
           value: trends.unpaidInvoices,
           isPositive: trends.unpaidInvoices <= 0,
-          label: 'vs last month'
+          label: trendLabel
         }}
       />
       <StatCard
@@ -104,7 +107,7 @@ export function KPIStatsRow({
         trend={{
           value: trends.tasksCompletedThisWeek,
           isPositive: trends.tasksCompletedThisWeek >= 0,
-          label: 'vs last month'
+          label: trendLabel
         }}
       />
       <StatCard
@@ -117,7 +120,7 @@ export function KPIStatsRow({
         trend={{
           value: trends.unpaidAmount,
           isPositive: trends.unpaidAmount <= 0,
-          label: 'vs last month'
+          label: trendLabel
         }}
       />
     </motion.div>
