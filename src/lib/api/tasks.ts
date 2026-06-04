@@ -8,7 +8,7 @@ export type Task =  {
     project: Project,
     title: string,
     description: string | null,
-    status: 'todo' | 'in_progress' | 'done' | 'delayed' | 'cancelled',
+    status: 'todo' | 'in_progress' | 'done' | 'delayed' | 'cancelled' | 'overdue',
     priority: 'low' | 'medium' | 'high',
     deadline: Date | string,
     completedAt: Date | null,
@@ -19,21 +19,45 @@ export type Task =  {
     deletedAt: Date | null
 }
 
-export const getAllTasks = async ( cookieHeader?: string ): Promise<Task[]> => {
+interface TaskResponse {
+    tasks: Task[]
+    totalHours: number
+}
 
-    const headers: Record<string, string> ={'Content-Type': 'application/json'}
+const getTotalTaskHours = async (cookieHeader?: string): Promise<number> => {
+    const headers: Record<string, string> = {'Content-Type': 'application/json'}
     if (cookieHeader) headers['Cookie'] = cookieHeader;
-    
 
-    const res = await fetch(`${API_BASE}/tasks`, {
+    const res = await fetch(`${API_BASE}/tasks/total-hours`, {
         method: 'GET',
         headers,
         credentials: 'include'
     })
-    if (!res.ok) throw new Error (`Failed to fetch tasks: ${res.status}`)
-        
+
+    if (!res.ok) return 0
+
     const data = await res.json()
-    return data.tasks
+    return Number(data.totalHours) || 0
+}
+
+export const getAllTasks = async ( cookieHeader?: string ): Promise<TaskResponse> => {
+    const headers: Record<string, string> = {'Content-Type': 'application/json'}
+    if (cookieHeader) headers['Cookie'] = cookieHeader;
+
+    const [taskRes, totalHours] = await Promise.all([
+        fetch(`${API_BASE}/tasks`, {
+            method: 'GET',
+            headers,
+            credentials: 'include'
+        }),
+        getTotalTaskHours(cookieHeader)
+    ])
+
+    if (!taskRes.ok) throw new Error (`Failed to fetch tasks: ${taskRes.status}`)
+
+    const data = await taskRes.json()
+
+    return { tasks: data.tasks, totalHours }
 }
 
 export const getTask = async (taskId: number, cookieHeader?: string): Promise<Task> => {

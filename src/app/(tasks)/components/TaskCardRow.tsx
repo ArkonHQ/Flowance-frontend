@@ -35,6 +35,7 @@ const getStatusColor = (status: string) => {
     done: "bg-emerald-100 text-emerald-700 border-emerald-200",
     cancelled: "bg-red-100 text-red-700 border-red-200",
     delayed: "bg-gray-100 text-gray-700 border-gray-200",
+    overdue: "bg-rose-100 text-rose-700 border-rose-200",
   }
   return statusColors[status] || statusColors.delayed
 }

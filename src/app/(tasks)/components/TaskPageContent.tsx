@@ -14,7 +14,7 @@ import { PaginationFooter } from "@/app/components/pagination-footer";
 
 interface Props {
   initialTask: Task[]
-  stats: { total: number; todo: number, in_progress: number, done: number, cancelled: number, delayed: number, high: number, overdue: number}
+  stats: { total: number; todo: number, in_progress: number, done: number, cancelled: number, delayed: number, totalHours: number, overdue: number}
 }
 
 export const TaskPageContent = ({ initialTask, stats }: Props) => {
@@ -104,7 +104,7 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
         />
         <StatCard 
           title="Total Hours"
-          value={stats.total.toString()} 
+          value={stats.totalHours.toFixed(1).concat(' hrs')} 
           icon={Clock}
           color="text-indigo-500"
           bg="bg-indigo-100/70 dark:bg-indigo-950/40"
@@ -119,9 +119,9 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
           gradient="from-red-500 to-pink-500"
         />
         <StatCard 
-          title="High Priority"
-          value={stats.high.toString()} 
-          icon={AlertCircle}
+          title="To Do"
+          value={stats.todo.toString()} 
+          icon={ListTodo}
           color="text-rose-500"
           bg="bg-rose-100/70 dark:bg-rose-950/40"
           gradient="from-rose-500 to-pink-600"
