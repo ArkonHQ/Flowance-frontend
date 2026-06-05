@@ -2,7 +2,7 @@
 
 import { Invoice, deleteInvoice, updateInvoice } from '@/lib/api/invoices'
 import { useState, useMemo, useEffect } from 'react'
-import { Search, Calendar, ChevronDown, Trash2, X, AlertTriangle, SlidersHorizontal, Bell, FileText } from 'lucide-react'
+import { Search, Calendar, ChevronDown, X, SlidersHorizontal, Bell, FileText } from 'lucide-react'
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { InvoicesRow } from './InvoicesRow'
@@ -19,11 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+import { InvoicesBulkActions } from '@/app/(invoices)/invoices/components/invoices-bulk-actions'
 
 interface Props {
   initialInvoices: Invoice[]
@@ -454,90 +450,12 @@ export const InvoicesContent = ({ initialInvoices, clients, projects }: Props) =
 
       {/* Floating Bulk Actions Toolbar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-lg animate-in fade-in slide-in-from-bottom-5 duration-300">
-          <div className="bg-card/90 dark:bg-card/85 backdrop-blur-xl border border-border/40 px-4 py-3 rounded-2xl shadow-2xl flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="h-5 px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold border border-primary/20 flex items-center justify-center">
-                {selectedIds.size}
-              </span>
-              <span className="text-xs font-bold text-muted-foreground">selected</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* Bulk Status Select */}
-              <Select onValueChange={(val) => handleBulkStatusChange(val as Invoice['status'])}>
-                <SelectTrigger className="h-9 px-3 bg-background border-border/50 hover:bg-muted text-xs font-bold text-foreground w-[130px] rounded-xl">
-                  <SelectValue placeholder="Set Status" />
-                </SelectTrigger>
-                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/40 rounded-xl">
-                  <SelectItem value="paid">Mark Paid</SelectItem>
-                  <SelectItem value="sent">Mark Sent</SelectItem>
-                  <SelectItem value="overdue">Mark Overdue</SelectItem>
-                  <SelectItem value="draft">Mark Draft</SelectItem>
-                  <SelectItem value="partially_paid">Mark Partially Paid</SelectItem>
-                  <SelectItem value="cancelled">Mark Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Bulk Delete Confirm Dialog */}
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-9 px-3 text-xs font-bold text-red-600 hover:bg-red-500/10 hover:text-red-600 rounded-xl flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    <span>Delete</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md bg-card/80 backdrop-blur-xl border border-border/40 shadow-2xl p-0 gap-0 overflow-hidden rounded-xl">
-                  <div className="h-1.5 bg-linear-to-r from-red-500 to-rose-500" />
-                  <div className="p-6 space-y-5">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 ring-4 ring-destructive/20">
-                      <AlertTriangle className="h-7 w-7 text-destructive" />
-                    </div>
-                    <div className="space-y-2 text-center">
-                      <h3 className="text-lg font-bold text-foreground">Delete {selectedIds.size} Invoices?</h3>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Are you sure you want to permanently delete the {selectedIds.size} selected invoices? This action cannot be undone.
-                      </p>
-                    </div>
-                    <div className="flex gap-2.5 justify-center">
-                      <DialogTrigger asChild>
-                        <Button variant="outline" className="min-w-24 text-xs h-9 rounded-xl">
-                          Cancel
-                        </Button>
-                      </DialogTrigger>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="destructive"
-                          onClick={handleBulkDelete}
-                          className="min-w-28 text-xs h-9 rounded-xl gap-1.5"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          <span>Delete Invoices</span>
-                        </Button>
-                      </DialogTrigger>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <div className="h-5 w-[1px] bg-border/40 mx-1" />
-
-              {/* Clear Selection */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedIds(new Set())}
-                className="h-8.5 w-8.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
+        <InvoicesBulkActions
+          selectedCount={selectedIds.size}
+          onBulkStatusChange={(status) => handleBulkStatusChange(status)}
+          onBulkDelete={handleBulkDelete}
+          onClearSelection={() => setSelectedIds(new Set())}
+        />
       )}
     </div>
   )

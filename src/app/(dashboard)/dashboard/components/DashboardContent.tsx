@@ -66,16 +66,29 @@ export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trend
   const periodLabel = getPeriodLabel(selectPeriod)
   const trendLabel = getTrendLabel(selectPeriod)
 
+  const reloadDashboard = async (period: string) => {
+    setLoading(true)
+    try {
+      const periodArg = period === 'all' ? undefined : period
+      const newData = await getDashboard(undefined, periodArg)
+      setDashboard(newData)
+    } catch (error) {
+      console.error('Failed to reload dashboard after time logging:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (selectPeriod === 'all') {
       setDashboard(initialDashboard)
       return
     }
 
-    setLoading(true)
     let active = true
 
     const loadDashboard = async () => {
+      setLoading(true)
       try {
         const newData = await getDashboard(undefined, selectPeriod)
         if (active) {
@@ -95,6 +108,15 @@ export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trend
       active = false
     }
   }, [selectPeriod, initialDashboard])
+
+  useEffect(() => {
+    const handleTaskTimeLogged = () => {
+      reloadDashboard(selectPeriod)
+    }
+
+    window.addEventListener('taskTimeLogged', handleTaskTimeLogged)
+    return () => window.removeEventListener('taskTimeLogged', handleTaskTimeLogged)
+  }, [selectPeriod])
   
   
   return (

@@ -16,7 +16,7 @@ const TaskPage = async () => {
   const cookieHeader = cookieStore.toString()
   
   const {tasks, totalHours} = await getAllTasks(cookieHeader)
-  const project:Project [] = await getAllProjects(cookieHeader)
+  const projects: Project[] = await getAllProjects(cookieHeader)
   
   // Compute stats
   const total = tasks.length
@@ -30,7 +30,7 @@ const TaskPage = async () => {
 
   const stats = { total, todo, in_progress, done, cancelled, delayed, totalHours, overdue }
 
-  return <TaskPageContent initialTask={tasks} stats={stats} />
+  return <TaskPageContent initialTask={tasks} stats={stats} projects={projects} />
   
 }
 

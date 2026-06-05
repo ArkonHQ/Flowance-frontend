@@ -1,7 +1,8 @@
 'use client'
 import { motion } from "framer-motion";
-import { Task } from "@/lib/api/tasks"
-import { useState, useMemo } from "react";
+import { Task, getAllTasks } from "@/lib/api/tasks"
+import { Project } from "@/lib/api/projects"
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, XCircle, Clock, AlertCircle, Search, FilterX, WatchIcon } from "lucide-react";
@@ -9,21 +10,51 @@ import { StatCard } from "@/components/ui/StatCard";
 import { Input } from "@/components/ui/input";
 import { TaskCardRow } from "./TaskCardRow";
 import { PaginationFooter } from "@/app/components/pagination-footer";
+import TaskSidePanel from "./SidePanel";
 
 
 
 interface Props {
   initialTask: Task[]
   stats: { total: number; todo: number, in_progress: number, done: number, cancelled: number, delayed: number, totalHours: number, overdue: number}
+  projects: Project[]
 }
 
-export const TaskPageContent = ({ initialTask, stats }: Props) => {
+export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
   const [tasks, setTasks] = useState<Task[]>(initialTask);
+  const [taskStats, setTaskStats] = useState(stats);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedTask, setSelectedTask] = useState<{ id: number; title: string; projectTitle: string | null } | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const pageSize = 7;
 
+  const refreshTasksAndStats = async () => {
+    try {
+      const { tasks: refreshedTasks, totalHours } = await getAllTasks();
+      setTasks(refreshedTasks);
+      const total = refreshedTasks.length;
+      const todo = refreshedTasks.filter(t => t.status === 'todo').length;
+      const in_progress = refreshedTasks.filter(t => t.status === 'in_progress').length;
+      const done = refreshedTasks.filter(t => t.status === 'done').length;
+      const cancelled = refreshedTasks.filter(t => t.status === 'cancelled').length;
+      const delayed = refreshedTasks.filter(t => t.status === 'delayed').length;
+      const overdue = refreshedTasks.filter(t => t.status === 'overdue').length;
 
+      setTaskStats({ total, todo, in_progress, done, cancelled, delayed, totalHours, overdue });
+    } catch (error) {
+      console.error('Failed to refresh tasks and stats after time logging:', error);
+    }
+  };
+
+  const projectLookup = useMemo(() => {
+    return new Map(projects.map((project) => [project.id, project.title]));
+  }, [projects]);
+
+  const handleOpenPanel = (taskId: number, taskTitle: string, projectTitle: string | null) => {
+    setSelectedTask({ id: taskId, title: taskTitle, projectTitle });
+    setIsPanelOpen(true);
+  };
 
   const filtered = useMemo(() => {
     const term = searchTerm.toLowerCase().trim();
@@ -55,6 +86,15 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
     setTasks(prev => prev.filter(t => t.id !== id));
   };
 
+  useEffect(() => {
+    const handleTaskTimeLogged = () => {
+      refreshTasksAndStats()
+    }
+
+    window.addEventListener('taskTimeLogged', handleTaskTimeLogged)
+    return () => window.removeEventListener('taskTimeLogged', handleTaskTimeLogged)
+  }, [])
+
   return (
     <motion.div
       initial="hidden"
@@ -80,7 +120,7 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
         <StatCard 
           title="Total Tasks"
-          value={stats.total.toString()} 
+          value={taskStats.total.toString()} 
           icon={Briefcase}
           color="text-yellow-500"
           bg="bg-yellow-100/70 dark:bg-yellow-950/40"
@@ -88,7 +128,7 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
         />
         <StatCard 
           title="In Progress"
-          value={stats.in_progress.toString()} 
+          value={taskStats.in_progress.toString()} 
           icon={Activity}
           color="text-blue-500"
           bg="bg-blue-100/70 dark:bg-blue-950/40"
@@ -96,7 +136,7 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
         />
         <StatCard 
           title="Completed"
-          value={stats.done.toString()} 
+          value={taskStats.done.toString()} 
           icon={CheckCircle}
           color="text-emerald-500"
           bg="bg-emerald-100/70 dark:bg-emerald-950/40"
@@ -104,7 +144,7 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
         />
         <StatCard 
           title="Total Hours"
-          value={stats.totalHours.toFixed(1).concat(' hrs')} 
+          value={taskStats.totalHours.toFixed(1).concat(' hrs')} 
           icon={Clock}
           color="text-indigo-500"
           bg="bg-indigo-100/70 dark:bg-indigo-950/40"
@@ -112,7 +152,7 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
         />
         <StatCard 
           title="Overdue"
-          value={stats.overdue.toString()} 
+          value={taskStats.overdue.toString()} 
           icon={Clock}
           color="text-red-500"
           bg="bg-red-100/70 dark:bg-red-950/40"
@@ -120,7 +160,7 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
         />
         <StatCard 
           title="To Do"
-          value={stats.todo.toString()} 
+          value={taskStats.todo.toString()} 
           icon={ListTodo}
           color="text-rose-500"
           bg="bg-rose-100/70 dark:bg-rose-950/40"
@@ -170,9 +210,18 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
             </div>
         ) : (
           <div className="grid gap-3">
-            {paginatedTasks.map((task) => (
-              <TaskCardRow key={task.id} task={task} onDelete={handleDelete} />
-            ))}
+            {paginatedTasks.map((task) => {
+              const projectTitle = task.project?.title ?? projectLookup.get(task.projectId) ?? null;
+              return (
+                <TaskCardRow
+                  key={task.id}
+                  task={task}
+                  projectTitle={projectTitle}
+                  onDelete={handleDelete}
+                  onOpenPanel={handleOpenPanel}
+                />
+              )
+            })}
           </div>
         )}
         {filtered.length > 0 && (
@@ -190,6 +239,15 @@ export const TaskPageContent = ({ initialTask, stats }: Props) => {
           </div>
         )}
       </div>
+
+      <TaskSidePanel 
+        taskId={selectedTask?.id ?? null}
+        taskTitle={selectedTask?.title ?? ''}
+        projectTitle={selectedTask?.projectTitle ?? ''}
+        open={isPanelOpen}
+        onClose={() => setIsPanelOpen(false)}
+        onTimeLogged={refreshTasksAndStats}
+      />
     </motion.div>
   )
 }

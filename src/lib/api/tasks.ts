@@ -120,3 +120,18 @@ export const deleteTask = async (taskId: number, cookieHeader?: string): Promise
     if (!res.ok) throw new Error(`Failed to delete task: ${res.status}`);
     return { success: true };
 }
+
+export const getTaskByProject = async (processId: number, cookieHeader?: string): Promise<Task[]> => {
+    const headers: Record<string, string> = {'Content-Type': 'application/json'}
+    if (cookieHeader) headers['Cookie'] = cookieHeader
+
+    const res = await fetch (`${API_BASE}/tasks?projectId=${processId}`, {
+        headers,
+        credentials: 'include'
+    })
+
+    if (!res.ok) throw new Error(`Failed to fetch tasks for project: ${res.status}`)
+
+    const data = await res.json()
+    return data.tasks
+}

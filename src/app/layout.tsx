@@ -15,6 +15,8 @@ import AppSidebar from './components/app-sidebar';
 import { GlobalSearch } from './components/global-search';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
+import GlobalTimerDisplay from './components/GlobalTimerDisplay';
+import GlobalTimerUpdater from './components/GlobalTimerUpdater copy';
 import { useSession } from '@/lib/auth';
 import { usePathname } from 'next/navigation';
 
@@ -80,6 +82,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Toaster richColors />
             {/* Global Search */}
             <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
+
+            <GlobalTimerUpdater />
+            <GlobalTimerDisplay />
           </AuthGuard>
         </Providers>
       </body>

@@ -24,7 +24,9 @@ import DeleteButton from "./DeleteTasks"
 
 interface TaskCardRowProps {
   task: Task
+  projectTitle?: string | null
   onDelete: (id:number) => void
+  onOpenPanel: (taskId: number, taskTitle: string, projectTitle: string | null) => void
 }
 
   // 1.Define Colors if exist 
@@ -63,11 +65,16 @@ const formatDate = (date: Date | string | undefined | null) => {
 
 
 
-export const TaskCardRow = ({ task, onDelete }: TaskCardRowProps) => {
+export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel }: TaskCardRowProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
 
   const statusDisplay = (task.status).replace(/_/g, " ")
   const title = task.title ?? "Untitled task"
+
+  const handleOpenPanel = (e: React.MouseEvent) => {
+    e.preventDefault()
+    onOpenPanel(task.id, task.title ?? "Untitled task", task.project?.title ?? null)
+  }
 
   return (
     <div
@@ -87,6 +94,7 @@ export const TaskCardRow = ({ task, onDelete }: TaskCardRowProps) => {
         <Link
           href={`/tasks/${task.id}`}
           className="font-semibold truncate hover:text-primary transition-colors"
+          onClick={handleOpenPanel}
           title={title}
         >
           {title}
@@ -96,7 +104,7 @@ export const TaskCardRow = ({ task, onDelete }: TaskCardRowProps) => {
       {/* Project */}
       <div className="col-span-2 hidden lg:block text-sm text-muted-foreground truncate">
         <span className="text-xs font-medium text-gray-400 mr-1">Project:</span>
-        {task.project?.title ?? "No project"}
+        {projectTitle ?? task.project?.title ?? "No project"}
       </div>
 
       {/* Last updated */}
@@ -131,11 +139,11 @@ export const TaskCardRow = ({ task, onDelete }: TaskCardRowProps) => {
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem asChild>
-              <Link href={`/tasks/${task.id}`} className="flex items-center gap-2">
+            <DropdownMenuItem onSelect={() => onOpenPanel(task.id, task.title ?? "Untitled task", task.project?.title ?? null) }>
+              <div className="flex items-center gap-2 cursor-pointer">
                 <ExternalLink className="h-4 w-4" />
                 View details
-              </Link>
+              </div>
             </DropdownMenuItem>
 
             <DropdownMenuItem asChild>
