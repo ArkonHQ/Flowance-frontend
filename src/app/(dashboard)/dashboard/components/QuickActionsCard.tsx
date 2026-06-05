@@ -55,9 +55,8 @@ export function QuickActionsCard() {
 
       <CardContent className="grid grid-cols-2 gap-2.5">
         {actions.map((action) => (
-          <Link href={`${action.href}`} >
+          <Link key={action.label} href={`${action.href ?? '#'}`} >
           <Button
-            key={action.label}
             variant="outline"
             className={`h-14 justify-start gap-3 text-xs font-bold border-border/40 rounded-xl group transition-all duration-200 ${action.hoverBg} ${action.hoverBorder} shadow-sm`}
           >

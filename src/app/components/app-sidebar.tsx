@@ -31,6 +31,7 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { GlobalTimerDisplay } from "@/components/GlobalTimerDisplay";
 
 
 const mainItems = [
@@ -83,6 +84,10 @@ const AppSidebar = () => {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
+
+                <div className="mt-auto px-1">
+                    <GlobalTimerDisplay />
+                </div>
             </SidebarContent>
 
             {/* Footer with user & theme toggle */}

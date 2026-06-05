@@ -32,7 +32,13 @@ export function TimeTrackingCard({
           </CardTitle>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-2xl font-bold text-foreground">
-              {totalHours.toFixed(1)} hrs
+              {(() => {
+                const h = Math.floor(totalHours);
+                const m = Math.round((totalHours - h) * 60);
+                if (h === 0 && m === 0 && totalHours > 0) return "< 1m";
+                if (h === 0) return `${m}m`;
+                return `${h}h ${m}m`;
+              })()}
             </span>
             {trendPercent > 0 ? (
             <span className="text-xs font-semibold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-0.5">

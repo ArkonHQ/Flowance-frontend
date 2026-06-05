@@ -143,8 +143,14 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
           gradient="from-emerald-500 to-teal-500"
         />
         <StatCard 
-          title="Total Hours"
-          value={taskStats.totalHours.toFixed(1).concat(' hrs')} 
+          title="Total Time"
+          value={(() => {
+            const h = Math.floor(taskStats.totalHours);
+            const m = Math.round((taskStats.totalHours - h) * 60);
+            if (h === 0 && m === 0 && taskStats.totalHours > 0) return "< 1m";
+            if (h === 0) return `${m}m`;
+            return `${h}h ${m}m`;
+          })()}
           icon={Clock}
           color="text-indigo-500"
           bg="bg-indigo-100/70 dark:bg-indigo-950/40"

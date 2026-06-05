@@ -94,6 +94,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
               </div>
 
               <TaskTimer 
+                taskStatus={task.status}
                 taskId={task.id}
                 taskName={task.title}
                 onTimeLogged={() => {

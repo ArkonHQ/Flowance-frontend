@@ -15,8 +15,7 @@ import AppSidebar from './components/app-sidebar';
 import { GlobalSearch } from './components/global-search';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
-import GlobalTimerDisplay from './components/GlobalTimerDisplay';
-import GlobalTimerUpdater from './components/GlobalTimerUpdater copy';
+import { GlobalTimerDisplay } from '@/components/GlobalTimerDisplay';
 import { useSession } from '@/lib/auth';
 import { usePathname } from 'next/navigation';
 
@@ -72,6 +71,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     </div>
                   </header>
                   <main className="p-4">{children}</main>
+                  {/* Floating timer pill — shown only when sidebar is collapsed */}
+                  <GlobalTimerDisplay />
                 </SidebarInset>
               </SidebarProvider>
             ) : (
@@ -80,11 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </main>
             )}
             <Toaster richColors />
-            {/* Global Search */}
             <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
-
-            <GlobalTimerUpdater />
-            <GlobalTimerDisplay />
           </AuthGuard>
         </Providers>
       </body>

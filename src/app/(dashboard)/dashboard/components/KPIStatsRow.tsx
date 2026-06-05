@@ -73,7 +73,13 @@ export function KPIStatsRow({
       />
       <StatCard
         title='Total Hours'
-        value={totalHours.toFixed(1).concat(' hrs')}
+        value={(() => {
+          const h = Math.floor(totalHours);
+          const m = Math.round((totalHours - h) * 60);
+          if (h === 0 && m === 0 && totalHours > 0) return "< 1m";
+          if (h === 0) return `${m}m`;
+          return `${h}h ${m}m`;
+        })()}
         icon={Clock}
         color='text-orange-500'
         bg='bg-orange-100/70 dark:bg-orange-950/40'
