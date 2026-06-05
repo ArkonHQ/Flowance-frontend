@@ -15,7 +15,6 @@ import AppSidebar from './components/app-sidebar';
 import { GlobalSearch } from './components/global-search';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
-import { GlobalTimerDisplay } from '@/components/GlobalTimerDisplay';
 import { useSession } from '@/lib/auth';
 import { usePathname } from 'next/navigation';
 
@@ -71,8 +70,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     </div>
                   </header>
                   <main className="p-4">{children}</main>
-                  {/* Floating timer pill — shown only when sidebar is collapsed */}
-                  <GlobalTimerDisplay />
                 </SidebarInset>
               </SidebarProvider>
             ) : (
