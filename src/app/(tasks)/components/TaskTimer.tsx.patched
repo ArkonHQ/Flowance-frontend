@@ -247,69 +247,62 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
 
         {/* Manual time entry (popover) */}
         <div className="flex items-center justify-center gap-2 pt-2 border-t border-gray-100 dark:border-zinc-800">
+          <div className="flex items-center gap-3">
+            <TimerIcon className="h-5 w-5" />
+            <div className="text-sm font-medium text-muted-foreground dark:text-zinc-400">Add Manual Time</div>
+          </div>
+
           <Popover open={manualOpen} onOpenChange={setManualOpen}>
             <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-full border border-transparent bg-slate-100 px-3 py-2 text-sm font-medium text-slate-900 transition hover:border-slate-300 hover:bg-white dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-700 dark:hover:bg-zinc-800"
-                disabled={loading || isDone}
-              >
-                <TimerIcon className="h-4 w-4 text-slate-500 dark:text-zinc-400" />
-                <span className="text-sm font-medium text-primary">Add manual time</span>
-              </button>
+              <Button size="sm" className="h-9 w-24 gap-2" disabled={loading || isDone}>
+                <PlusCircle className="h-4 w-4" /> Add
+              </Button>
             </PopoverTrigger>
 
             <PopoverContent className="w-[320px] max-w-[90vw]" onKeyDown={onPopoverKeyDown}>
               <PopoverHeader>
-                <PopoverTitle>Manual time entry</PopoverTitle>
-                <PopoverDescription>Enter hours and minutes to log time quickly.</PopoverDescription>
+                <PopoverTitle>Add Manual Time</PopoverTitle>
+                <PopoverDescription>Enter hours and minutes to log time manually.</PopoverDescription>
               </PopoverHeader>
 
-              <div className="grid gap-3 pt-3">
-                <div className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-xl bg-slate-50 p-3 dark:bg-zinc-950">
-                  <span className="text-sm text-slate-500 dark:text-zinc-500">Hours</span>
-                  <Input
-                    ref={hoursRef}
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={manualHours}
-                    onChange={(e) => setManualHours(e.target.value)}
-                    className="h-11 w-full rounded-lg border-slate-200 bg-white text-center text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-600 dark:focus:ring-zinc-700"
-                    disabled={loading}
-                  />
-                </div>
+              <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+                <Input
+                  ref={hoursRef}
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={manualHours}
+                  onChange={(e) => setManualHours(e.target.value)}
+                  className="h-9 w-20 text-center text-sm"
+                  disabled={loading}
+                />
+                <div className="text-sm text-muted-foreground">h</div>
+                <Input
+                  type="number"
+                  min="0"
+                  max="59"
+                  placeholder="0"
+                  value={manualMinutes}
+                  onChange={(e) => setManualMinutes(e.target.value)}
+                  className="h-9 w-20 text-center text-sm"
+                  disabled={loading}
+                />
+                <div className="text-sm text-muted-foreground">m</div>
+              </div>
 
-                <div className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-xl bg-slate-50 p-3 dark:bg-zinc-950">
-                  <span className="text-sm text-slate-500 dark:text-zinc-500">Minutes</span>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="59"
-                    placeholder="0"
-                    value={manualMinutes}
-                    onChange={(e) => setManualMinutes(e.target.value)}
-                    className="h-11 w-full rounded-lg border-slate-200 bg-white text-center text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-600 dark:focus:ring-zinc-700"
-                    disabled={loading}
-                  />
-                </div>
+              <div className="text-sm text-muted-foreground mt-2">{manualPreview}</div>
 
-                <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-zinc-950 dark:text-zinc-400">
-                  {manualPreview}
-                </div>
-
-                <div className="flex justify-end gap-2 pt-1">
-                  <Button size="sm" variant="ghost" onClick={() => setManualOpen(false)} disabled={loading}>
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleManualLog}
-                    disabled={loading || (Number(manualHours || 0) === 0 && Number(manualMinutes || 0) === 0)}
-                  >
-                    Add time
-                  </Button>
-                </div>
+              <div className="flex justify-end gap-2 pt-3">
+                <Button size="sm" variant="ghost" onClick={() => setManualOpen(false)} disabled={loading}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleManualLog}
+                  disabled={loading || (Number(manualHours || 0) === 0 && Number(manualMinutes || 0) === 0)}
+                >
+                  Add
+                </Button>
               </div>
             </PopoverContent>
           </Popover>
