@@ -3,7 +3,7 @@ import { create } from 'zustand';
 export interface SingleTimer {
   taskId: number;
   taskName: string;
-  status: 'running' | 'paused';
+  status: 'running' | 'paused' | 'stopped';
   startTime: Date;
   pausedAt: Date | null;
   totalPausedSeconds: number;
@@ -17,7 +17,7 @@ interface MultiTimerState {
   timers: Record<number, SingleTimer>;
   /*
     false until loadSession() finishes backend reconciliation.
-    Use this in TaskTimer to show a skeleton instead of the Start button
+    Use this in TaskTimer to show a skeleton instead of the Start button1
     while the first network call is in flight.
    */
   sessionLoaded: boolean;
@@ -125,7 +125,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
     if (get().timers[taskId]) return;
 
     const now = new Date();
-    const pastLoggedSeconds = await fetchPastLoggedSeconds(taskId);
+    const pastLoggedSeconds = 0; // Always start from zero for a new session
 
     set((state) => ({
       timers: {
@@ -277,32 +277,46 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
     const timer = get().timers[taskId];
     if (!timer) return;
 
-    const cleanup = () => {
+    const previousTimer = { ...timer };
+    const now = new Date();
+
+    const removeTimer = () => {
       set((state) => {
-        const next = { ...state.timers };
-        delete next[taskId];
-        return { timers: next };
+        const nextTimers = { ...state.timers };
+        delete nextTimers[taskId];
+        return { timers: nextTimers };
       });
       get()._saveToLocalStorage();
     };
 
-    // If already paused, chunk was already logged — just clean up local state
+    const restoreTimer = () => {
+      set((state) => ({
+        timers: {
+          ...state.timers,
+          [taskId]: previousTimer,
+        },
+      }));
+      get()._saveToLocalStorage();
+    };
+
     if (timer.status === 'paused') {
-      cleanup();
+      removeTimer();
+      await get().deleteSession();
       return;
     }
 
-    const now = new Date();
     const totalSeconds =
       (now.getTime() - new Date(timer.startTime).getTime()) / 1000 - timer.totalPausedSeconds;
     const hours = totalSeconds / 3600;
 
     if (totalSeconds <= 0) {
       console.warn(`[Timer] Task ${taskId} had 0 seconds — skipping log.`);
-      cleanup();
+      removeTimer();
       await get().deleteSession();
       return;
     }
+
+    removeTimer();
 
     try {
       const res = await fetch(`${API_BASE}/tasks/${taskId}/timer/stop`, {
@@ -336,8 +350,8 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
       } catch { /* SSR */ }
     } catch (err) {
       console.error('[Timer] stopTimer error:', err);
+      restoreTimer();
     } finally {
-      cleanup();
       await get().deleteSession();
     }
   },
@@ -365,25 +379,27 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
 
       if (data?.session) {
         const s = data.session;
-        // Use backend's startTime as authoritative, fetch accumulated past hours
-        const pastLoggedSeconds = await fetchPastLoggedSeconds(s.taskId);
+        set((state) => {
+          const existingTimer = state.timers[s.taskId];
+          const pastLoggedSeconds = existingTimer ? existingTimer.pastLoggedSeconds : 0;
 
-        set((state) => ({
-          sessionLoaded: true,
-          timers: {
-            ...state.timers,
-            [s.taskId]: {
-              taskId: s.taskId,
-              taskName: s.taskName,
-              status: 'running',
-              startTime: new Date(s.startTime),
-              pausedAt: null,
-              totalPausedSeconds: s.totalPausedSeconds,
-              elapsedSeconds: pastLoggedSeconds,
-              pastLoggedSeconds,
+          return {
+            sessionLoaded: true,
+            timers: {
+              ...state.timers,
+              [s.taskId]: {
+                taskId: s.taskId,
+                taskName: s.taskName,
+                status: 'running',
+                startTime: new Date(s.startTime),
+                pausedAt: null,
+                totalPausedSeconds: s.totalPausedSeconds,
+                elapsedSeconds: pastLoggedSeconds,
+                pastLoggedSeconds,
+              },
             },
-          },
-        }));
+          };
+        });
         get()._saveToLocalStorage();
         console.log(`[Timer] Backend confirmed running session for task ${s.taskId}`);
       } else {

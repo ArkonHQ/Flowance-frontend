@@ -174,6 +174,8 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
     ? 'bg-green-500 animate-pulse'
     : status === 'paused'
     ? 'bg-yellow-500'
+    : status === 'stopped'
+    ? 'bg-gray-500'
     : 'bg-gray-400'
 
   const statusText = isDone
@@ -182,6 +184,8 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
     ? 'Running'
     : status === 'paused'
     ? 'Paused'
+    : status === 'stopped'
+    ? 'Stopped'
     : 'Stopped'
 
   const formatManualPreview = (hStr: string, mStr: string) => {
@@ -239,7 +243,7 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
               <Square className="h-4 w-4" /> Completed
             </Button>
           ) : (
-            !isActive && status !== 'running' && status !== 'paused' && (
+            (!isActive || status === 'stopped') && (
               <Button size="lg" onClick={handleStart} disabled={loading} className="h-11 w-28 gap-1">
                 <Play className="h-4 w-4" /> Start
               </Button>
@@ -266,6 +270,12 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
                 <Square className="h-4 w-4" /> Stop
               </Button>
             </>
+          )}
+
+          {sessionLoaded && isActive && status === 'stopped' && (
+            <Button size="lg" onClick={handleStart} disabled={loading} className="h-11 w-28 gap-1">
+              <Play className="h-4 w-4" /> Start
+            </Button>
           )}
         </div>
 
