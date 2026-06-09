@@ -17,11 +17,17 @@ import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { useSession } from '@/lib/auth';
 import { usePathname } from 'next/navigation';
+import { useTimerStore } from '@/store/timerStore';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: session } = useSession();
   const pathname = usePathname();
+  const loadTiemrSession = useTimerStore((state) => state.loadSession)
+
+  useEffect(() => {
+    loadTiemrSession()
+  }, [loadTiemrSession])
 
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 
@@ -79,9 +85,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             )}
             <Toaster richColors />
             <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
+            <TimerSessionLoader />
           </AuthGuard>
         </Providers>
       </body>
     </html>
   );
+}
+
+
+const TimerSessionLoader = () => {
+  const loadSession = useTimerStore((state) => state.loadSession)
+
+  useEffect(() => {
+    loadSession()
+  }, [])
+
+  return null
 }

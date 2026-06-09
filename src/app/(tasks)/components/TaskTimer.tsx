@@ -40,6 +40,7 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
 
   // Subscribe only to this task's timer slot
   const timer = useTimerStore((state) => state.timers[taskId])
+  const sessionLoaded = useTimerStore((state) => state.sessionLoaded)
   const startTimer = useTimerStore((state) => state.startTimer)
   const pauseTimer = useTimerStore((state) => state.pauseTimer)
   const resumeTimer = useTimerStore((state) => state.resumeTimer)
@@ -103,8 +104,27 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
     }
   }
 
-  const handlePause = () => pauseTimer(taskId)
-  const handleResume = () => resumeTimer(taskId)
+  const handlePause = async () => {
+    setLoading(true)
+    try {
+      await pauseTimer(taskId)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResume = async () => {
+    setLoading(true)
+    try {
+      await resumeTimer(taskId)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleStop = async () => {
     setLoading(true)
@@ -188,7 +208,7 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 shadow-md border border-gray-200 dark:border-zinc-700 space-y-3">
-      <h1 className="font-semibold text-lg">Time Tracking</h1>
+        <h1 className="font-semibold text-lg">Time Tracking</h1>
       <div className="border-b p-4 bg-secondary/10 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-700 space-y-3">
         {/* Header */}
         <div className="flex items-center justify-center mt-2">
@@ -210,19 +230,23 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
 
         {/* Action Buttons */}
         <div className="flex justify-center gap-4 mt-4">
-          {isDone ? (
+          {/* While session is reconciling with backend, show nothing (localStorage
+              already shows the correct timer state above) */}
+          {!sessionLoaded ? (
+            <div className="h-11 w-28 rounded-md bg-muted animate-pulse" />
+          ) : isDone ? (
             <Button size="lg" disabled className="h-11 w-28 gap-1">
               <Square className="h-4 w-4" /> Completed
             </Button>
           ) : (
             !isActive && status !== 'running' && status !== 'paused' && (
-              <Button size="lg" onClick={handleStart} className="h-11 w-28 gap-1">
+              <Button size="lg" onClick={handleStart} disabled={loading} className="h-11 w-28 gap-1">
                 <Play className="h-4 w-4" /> Start
               </Button>
             )
           )}
 
-          {isActive && status === 'running' && (
+          {sessionLoaded && isActive && status === 'running' && (
             <>
               <Button size="lg" onClick={handlePause} disabled={loading} className="h-11 w-28 gap-1">
                 <Pause className="h-4 w-4" /> Pause
@@ -233,7 +257,7 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
             </>
           )}
 
-          {isActive && status === 'paused' && (
+          {sessionLoaded && isActive && status === 'paused' && (
             <>
               <Button size="lg" variant="default" onClick={handleResume} disabled={loading} className="h-11 w-28 gap-1">
                 <Play className="h-4 w-4" /> Resume
