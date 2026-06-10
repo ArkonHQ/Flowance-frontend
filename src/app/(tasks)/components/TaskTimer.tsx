@@ -80,17 +80,28 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
   const elapsedSeconds = timer?.elapsedSeconds ?? 0
   const isActive = !!timer
 
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds: number, status?: string) => {
     const total = Math.max(0, Math.floor(seconds))
     const hrs = Math.floor(total / 3600)
     const mins = Math.floor((total % 3600) / 60)
     const secs = total % 60
-    if (hrs > 0) {
-      return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs
-        .toString()
-        .padStart(2, '0')}`
+    
+    let msNode = null
+    if (status === 'running') {
+      const ms = Math.floor((seconds - total) * 100)
+      msNode = <span className="text-xl text-muted-foreground ml-1">.{ms.toString().padStart(2, '0')}</span>
     }
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+
+    const mainStr = hrs > 0 
+      ? `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+      : `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+
+    return (
+      <>
+        {mainStr}
+        {msNode}
+      </>
+    )
   }
 
   const handleStart = async () => {
@@ -224,8 +235,8 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
 
         {/* Time Display */}
         <div className="text-center">
-          <div className="text-4xl font-mono font-bold tracking-wider text-gray-800 dark:text-zinc-100">
-            {formatTime(elapsedSeconds)}
+          <div className="text-4xl font-mono font-bold tracking-wider text-gray-800 dark:text-zinc-100 min-w-[150px]">
+            {formatTime(elapsedSeconds, status)}
           </div>
           <div className="text-sm font-medium text-muted-foreground dark:text-zinc-400 mt-1 truncate">
             {formatStartDisplay(startDate)}

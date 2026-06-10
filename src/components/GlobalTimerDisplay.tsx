@@ -8,15 +8,28 @@ import { Popover, PopoverTrigger, PopoverContent, PopoverHeader, PopoverTitle, P
 import { Button } from './ui/button'
 import { cn } from '@/lib/utils'
 
-const formatTime = (seconds: number) => {
+const formatTime = (seconds: number, status?: string) => {
   const total = Math.max(0, Math.floor(seconds))
   const hrs = Math.floor(total / 3600)
   const mins = Math.floor((total % 3600) / 60)
   const secs = total % 60
-  if (hrs > 0) {
-    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  
+  let msNode = null;
+  if (status === 'running') {
+    const ms = Math.floor((seconds - total) * 100);
+    msNode = <span className="text-[0.65em] text-muted-foreground ml-[1px]">.{ms.toString().padStart(2, '0')}</span>;
   }
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+
+  const mainStr = hrs > 0 
+    ? `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    : `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+  return (
+    <>
+      {mainStr}
+      {msNode}
+    </>
+  )
 }
 
 const TimerRow = ({ timer }: { timer: SingleTimer }) => {
@@ -32,8 +45,8 @@ const TimerRow = ({ timer }: { timer: SingleTimer }) => {
             <Button className={cn('bg-primary rounded-full text-xs', timer.status === 'paused' ? 'block' : 'hidden')} onClick={() => resumeTimer(timer.taskId)}>
               ▶ 
             </Button>
-          <span className=" text-lg font-mono font-bold text-foreground ml-2">
-              {formatTime(timer.elapsedSeconds)}
+          <span className=" text-lg font-mono font-bold text-foreground ml-2 w-[70px]">
+              {formatTime(timer.elapsedSeconds, timer.status)}
             </span>
             </div>
           <div className="flex items-center justify-between">
@@ -67,7 +80,7 @@ const TimerRow = ({ timer }: { timer: SingleTimer }) => {
 
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">{timer.status === 'running' ? 'Running' : 'Paused'}</div>
-          <div className="font-mono font-bold">{formatTime(timer.elapsedSeconds)}</div>
+          <div className="font-mono font-bold w-[70px] text-right">{formatTime(timer.elapsedSeconds, timer.status)}</div>
         </div>
 
         <div className="flex items-center gap-2 pt-2">

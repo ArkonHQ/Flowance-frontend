@@ -8,7 +8,7 @@ export interface SingleTimer {
   pausedAt: Date | null;
   totalPausedSeconds: number;
   elapsedSeconds: number;
-  
+
   /* Total hours already logged to DB for this task (from previous chunks) */
   pastLoggedSeconds: number;
 }
@@ -207,16 +207,16 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
       set((state) => {
         const currentTimer = state.timers[taskId];
         if (currentTimer && currentTimer.status === 'paused') {
-           return {
-             timers: {
-               ...state.timers,
-               [taskId]: {
-                 ...currentTimer,
-                 elapsedSeconds: actualPastLoggedSeconds,
-                 pastLoggedSeconds: actualPastLoggedSeconds,
-               }
-             }
-           };
+          return {
+            timers: {
+              ...state.timers,
+              [taskId]: {
+                ...currentTimer,
+                elapsedSeconds: actualPastLoggedSeconds,
+                pastLoggedSeconds: actualPastLoggedSeconds,
+              }
+            }
+          };
         }
         return state;
       });
@@ -483,5 +483,5 @@ if (typeof window !== 'undefined') {
       }
       return { timers: updated };
     });
-  }, 1000);
+  }, 50);
 }
