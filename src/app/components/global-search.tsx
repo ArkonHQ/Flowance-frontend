@@ -45,7 +45,7 @@ const fetchData = useCallback(async () => {
 
       setClients(c);
       setProjects(p);
-      setTasks(t);
+      setTasks(t.tasks);
 
     } catch (err: any) {
 

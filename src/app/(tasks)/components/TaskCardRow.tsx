@@ -1,7 +1,9 @@
 'use client'
 
-
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useTimerStore } from "@/store/timerStore"
+import { Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenuContent,
@@ -11,7 +13,7 @@ import {
   DropdownMenu,
 } from "@/components/ui/dropdown-menu"
 import { Progress } from "@/components/ui/progress"
-import { Task } from "@/lib/api/tasks"
+import { Task, updateTask } from "@/lib/api/tasks"
 import { cn } from "@/lib/utils"
 import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
@@ -27,6 +29,7 @@ interface TaskCardRowProps {
   projectTitle?: string | null
   onDelete: (id:number) => void
   onOpenPanel: (taskId: number, taskTitle: string, projectTitle: string | null) => void
+  onStatusChange?: (taskId: number, newStatus: string) => void
 }
 
   // 1.Define Colors if exist 
@@ -65,8 +68,9 @@ const formatDate = (date: Date | string | undefined | null) => {
 
 
 
-export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel }: TaskCardRowProps) => {
+export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, onStatusChange }: TaskCardRowProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
+  const timer = useTimerStore((state) => state.timers[task.id])
 
   const statusDisplay = (task.status).replace(/_/g, " ")
   const title = task.title ?? "Untitled task"
@@ -74,6 +78,29 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel }: TaskC
   const handleOpenPanel = (e: React.MouseEvent) => {
     e.preventDefault()
     onOpenPanel(task.id, task.title ?? "Untitled task", task.project?.title ?? null)
+  }
+
+  const formatTime = (seconds: number) => {
+    const total = Math.max(0, Math.floor(seconds))
+    if (total === 0) return "0s"
+    const hrs = Math.floor(total / 3600)
+    const mins = Math.floor((total % 3600) / 60)
+    const secs = total % 60
+    
+    if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`
+    if (mins > 0) return `${mins}m ${secs}s`
+    return `${secs}s`
+  }
+
+  const handleCheckboxChange = async (checked: boolean | string) => {
+    const isChecked = checked === true;
+    const newStatus = isChecked ? 'done' : 'todo';
+    try {
+      await updateTask(task.id, { status: newStatus });
+      onStatusChange?.(task.id, newStatus);
+    } catch (error) {
+      console.error('Failed to update task status:', error);
+    }
   }
 
   return (
@@ -84,6 +111,11 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel }: TaskC
     >
       {/* Title & status */}
       <div className="flex col-span-12 md:col-span-4 items-center gap-3 min-w-0">
+        <Checkbox 
+          checked={task.status === 'done'}
+          onCheckedChange={handleCheckboxChange}
+          className="h-5 w-5 rounded-full"
+        />
         <Badge
           variant="outline"
           className={cn("font-medium shrink-0", getStatusColor(task.status))}
@@ -117,6 +149,16 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel }: TaskC
       {/* Priority */}
       <div className={cn("col-span-1 font-semibold text-xs text-center rounded px-2 py-1", getPriorityColor(task.priority))}>
         {(task.priority ?? "medium").toUpperCase()}
+      </div>
+
+      {/* Timer */}
+      <div className="col-span-2 flex items-center justify-end text-sm font-medium text-muted-foreground">
+        {timer?.elapsedSeconds ? (
+          <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md border", timer.status === 'running' ? "bg-green-100/50 text-green-700 border-green-200" : "bg-secondary/50 border-transparent")}>
+            <Clock className="w-3.5 h-3.5" />
+            <span className="tabular-nums">{formatTime(timer.elapsedSeconds)}</span>
+          </div>
+        ) : null}
       </div>
 
       {/* Actions */}

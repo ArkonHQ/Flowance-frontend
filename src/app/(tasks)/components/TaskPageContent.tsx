@@ -5,7 +5,7 @@ import { Project } from "@/lib/api/projects"
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, XCircle, Clock, AlertCircle, Search, FilterX, WatchIcon } from "lucide-react";
+import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, XCircle, Clock, AlertCircle, Search, FilterX, WatchIcon, XIcon } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { Input } from "@/components/ui/input";
 import { TaskCardRow } from "./TaskCardRow";
@@ -24,6 +24,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
   const [tasks, setTasks] = useState<Task[]>(initialTask);
   const [taskStats, setTaskStats] = useState(stats);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTask, setSelectedTask] = useState<{ id: number; title: string; projectTitle: string | null } | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -57,17 +58,22 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
   };
 
   const filtered = useMemo(() => {
-    const term = searchTerm.toLowerCase().trim();
-    if (!term) return tasks;
+    let result = tasks;
+    if (statusFilter !== 'all') {
+      result = result.filter(t => t.status === statusFilter);
+    }
 
-    return tasks.filter(t => {
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return result;
+
+    return result.filter(t => {
       const projectName = t.project?.title.toLowerCase() ?? '';
       return (
         t.title.toLowerCase().includes(term) ||
         projectName.includes(term)
       );
     });
-  }, [tasks, searchTerm]);
+  }, [tasks, searchTerm, statusFilter]);
 
   const totalItems = filtered.length
   const totalPages = Math.ceil(totalItems / pageSize)
@@ -80,7 +86,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
   // Reset to first page when search changes
   useMemo(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, statusFilter]);
 
   const handleDelete = (id: number) => {
     setTasks(prev => prev.filter(t => t.id !== id));
@@ -94,6 +100,13 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
     window.addEventListener('taskTimeLogged', handleTaskTimeLogged)
     return () => window.removeEventListener('taskTimeLogged', handleTaskTimeLogged)
   }, [])
+
+  const handleStatusChange = async (taskId: number, newStatus: string) => {
+    // Optimistically update the UI
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus as any } : t))
+    // Trigger a full refresh to sync stats
+    await refreshTasksAndStats()
+  }
 
   return (
     <motion.div
@@ -177,15 +190,25 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
       {/* Search and List Section */}
       <div className="space-y-4">
         {tasks.length > 0 && (
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              type="text"
-              placeholder="Search for tasks..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 transition-all focus:ring-2 focus:ring-primary/20"
-            />
+          <div className="flex flex-col md:flex-row gap-6 items-start md:items-end justify-between mb-4">
+            <nav className="flex flex-wrap gap-8 md:gap-12 text-base font-medium text-gray-500">
+              <button onClick={() => setStatusFilter('all')} className={statusFilter === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>All Tasks ({taskStats.total})</button>
+              <button onClick={() => setStatusFilter('todo')} className={statusFilter === 'todo' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>To Do ({taskStats.todo})</button>
+              <button onClick={() => setStatusFilter('in_progress')} className={statusFilter === 'in_progress' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>In Progress ({taskStats.in_progress})</button>
+              <button onClick={() => setStatusFilter('done')} className={statusFilter === 'done' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Completed ({taskStats.done})</button>
+              <button onClick={() => setStatusFilter('overdue')} className={statusFilter === 'overdue' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Overdue ({taskStats.overdue})</button>
+            </nav>
+            
+            <div className="relative w-full md:w-64 shrink-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                type="text"
+                placeholder="Search for tasks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 transition-all focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
           </div>
         )}
 
@@ -210,7 +233,10 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
               </div>
               <h3 className="text-lg font-medium">No tasks match your search</h3>
               <p className="text-muted-foreground mt-1">Try adjusting your search for &quot;{searchTerm}&quot;</p>
-              <Button variant="link" onClick={() => setSearchTerm('')} className="mt-2 text-primary">
+              <Button variant="link" onClick={() => {
+                setSearchTerm('');
+                setStatusFilter('all')
+              }} className="mt-2 text-primary">
                 Clear search
               </Button>
             </div>
@@ -225,6 +251,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
                   projectTitle={projectTitle}
                   onDelete={handleDelete}
                   onOpenPanel={handleOpenPanel}
+                  onStatusChange={handleStatusChange}
                 />
               )
             })}
