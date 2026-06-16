@@ -1,83 +1,122 @@
 'use client'
-import { motion } from "framer-motion";
+import { motion } from "framer-motion" 
 import { Task, getAllTasks, updateTask, deleteTask } from "@/lib/api/tasks"
 import { Project } from "@/lib/api/projects"
-import { useState, useMemo, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { toast } from 'sonner';
-import { Checkbox } from "@/components/ui/checkbox";
-import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, XCircle, Clock, AlertCircle, Search, FilterX, WatchIcon, XIcon } from "lucide-react";
-import { StatCard } from "@/components/ui/StatCard";
-import { Input } from "@/components/ui/input";
-import { TaskCardRow } from "./TaskCardRow";
-import { PaginationFooter } from "@/app/components/pagination-footer";
-import TaskSidePanel from "./SidePanel";
-import { TasksBulkActions } from "./tasks-bulk-actions";
+import { useState, useMemo, useEffect } from "react" 
+import { Button } from "@/components/ui/button" 
+import Link from "next/link" 
+import { toast } from 'sonner' 
+import { Checkbox } from "@/components/ui/checkbox" 
+import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, Clock, FilterX } from "lucide-react" 
+import { StatCard } from "@/components/ui/StatCard" 
+import { TaskCardRow } from "./TaskCardRow" 
+import { PaginationFooter } from "@/app/components/pagination-footer" 
+import TaskSidePanel from "./SidePanel" 
+import { TasksBulkActions } from "./tasks-bulk-actions" 
+import FilterSortRow from "./FilterSortRow" 
 
-
+//TODO Assignees not ready now i put it for project until i add team collaboration features
 
 interface Props {
   initialTask: Task[]
-  stats: { total: number; todo: number, in_progress: number, done: number, cancelled: number, delayed: number, totalHours: number, overdue: number}
+  stats: { total: number, todo: number, in_progress: number, done: number, cancelled: number, delayed: number, totalHours: number, overdue: number }
   projects: Project[]
 }
 
 export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
-  const [tasks, setTasks] = useState<Task[]>(initialTask);
-  const [taskStats, setTaskStats] = useState(stats);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedTask, setSelectedTask] = useState<{ id: number; title: string; projectTitle: string | null } | null>(null);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const pageSize = 7;
+  const [tasks, setTasks] = useState<Task[]>(initialTask) 
+  const [taskStats, setTaskStats] = useState(stats) 
+  const [statusFilter, setStatusFilter] = useState('all') 
+  const [currentPage, setCurrentPage] = useState(1) 
+  const [selectedTask, setSelectedTask] = useState<{ id: number, title: string, projectTitle: string | null } | null>(null) 
+  const [isPanelOpen, setIsPanelOpen] = useState(false) 
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set()) 
+  
+  // Filter/Sort State 
+  const [searchQuery, setSearchQuery] = useState('') 
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null) 
+  const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null)
+  const [projectFilter, setProjectFilter] = useState<string | null>(null)
+  const [sortBy, setSortBy] = useState('dueDate')
+
+  const filtered = useMemo(() => {
+    let result = [...tasks]
+
+    if (statusFilter !== 'all') {
+      result = result.filter((task) => task.status === statusFilter)
+    }
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase().trim()
+      result = result.filter((task) =>
+        task.title?.toLowerCase().includes(q) ||
+        task.description?.toLowerCase().includes(q)
+      )
+    }
+
+    if (priorityFilter) {
+      result = result.filter((task) => task.priority === priorityFilter)
+    }
+
+    if (projectFilter) {
+      result = result.filter((task) => String(task.projectId) === projectFilter)
+    }
+
+    if (assigneeFilter) {
+      result = result.filter((task) => task.ownerId === assigneeFilter)
+    }
+
+    switch (sortBy) {
+      case 'dueDate':
+        result.sort(
+          (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+        )
+        break
+      case 'priority': {
+        const priorityOrder = { high: 0, medium: 1, low: 2 }
+        result.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+        break
+      }
+      case 'title':
+        result.sort((a, b) => a.title.localeCompare(b.title))
+        break
+      default:
+        break
+    }
+
+    return result
+  }, [tasks, searchQuery, statusFilter, priorityFilter, assigneeFilter, projectFilter, sortBy])
+
+
+  const pageSize = 7 
 
   const refreshTasksAndStats = async () => {
     try {
-      const { tasks: refreshedTasks, totalHours } = await getAllTasks();
-      setTasks(refreshedTasks);
-      const total = refreshedTasks.length;
-      const todo = refreshedTasks.filter(t => t.status === 'todo').length;
-      const in_progress = refreshedTasks.filter(t => t.status === 'in_progress').length;
-      const done = refreshedTasks.filter(t => t.status === 'done').length;
-      const cancelled = refreshedTasks.filter(t => t.status === 'cancelled').length;
-      const delayed = refreshedTasks.filter(t => t.status === 'delayed').length;
-      const overdue = refreshedTasks.filter(t => t.status === 'overdue').length;
+      const { tasks: refreshedTasks, totalHours } = await getAllTasks() 
+      setTasks(refreshedTasks) 
+      const total = refreshedTasks.length 
+      const todo = refreshedTasks.filter(t => t.status === 'todo').length 
+      const in_progress = refreshedTasks.filter(t => t.status === 'in_progress').length 
+      const done = refreshedTasks.filter(t => t.status === 'done').length 
+      const cancelled = refreshedTasks.filter(t => t.status === 'cancelled').length 
+      const delayed = refreshedTasks.filter(t => t.status === 'delayed').length 
+      const overdue = refreshedTasks.filter(t => t.status === 'overdue').length 
 
-      setTaskStats({ total, todo, in_progress, done, cancelled, delayed, totalHours, overdue });
+      setTaskStats({ total, todo, in_progress, done, cancelled, delayed, totalHours, overdue }) 
     } catch (error) {
-      console.error('Failed to refresh tasks and stats after time logging:', error);
+      console.error('Failed to refresh tasks and stats after time logging:', error) 
     }
-  };
+  } 
 
   const projectLookup = useMemo(() => {
-    return new Map(projects.map((project) => [project.id, project.title]));
-  }, [projects]);
+    return new Map(projects.map((project) => [project.id, project.title])) 
+  }, [projects]) 
 
   const handleOpenPanel = (taskId: number, taskTitle: string, projectTitle: string | null) => {
-    setSelectedTask({ id: taskId, title: taskTitle, projectTitle });
-    setIsPanelOpen(true);
-  };
+    setSelectedTask({ id: taskId, title: taskTitle, projectTitle }) 
+    setIsPanelOpen(true) 
+  } 
 
-  const filtered = useMemo(() => {
-    let result = tasks;
-    if (statusFilter !== 'all') {
-      result = result.filter(t => t.status === statusFilter);
-    }
-
-    const term = searchTerm.toLowerCase().trim();
-    if (!term) return result;
-
-    return result.filter(t => {
-      const projectName = t.project?.title.toLowerCase() ?? '';
-      return (
-        t.title.toLowerCase().includes(term) ||
-        projectName.includes(term)
-      );
-    });
-  }, [tasks, searchTerm, statusFilter]);
 
   const totalItems = filtered.length
   const totalPages = Math.ceil(totalItems / pageSize)
@@ -88,15 +127,9 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
     setSelectedIds(new Set())
   }
 
-  // Reset to first page when search changes
-  useMemo(() => {
-    setCurrentPage(1);
-    setSelectedIds(new Set())
-  }, [searchTerm, statusFilter]);
-
   const handleDelete = (id: number) => {
-    setTasks(prev => prev.filter(t => t.id !== id));
-  };
+    setTasks(prev => prev.filter(t => t.id !== id)) 
+  } 
 
   const handleToggle = (id: number) => {
     setSelectedIds(prev => {
@@ -195,6 +228,11 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
     return () => window.removeEventListener('taskTimeLogged', handleTaskTimeLogged)
   }, [])
 
+  useEffect(() => {
+    setCurrentPage(1)
+    setSelectedIds(new Set())
+  }, [searchQuery, priorityFilter, assigneeFilter, projectFilter, statusFilter])
+
   return (
     <motion.div
       initial="hidden"
@@ -245,11 +283,11 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
         <StatCard 
           title="Total Time"
           value={(() => {
-            const h = Math.floor(taskStats.totalHours);
-            const m = Math.round((taskStats.totalHours - h) * 60);
-            if (h === 0 && m === 0 && taskStats.totalHours > 0) return "< 1m";
-            if (h === 0) return `${m}m`;
-            return `${h}h ${m}m`;
+            const h = Math.floor(taskStats.totalHours) 
+            const m = Math.round((taskStats.totalHours - h) * 60) 
+            if (h === 0 && m === 0 && taskStats.totalHours > 0) return "< 1m" 
+            if (h === 0) return `${m}m` 
+            return `${h}h ${m}m` 
           })()}
           icon={Clock}
           color="text-indigo-500"
@@ -274,28 +312,42 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
         />
       </div>
 
+      <div className="flex border bg-card/50">
+          <FilterSortRow 
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            assigneeFilter={assigneeFilter}
+            onAssigneeChange={setAssigneeFilter}
+            projectFilter={projectFilter}
+            onProjectChange={setProjectFilter}
+            priorityFilter={priorityFilter}
+            onPriorityChange={setPriorityFilter}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+            assignees={projects.map(p => ({ id: p.id, name: p.title }))}
+            projects={projects.map((project) => ({ id: project.id, name: project.title }))}
+            priorities={['low', 'medium', 'high']}
+            sortOptions={[
+              { value: 'dueDate', label: 'Due Date' },
+              { value: 'priority', label: 'Priority' },
+              { value: 'title', label: 'Title' },
+            ]}
+            
+
+          />
+      </div>
+
       {/* Search and List Section */}
       <div className="space-y-4">
         {tasks.length > 0 && (
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-end justify-between mb-4">
             <nav className="flex flex-wrap gap-8 md:gap-12 text-base font-medium text-gray-500">
-              <button onClick={() => setStatusFilter('all')} className={statusFilter === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>All Tasks ({taskStats.total})</button>
-              <button onClick={() => setStatusFilter('todo')} className={statusFilter === 'todo' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>To Do ({taskStats.todo})</button>
-              <button onClick={() => setStatusFilter('in_progress')} className={statusFilter === 'in_progress' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>In Progress ({taskStats.in_progress})</button>
-              <button onClick={() => setStatusFilter('done')} className={statusFilter === 'done' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Completed ({taskStats.done})</button>
-              <button onClick={() => setStatusFilter('overdue')} className={statusFilter === 'overdue' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Overdue ({taskStats.overdue})</button>
+              <button onClick={() => setStatusFilter('all')} className={statusFilter === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>All Tasks <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.total}</span></button>
+              <button onClick={() => setStatusFilter('todo')} className={statusFilter === 'todo' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>To Do <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.todo}</span></button>
+              <button onClick={() => setStatusFilter('in_progress')} className={statusFilter === 'in_progress' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>In Progress <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.in_progress}</span></button>
+              <button onClick={() => setStatusFilter('done')} className={statusFilter === 'done' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Completed <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.done}</span></button>
+              <button onClick={() => setStatusFilter('overdue')} className={statusFilter === 'overdue' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Overdue <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.overdue}</span></button>
             </nav>
-            
-            <div className="relative w-full md:w-64 shrink-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                type="text"
-                placeholder="Search for tasks..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 transition-all focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
           </div>
         )}
 
@@ -319,9 +371,9 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
                 <FilterX className="h-6 w-6 text-muted-foreground/50" />
               </div>
               <h3 className="text-lg font-medium">No tasks match your search</h3>
-              <p className="text-muted-foreground mt-1">Try adjusting your search for &quot;{searchTerm}&quot;</p>
+              <p className="text-muted-foreground mt-1">Try adjusting your search for "{searchQuery}" </p>
               <Button variant="link" onClick={() => {
-                setSearchTerm('');
+                setSearchQuery('') 
                 setStatusFilter('all')
               }} className="mt-2 text-primary">
                 Clear search
@@ -343,7 +395,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
               </div>
             )}
             {paginatedTasks.map((task) => {
-              const projectTitle = task.project?.title ?? projectLookup.get(task.projectId) ?? null;
+              const projectTitle = task.project?.title ?? projectLookup.get(task.projectId) ?? null 
               return (
                 <TaskCardRow
                   key={task.id}
