@@ -13,7 +13,7 @@ import {
   DropdownMenu,
 } from "@/components/ui/dropdown-menu"
 import { Progress } from "@/components/ui/progress"
-import { Task, updateTask } from "@/lib/api/tasks"
+import { Task } from "@/lib/api/tasks"
 import { cn } from "@/lib/utils"
 import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
@@ -29,7 +29,8 @@ interface TaskCardRowProps {
   projectTitle?: string | null
   onDelete: (id:number) => void
   onOpenPanel: (taskId: number, taskTitle: string, projectTitle: string | null) => void
-  onStatusChange?: (taskId: number, newStatus: string) => void
+  isSelected: boolean
+  onToggle: (id: number) => void
 }
 
   // 1.Define Colors if exist 
@@ -68,7 +69,7 @@ const formatDate = (date: Date | string | undefined | null) => {
 
 
 
-export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, onStatusChange }: TaskCardRowProps) => {
+export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelected, onToggle }: TaskCardRowProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const timer = useTimerStore((state) => state.timers[task.id])
 
@@ -92,29 +93,21 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, onStatu
     return `${secs}s`
   }
 
-  const handleCheckboxChange = async (checked: boolean | string) => {
-    const isChecked = checked === true;
-    const newStatus = isChecked ? 'done' : 'todo';
-    try {
-      await updateTask(task.id, { status: newStatus });
-      onStatusChange?.(task.id, newStatus);
-    } catch (error) {
-      console.error('Failed to update task status:', error);
-    }
-  }
-
   return (
     <div
       role="group"
       aria-label={`Task row: ${title}`}
-      className="grid grid-cols-12 gap-4 items-center px-5 py-4 bg-card/50 backdrop-blur-md rounded-xl border border-border/30 shadow-sm hover:shadow-md transition-all hover:border-border/60 group"
+      className={cn("grid grid-cols-12 gap-4 items-center px-5 py-4 bg-card/50 backdrop-blur-md rounded-xl border shadow-sm hover:shadow-md transition-all group",
+        isSelected ? "bg-primary/5 dark:bg-primary/10 border-primary/50" : "border-border/30 hover:border-border/60"
+      )}
     >
       {/* Title & status */}
       <div className="flex col-span-12 md:col-span-4 items-center gap-3 min-w-0">
         <Checkbox 
-          checked={task.status === 'done'}
-          onCheckedChange={handleCheckboxChange}
-          className="h-5 w-5 rounded-full"
+          checked={isSelected}
+          onCheckedChange={() => onToggle(task.id)}
+          aria-label={`Select task ${task.id}`}
+          className="border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
         />
         <Badge
           variant="outline"

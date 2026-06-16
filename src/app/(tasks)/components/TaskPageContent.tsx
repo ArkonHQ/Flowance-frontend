@@ -1,16 +1,19 @@
 'use client'
 import { motion } from "framer-motion";
-import { Task, getAllTasks } from "@/lib/api/tasks"
+import { Task, getAllTasks, updateTask, deleteTask } from "@/lib/api/tasks"
 import { Project } from "@/lib/api/projects"
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { toast } from 'sonner';
+import { Checkbox } from "@/components/ui/checkbox";
 import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, XCircle, Clock, AlertCircle, Search, FilterX, WatchIcon, XIcon } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { Input } from "@/components/ui/input";
 import { TaskCardRow } from "./TaskCardRow";
 import { PaginationFooter } from "@/app/components/pagination-footer";
 import TaskSidePanel from "./SidePanel";
+import { TasksBulkActions } from "./tasks-bulk-actions";
 
 
 
@@ -28,6 +31,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTask, setSelectedTask] = useState<{ id: number; title: string; projectTitle: string | null } | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const pageSize = 7;
 
   const refreshTasksAndStats = async () => {
@@ -81,16 +85,82 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
+    setSelectedIds(new Set())
   }
 
   // Reset to first page when search changes
   useMemo(() => {
     setCurrentPage(1);
+    setSelectedIds(new Set())
   }, [searchTerm, statusFilter]);
 
   const handleDelete = (id: number) => {
     setTasks(prev => prev.filter(t => t.id !== id));
   };
+
+  const handleToggle = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    const next = new Set(selectedIds)
+    paginatedTasks.forEach(t => {
+      if (checked) next.add(t.id)
+      else next.delete(t.id)
+    })
+    setSelectedIds(next)
+  }
+
+  const isAllSelected = paginatedTasks.length > 0 && paginatedTasks.every(t => selectedIds.has(t.id))
+
+  // Bulk status update action
+  const handleBulkStatusChange = async (newStatus: Task['status']) => {
+    const idsToUpdate = Array.from(selectedIds)
+    if (idsToUpdate.length === 0) return
+
+    const toastId = toast.loading(`Updating ${idsToUpdate.length} tasks to ${newStatus.replace(/_/g, ' ')}...`)
+    try {
+      await Promise.all(idsToUpdate.map(id => updateTask(id, { status: newStatus })))
+
+      setTasks(prev => prev.map(t => {
+        if (selectedIds.has(t.id)) {
+          return { ...t, status: newStatus }
+        }
+        return t
+      }))
+
+      toast.success(`Successfully updated ${idsToUpdate.length} tasks`, { id: toastId })
+      setSelectedIds(new Set())
+      await refreshTasksAndStats()
+    } catch (err: any) {
+      toast.error(`Failed to update some tasks: ${err.message || 'Error'}`, { id: toastId })
+    }
+  }
+
+  // Bulk delete action
+  const handleBulkDelete = async () => {
+    const idsToDelete = Array.from(selectedIds)
+    if (idsToDelete.length === 0) return
+
+    const toastId = toast.loading(`Deleting ${idsToDelete.length} tasks...`)
+    try {
+      await Promise.all(idsToDelete.map(id => deleteTask(id)))
+
+      setTasks(prev => prev.filter(t => !selectedIds.has(t.id)))
+
+      toast.success(`Successfully deleted ${idsToDelete.length} tasks`, { id: toastId })
+      setSelectedIds(new Set())
+      setCurrentPage(1)
+      await refreshTasksAndStats()
+    } catch (err: any) {
+      toast.error(`Failed to delete some tasks: ${err.message || 'Error'}`, { id: toastId })
+    }
+  }
 
   useEffect(() => {
     const handleTaskTimeLogged = () => {
@@ -100,13 +170,6 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
     window.addEventListener('taskTimeLogged', handleTaskTimeLogged)
     return () => window.removeEventListener('taskTimeLogged', handleTaskTimeLogged)
   }, [])
-
-  const handleStatusChange = async (taskId: number, newStatus: string) => {
-    // Optimistically update the UI
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus as any } : t))
-    // Trigger a full refresh to sync stats
-    await refreshTasksAndStats()
-  }
 
   return (
     <motion.div
@@ -242,6 +305,19 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
             </div>
         ) : (
           <div className="grid gap-3">
+            {filtered.length > 0 && (
+              <div className="flex items-center justify-between py-2 mb-2 ml-5">
+                <div className="flex items-center gap-3">
+                  <Checkbox 
+                    checked={isAllSelected}
+                    onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                    aria-label="Select all tasks on current page"
+                    className="border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                  <span className="text-sm font-semibold text-muted-foreground tracking-wide">Select All</span>
+                </div>
+              </div>
+            )}
             {paginatedTasks.map((task) => {
               const projectTitle = task.project?.title ?? projectLookup.get(task.projectId) ?? null;
               return (
@@ -251,7 +327,8 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
                   projectTitle={projectTitle}
                   onDelete={handleDelete}
                   onOpenPanel={handleOpenPanel}
-                  onStatusChange={handleStatusChange}
+                  isSelected={selectedIds.has(task.id)}
+                  onToggle={handleToggle}
                 />
               )
             })}
@@ -281,6 +358,15 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
         onClose={() => setIsPanelOpen(false)}
         onTimeLogged={refreshTasksAndStats}
       />
+
+      {selectedIds.size > 0 && (
+        <TasksBulkActions
+          selectedCount={selectedIds.size}
+          onBulkStatusChange={(status) => handleBulkStatusChange(status)}
+          onBulkDelete={handleBulkDelete}
+          onClearSelection={() => setSelectedIds(new Set())}
+        />
+      )}
     </motion.div>
   )
 }
