@@ -8,6 +8,7 @@ import Link from "next/link"
 import { toast } from 'sonner' 
 import { Checkbox } from "@/components/ui/checkbox" 
 import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, Clock, FilterX } from "lucide-react" 
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { StatCard } from "@/components/ui/StatCard" 
 import { TaskCardRow } from "./TaskCardRow" 
 import { PaginationFooter } from "@/app/components/pagination-footer" 
@@ -234,6 +235,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
   }, [searchQuery, priorityFilter, assigneeFilter, projectFilter, statusFilter])
 
   return (
+    <TooltipProvider>
     <motion.div
       initial="hidden"
       animate="visible"
@@ -380,18 +382,25 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
               </Button>
             </div>
         ) : (
-          <div className="grid gap-3 ">
+          // Table Header (Hidden on Mobile)
+          <div className="grid grid-3">
             {filtered.length > 0 && (
-              <div className="flex items-center justify-between py-2 mb-2 ml-5">
-                <div className="flex items-center gap-3">
+              <div className="hidden md:grid grid-cols-[40px_1fr_1fr_1fr_110px_110px_100px_110px_40px] gap-4 py-3 px-5 text-xs font-semibold text-slate-700 dark:text-slate-300 border-slate-200/60 dark:border-border/25 z-10">
+                <div className="flex items-center justify-center">
                   <Checkbox 
                     checked={isAllSelected}
                     onCheckedChange={(checked) => handleSelectAll(!!checked)}
                     aria-label="Select all tasks on current page"
                     className="border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                   />
-                  <span className="text-sm font-semibold text-muted-foreground tracking-wide">Select All</span>
                 </div>
+                <div>Task</div>
+                <div>Project</div>
+                <div>Assignee</div>
+                <div>Status</div>
+                <div>Priority</div>
+                <div>Due Date</div>
+                <div>Timer</div>
               </div>
             )}
             {paginatedTasks.map((task) => {
@@ -443,5 +452,6 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
         />
       )}
     </motion.div>
+    </TooltipProvider>
   )
 }

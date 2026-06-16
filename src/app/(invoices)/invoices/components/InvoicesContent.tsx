@@ -359,7 +359,7 @@ export const InvoicesContent = ({ initialInvoices, clients, projects }: Props) =
             </div>
           </div>
 
-          {/* Table Header (Hidden on Mobile, Styled like mockup) */}
+          {/* Table Header (Hidden on Mobile) */}
           <div className='hidden md:grid grid-cols-[40px_130px_1fr_1fr_110px_110px_100px_110px_40px] gap-4 py-3 px-5 text-xs font-semibold text-slate-750 dark:text-slate-300 border-b border-slate-150/60 dark:border-border/25 z-10'>
             <div className='flex justify-center items-center'>
               <Checkbox

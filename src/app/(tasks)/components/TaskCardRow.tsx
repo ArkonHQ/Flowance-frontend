@@ -19,6 +19,7 @@ import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import DeleteButton from "./DeleteTasks"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 
 
@@ -43,8 +44,22 @@ const getStatusColor = (status: string) => {
     delayed: "bg-gray-100 text-gray-700 border-gray-200",
     overdue: "bg-rose-100 text-rose-700 border-rose-200",
   }
+
   return statusColors[status] || statusColors.delayed
 }
+
+const statusDisplay = (status: string) => {
+  const displayStatus: Record<string, string> = {
+    todo: "To Do",
+    in_progress: "In Progress",
+    done: "Done",
+    cancelled: "Cancelled",
+    delayed: "Delayed",
+    overdue: "Overdue",
+  }
+  return displayStatus[status] || displayStatus.todo
+}
+
 const getPriorityColor = (priority: string) => {
   const priorityColors: Record<string, string> = {
     low: "bg-green-100/70 text-green-700 border-green-200",
@@ -73,7 +88,6 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const timer = useTimerStore((state) => state.timers[task.id])
 
-  const statusDisplay = (task.status).replace(/_/g, " ")
   const title = task.title ?? "Untitled task"
 
   const handleOpenPanel = (e: React.MouseEvent) => {
@@ -97,38 +111,43 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
     <div
       role="group"
       aria-label={`Task row: ${title}`}
-      className={cn("grid grid-cols-12 gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 hover:shadow-xs transition-all group",
+      className={cn(
+        "flex flex-wrap md:grid md:grid-cols-[40px_1fr_1fr_1fr_110px_110px_100px_110px_40px] gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 hover:shadow-xs transition-all group",
         isSelected ? "bg-primary/5 dark:bg-primary/10 border-primary/50" : "border-border/30 hover:border-border/60"
       )}
     >
-      {/* Title & status */}
-      <div className="flex col-span-12 md:col-span-4 items-center gap-3 min-w-0">
-        <Checkbox 
+      {/* 1. Checkbox */}
+      <div className="flex items-center justify-center">
+        <Checkbox
           checked={isSelected}
           onCheckedChange={() => onToggle(task.id)}
           aria-label={`Select task ${task.id}`}
-          className="border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          className="shrink-0 border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary"
         />
-        <Badge
-          variant="outline"
-          className={cn("font-medium shrink-0", getStatusColor(task.status))}
-          aria-hidden
-        >
-          {statusDisplay}
-        </Badge>
-        <Link
-          href={`/tasks/${task.id}`}
-          className="font-semibold truncate hover:text-primary transition-colors"
-          onClick={handleOpenPanel}
-          title={title}
-        >
-          {title}
-        </Link>
+      </div>
+      
+      {/* 2. Title */}
+      <div className="min-w-0 flex-1 md:flex-none">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href={`/tasks/${task.id}`}
+                className="font-semibold truncate hover:text-primary transition-colors block"
+                onClick={handleOpenPanel}
+              >
+                {title}
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs break-words">
+              <p>{title}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
-      {/* Project */}
-      <div className="col-span-2 hidden lg:block text-sm text-muted-foreground truncate">
-        <span className="text-xs font-medium text-gray-400 mr-1">Project:</span>
+      {/* 3. Project */}
+      <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:block">
         <Link
           href={`/projects/${task.projectId}`}
           className="hover:text-primary transition-colors cursor-pointer"
@@ -137,30 +156,44 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
         </Link>
       </div>
 
-      {/* Last updated */}
-      <div className="col-span-2 text-muted-foreground text-sm">
-        <time dateTime={task.updatedAt ? new Date(task.updatedAt).toISOString() : undefined}>
-          {formatDate(task.updatedAt)}
+      {/* 4. Assignee (Placeholder for now) */}
+      <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:block">
+        -
+      </div>
+
+      {/* 5. Status */}
+      <div className="flex items-center">
+        <Badge variant="outline" className={cn("shrink-0 text-xs font-medium w-full md:w-auto justify-center", getStatusColor(task.status))}>
+          {statusDisplay(task.status)}
+        </Badge>
+      </div>
+
+      {/* 6. Priority */}
+      <div className="flex items-center">
+        <div className={cn("font-semibold text-xs text-center rounded px-2 py-1 w-full md:w-auto", getPriorityColor(task.priority))}>
+          {(task.priority ?? "medium").charAt(0).toUpperCase() + (task.priority ?? "medium").slice(1)}
+        </div>
+      </div>
+
+      {/* 7. Due Date */}
+      <div className="text-muted-foreground text-sm hidden md:block">
+        <time dateTime={task.deadline ? new Date(task.deadline).toISOString() : undefined}>
+          {formatDate(task.deadline)}
         </time>
       </div>
 
-      {/* Priority */}
-      <div className={cn("col-span-1 font-semibold text-xs text-center rounded px-2 py-1", getPriorityColor(task.priority))}>
-        {(task.priority ?? "medium").toUpperCase()}
-      </div>
-
-      {/* Timer */}
-      <div className="col-span-2 flex items-center justify-end text-sm font-medium text-muted-foreground">
+      {/* 8. Timer */}
+      <div className="flex items-center justify-end text-sm font-medium text-muted-foreground flex-1 md:flex-none">
         {timer?.elapsedSeconds ? (
-          <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md border", timer.status === 'running' ? "bg-green-100/50 text-green-700 border-green-200" : "bg-secondary/50 border-transparent")}>
+          <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md border w-full md:w-auto justify-center", timer.status === 'running' ? "bg-green-100/50 text-green-700 border-green-200" : "bg-secondary/50 border-transparent")}>
             <Clock className="w-3.5 h-3.5" />
             <span className="tabular-nums">{formatTime(timer.elapsedSeconds)}</span>
           </div>
-        ) : null}
+        ) : <span className="hidden md:inline text-muted-foreground/50">-</span>}
       </div>
 
-      {/* Actions */}
-      <div className="col-span-1 flex justify-end">
+      {/* 9. Actions */}
+      <div className="flex justify-end">
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
             <Button
