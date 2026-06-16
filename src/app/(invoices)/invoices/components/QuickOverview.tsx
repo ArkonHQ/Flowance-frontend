@@ -193,7 +193,7 @@ export const QuickOverview = ({
 
         return (
           <motion.div key={stat.title} variants={item}>
-            <Card className="relative overflow-hidden border border-slate-150/60 dark:border-border/30 bg-white/70 dark:bg-card/25 backdrop-blur-md shadow-2xs hover:shadow-xs transition-all duration-300 rounded-[20px] px-5 py-4">
+            <Card className="relative overflow-hidden border border-slate-150/60 dark:border-border/30 bg-white/70 dark:bg-card/25 backdrop-blur-md shadow-2xs hover:-translate-y-1 transition-all duration-300 rounded-[20px] px-5 py-4">
               
               {/* Card Top Title & Icon */}
               <div className="flex items-center justify-between pb-1.5">

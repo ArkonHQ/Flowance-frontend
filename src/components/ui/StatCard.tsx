@@ -24,10 +24,9 @@ export const StatCard = ({ title, value, icon: Icon, bg, gradient, trend, color 
 
   return (
     <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }} >
-      <Card className="relative overflow-hidden border border-border/30 bg-card/50 backdrop-blur-md shadow-sm hover:shadow-xl transition-all duration-200 hover:translate-y-0.5" >
+      <Card className="relative overflow-hidden border border-slate-150/60 dark:border-border/30 bg-white/70 dark:bg-card/25 backdrop-blur-md shadow-2xs hover:-translate-y-1 transition-all duration-300 rounded-[20px]" >
 
         {/* Gradient top bar */}
-        <div className={`absolute top-0 left-0 right-0 h-1 bg-linear-to-r ${gradient}`} />
 
         {/* Card Header */}
         <CardHeader className="flex flex-row items-center justify-between pb-2 pt-5">

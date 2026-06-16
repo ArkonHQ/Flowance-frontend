@@ -97,7 +97,7 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
     <div
       role="group"
       aria-label={`Task row: ${title}`}
-      className={cn("grid grid-cols-12 gap-4 items-center px-5 py-4 bg-card/50 backdrop-blur-md rounded-xl border shadow-sm hover:shadow-md transition-all group",
+      className={cn("grid grid-cols-12 gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 hover:shadow-xs transition-all group",
         isSelected ? "bg-primary/5 dark:bg-primary/10 border-primary/50" : "border-border/30 hover:border-border/60"
       )}
     >
@@ -129,7 +129,12 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
       {/* Project */}
       <div className="col-span-2 hidden lg:block text-sm text-muted-foreground truncate">
         <span className="text-xs font-medium text-gray-400 mr-1">Project:</span>
-        {projectTitle ?? task.project?.title ?? "No project"}
+        <Link
+          href={`/projects/${task.projectId}`}
+          className="hover:text-primary transition-colors cursor-pointer"
+        >
+          {projectTitle ?? task.project?.title ?? "No project"}
+        </Link>
       </div>
 
       {/* Last updated */}

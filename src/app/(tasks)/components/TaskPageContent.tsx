@@ -37,7 +37,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null) 
   const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null)
   const [projectFilter, setProjectFilter] = useState<string | null>(null)
-  const [sortBy, setSortBy] = useState('dueDate')
+  const [sortBy, setSortBy] = useState('')
 
   const filtered = useMemo(() => {
     let result = [...tasks]
@@ -312,7 +312,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
         />
       </div>
 
-      <div className="flex border bg-card/50">
+      <div className="flex">
           <FilterSortRow 
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -338,10 +338,10 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
       </div>
 
       {/* Search and List Section */}
-      <div className="space-y-4">
+      <div className="space-y-4 border p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm">
         {tasks.length > 0 && (
-          <div className="flex flex-col md:flex-row gap-6 items-start md:items-end justify-between mb-4">
-            <nav className="flex flex-wrap gap-8 md:gap-12 text-base font-medium text-gray-500">
+          <div className="flex flex-col md:flex-row gap-6 items-start md:items-end justify-between mb-4 border-border/40 py-5 border-b rounded-md">
+            <nav className="flex flex-wrap gap-8 md:gap-12 text-base font-medium text-gray-500 mx-4">
               <button onClick={() => setStatusFilter('all')} className={statusFilter === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>All Tasks <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.total}</span></button>
               <button onClick={() => setStatusFilter('todo')} className={statusFilter === 'todo' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>To Do <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.todo}</span></button>
               <button onClick={() => setStatusFilter('in_progress')} className={statusFilter === 'in_progress' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>In Progress <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.in_progress}</span></button>
@@ -380,7 +380,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
               </Button>
             </div>
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-3 ">
             {filtered.length > 0 && (
               <div className="flex items-center justify-between py-2 mb-2 ml-5">
                 <div className="flex items-center gap-3">
@@ -411,17 +411,15 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
           </div>
         )}
         {filtered.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-background/80 dark:bg-card/80 backdrop-blur-md border-t border-border px-6 py-4 z-20 lg:left-64">
-            <div className="max-w-7xl mx-auto w-full">
-              <PaginationFooter 
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-                pageSize={pageSize}
-                onChangePage={handlePageChange}
-                label='tasks'
-              />
-            </div>
+          <div className="mt-4 rounded-2xl border-t border-border/40 bg-background px-5 py-4 backdrop-blur-md">
+            <PaginationFooter 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onChangePage={handlePageChange}
+              label='tasks'
+            />
           </div>
         )}
       </div>

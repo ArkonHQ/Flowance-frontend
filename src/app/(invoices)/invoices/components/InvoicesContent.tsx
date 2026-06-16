@@ -252,26 +252,6 @@ export const InvoicesContent = ({ initialInvoices, clients, projects }: Props) =
 
           {/* Right Header Controls */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-            {/* Global Search */}
-            <button
-              onClick={() => {
-                const event = new KeyboardEvent('keydown', {
-                  key: 'k',
-                  ctrlKey: true,
-                  metaKey: true,
-                  bubbles: true,
-                  cancelable: true
-                });
-                document.dispatchEvent(event);
-              }}
-              className="relative w-full sm:w-[220px] text-left cursor-pointer h-9.5 pl-9.5 pr-8 bg-card border border-slate-200 hover:border-slate-300 dark:border-border/60 dark:hover:border-border/90 text-xs text-muted-foreground/60 rounded-xl shadow-3xs flex items-center shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/45"
-            >
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
-              <span>Search invoices...</span>
-              <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-0.5 rounded border bg-muted px-1 font-mono text-[9px] font-medium opacity-100 sm:flex">
-                <span className="text-[10px]">⌘</span>K
-              </kbd>
-            </button>
 
             {/* Notification Bell Button */}
             <Button variant="outline" size="icon" className="h-9.5 w-9.5 border-slate-200 hover:bg-slate-50 dark:border-border/60 dark:hover:bg-muted rounded-xl flex items-center justify-center relative shrink-0">
