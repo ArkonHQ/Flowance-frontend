@@ -44,17 +44,12 @@ export const InvoicesBulkActions = ({
                 <div className="flex items-center gap-2 text-blue-500 font-medium">Mark as Sent</div>
               </SelectItem>
               <SelectItem value="paid">
-                <div className="flex items-center gap-2 text-indigo-500 font-medium">Mark as Paid</div>
-              </SelectItem>
-              <SelectItem value="partially_paid">
-                <div className="flex items-center gap-2 text-emerald-500 font-medium">Mark as Partially Paid</div>
+                <div className="flex items-center gap-2 text-emerald-500 font-medium">Mark as Paid</div>
               </SelectItem>
               <SelectItem value="overdue">
-                <div className="flex items-center gap-2 text-orange-500 font-medium">Mark as Overdue</div>
+                <div className="flex items-center gap-2 text-rose-500 font-medium">Mark as Overdue</div>
               </SelectItem>
-              <SelectItem value="cancelled">
-                <div className="flex items-center gap-2 text-red-500 font-medium">Mark as Cancelled</div>
-              </SelectItem>
+              <SelectItem value="voided">Mark as Voided</SelectItem>
             </SelectContent>
           </Select>
 

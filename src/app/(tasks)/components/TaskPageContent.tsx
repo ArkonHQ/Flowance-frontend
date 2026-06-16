@@ -142,6 +142,30 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
     }
   }
 
+  // Bulk priority update action
+  const handleBulkPriorityChange = async (newPriority: Task['priority']) => {
+    const idsToUpdate = Array.from(selectedIds)
+    if (idsToUpdate.length === 0) return
+
+    const toastId = toast.loading(`Updating ${idsToUpdate.length} tasks priority...`)
+    try {
+      await Promise.all(idsToUpdate.map(id => updateTask(id, { priority: newPriority })))
+
+      setTasks(prev => prev.map(t => {
+        if (selectedIds.has(t.id)) {
+          return { ...t, priority: newPriority }
+        }
+        return t
+      }))
+
+      toast.success(`Successfully updated ${idsToUpdate.length} tasks`, { id: toastId })
+      setSelectedIds(new Set())
+      await refreshTasksAndStats()
+    } catch (err: any) {
+      toast.error(`Failed to update priority: ${err.message || 'Error'}`, { id: toastId })
+    }
+  }
+
   // Bulk delete action
   const handleBulkDelete = async () => {
     const idsToDelete = Array.from(selectedIds)
@@ -363,6 +387,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
         <TasksBulkActions
           selectedCount={selectedIds.size}
           onBulkStatusChange={(status) => handleBulkStatusChange(status)}
+          onBulkPriorityChange={handleBulkPriorityChange}
           onBulkDelete={handleBulkDelete}
           onClearSelection={() => setSelectedIds(new Set())}
         />
