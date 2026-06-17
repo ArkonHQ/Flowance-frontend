@@ -1,7 +1,7 @@
 'use client'
 
-import { DashboardData, MonthlyHealthMetric, getDashboard } from "@/lib/api/dashboard"
-import { useState, useEffect } from "react"
+import { DashboardData, MonthlyHealthMetric, getDashboard, getLastMonthKPIs, LastMonthKPIs } from "@/lib/api/dashboard"
+import { useState, useEffect, useMemo } from "react"
 import { Loader2 } from "lucide-react"
 import { HeaderBar } from "./HeaderBar"
 import { KPIStatsRow } from "./KPIStatsRow"
@@ -17,7 +17,14 @@ import UpcomingTasks from "./UpcomingTasks"
 interface DashboardContentProps {
   initialDashboard: DashboardData
   initialHealthMetrics: MonthlyHealthMetric[]
-  trends: any
+  initialTrends: {
+    totalRevenue: number
+    activeProjects: number
+    totalHours: number
+    unpaidInvoices: number
+    tasksCompletedThisWeek: number
+    unpaidAmount: number
+  }
   topClients: any[]
   sourceData: any[]
   weeklyHours: any[]
@@ -25,99 +32,154 @@ interface DashboardContentProps {
   userName?: string
 }
 
+// Map a selected period to the comparison period (the "previous" window)
+const getPrevPeriod = (period: string): string => {
+  switch (period) {
+    case '7days':   return 'prev7days'
+    case '30days':  return 'prev30days'
+    case '90days':  return 'prev90days'
+    case 'thisyear': return 'lastyear'
+    default:        return 'all'
+  }
+}
 
-export const DashboardContent = ({ initialDashboard, initialHealthMetrics, trends, topClients, sourceData, weeklyHours, pieData, userName }: DashboardContentProps) => {
-  
-  // Period can be changed by header HeaderBar date picker
+// Compute % change between two dashboard snapshots
+const computeTrends = (curr: DashboardData, prev: DashboardData | null) => {
+  const pct = (c: number, p: number) => {
+    if (p === 0) return c > 0 ? 100 : 0
+    return Math.round(((c - p) / p) * 100)
+  }
+
+  if (!prev) {
+    return {
+      totalRevenue: 0,
+      activeProjects: 0,
+      totalHours: 0,
+      unpaidInvoices: 0,
+      tasksCompletedThisWeek: 0,
+      unpaidAmount: 0,
+    }
+  }
+
+  return {
+    totalRevenue:          
+      pct(curr.totalRevenue, prev.totalRevenue),
+    activeProjects:
+      curr.activeProject - prev.activeProject,
+    totalHours: 
+      pct(curr.totalHours, prev.totalHours),
+    unpaidInvoices: 
+      pct(curr.pendingInvoices, prev.pendingInvoices),
+    tasksCompletedThisWeek:
+     pct(curr.tasksCompletedThisWeek, prev.tasksCompletedThisWeek),
+    unpaidAmount: 
+      pct(curr.unpaidAmount, prev.unpaidAmount),
+  }
+}
+
+const getPeriodLabel = (period: string) => {
+  switch (period) {
+    case '7days':    return 'Last Week'
+    case '30days':   return 'Last Month'
+    case '90days':   return 'Last 90 Days'
+    case 'thisyear': return 'This Year'
+    default:         return 'All Time'
+  }
+}
+
+const getTrendLabel = (period: string) => {
+  switch (period) {
+    case '7days':    return 'vs prev week'
+    case '30days':   return 'vs prev month'
+    case '90days':   return 'vs prev 90 days'
+    case 'thisyear': return 'vs last year'
+    default:         return 'vs last month'
+  }
+}
+
+export const DashboardContent = ({
+  initialDashboard,
+  initialHealthMetrics,
+  initialTrends,
+  topClients,
+  sourceData,
+  weeklyHours,
+  pieData,
+  userName,
+}: DashboardContentProps) => {
+
   const [selectPeriod, setSelectPeriod] = useState<string>("all")
   const [dashboard, setDashboard] = useState(initialDashboard)
+  const [prevDashboard, setPrevDashboard] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const getPeriodLabel = (period: string) => {
-    switch (period) {
-      case '7days':
-        return 'Last Week'
-      case '30days':
-        return 'Last Month'
-      case '90days':
-        return 'Last 90 Days'
-      case 'thisyear':
-        return 'This Year'
-      default:
-        return 'All Time'
-    }
-  }
-
-  const getTrendLabel = (period: string) => {
-    switch (period) {
-      case '7days':
-        return 'vs last Week'
-      case '30days':
-        return 'vs last Month'
-      case '90days':
-        return 'vs last 90 Days'
-      case 'thisyear':
-        return 'vs this Year'
-      default:
-        return 'vs all Time'
-    }
-  }
-
   const periodLabel = getPeriodLabel(selectPeriod)
-  const trendLabel = getTrendLabel(selectPeriod)
+  const trendLabel  = getTrendLabel(selectPeriod)
 
-  const reloadDashboard = async (period: string) => {
-    setLoading(true)
-    try {
-      const periodArg = period === 'all' ? undefined : period
-      const newData = await getDashboard(undefined, periodArg)
-      setDashboard(newData)
-    } catch (error) {
-      console.error('Failed to reload dashboard after time logging:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Compute live trends from current vs previous period data
+  const trends = useMemo(() => {
+    if (selectPeriod === 'all') return initialTrends
+    return computeTrends(dashboard, prevDashboard)
+  }, [dashboard, prevDashboard, selectPeriod, initialTrends])
 
+  // Fetch both current + comparison period in parallel on period change
   useEffect(() => {
     if (selectPeriod === 'all') {
       setDashboard(initialDashboard)
+      setPrevDashboard(null)
       return
     }
 
     let active = true
 
-    const loadDashboard = async () => {
+    const load = async () => {
       setLoading(true)
       try {
-        const newData = await getDashboard(undefined, selectPeriod)
+        const prevPeriod = getPrevPeriod(selectPeriod)
+        const [curr, prev] = await Promise.all([
+          getDashboard(undefined, selectPeriod),
+          getDashboard(undefined, prevPeriod),
+        ])
         if (active) {
-          setDashboard(newData)
+          setDashboard(curr)
+          setPrevDashboard(prev)
         }
-      } catch (error) {
-        console.error('Failed to load dashboard for period:', selectPeriod, error)
+      } catch (err) {
+        console.error('Failed to load dashboard for period:', selectPeriod, err)
       } finally {
-        if (active) {
-          setLoading(false)
-        }
+        if (active) setLoading(false)
       }
     }
 
-    loadDashboard()
-    return () => {
-      active = false
-    }
+    load()
+    return () => { active = false }
   }, [selectPeriod, initialDashboard])
 
+  // Reload on time-log events
   useEffect(() => {
-    const handleTaskTimeLogged = () => {
-      reloadDashboard(selectPeriod)
+    const handleTaskTimeLogged = async () => {
+      setLoading(true)
+      try {
+        const periodArg = selectPeriod === 'all' ? undefined : selectPeriod
+        const prevPeriod = getPrevPeriod(selectPeriod)
+        const [curr, prev] = await Promise.all([
+          getDashboard(undefined, periodArg),
+          selectPeriod !== 'all' ? getDashboard(undefined, prevPeriod) : Promise.resolve(null as any),
+        ])
+        setDashboard(curr)
+        if (prev) setPrevDashboard(prev)
+      } catch (err) {
+        console.error('Failed to reload dashboard after time logging:', err)
+      } finally {
+        setLoading(false)
+      }
     }
 
     window.addEventListener('taskTimeLogged', handleTaskTimeLogged)
     return () => window.removeEventListener('taskTimeLogged', handleTaskTimeLogged)
   }, [selectPeriod])
-  
+
+
   
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 space-y-8 pb-20">

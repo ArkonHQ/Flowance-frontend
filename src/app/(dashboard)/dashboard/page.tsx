@@ -42,7 +42,7 @@ const DashboardPage = async () => {
     <DashboardContent
       initialDashboard={dashboard}
       initialHealthMetrics={healthMetrics}
-      trends={trends}
+      initialTrends={trends}
       topClients={topClients}
       sourceData={sourceData}
       weeklyHours={weeklyHours}

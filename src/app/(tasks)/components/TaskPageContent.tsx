@@ -15,6 +15,7 @@ import { PaginationFooter } from "@/app/components/pagination-footer"
 import TaskSidePanel from "./SidePanel" 
 import { TasksBulkActions } from "./tasks-bulk-actions" 
 import FilterSortRow from "./FilterSortRow" 
+import { isTaskInThisWeek } from "@/lib/utils/date"
 
 //TODO Assignees not ready now i put it for project until i add team collaboration features
 
@@ -39,6 +40,30 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
   const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null)
   const [projectFilter, setProjectFilter] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState('')
+
+
+  // Compute weekly stats
+  const weeklyTasks = tasks.filter(isTaskInThisWeek)
+  const weeklyTotal = weeklyTasks.length
+
+  const weeklyStatusCounts = {
+    todo: weeklyTasks.filter(t => t.status === 'todo').length,
+    in_progress: weeklyTasks.filter(t => t.status === 'in_progress').length,
+    done: weeklyTasks.filter(t => t.status === 'done').length,
+    cancelled: weeklyTasks.filter(t => t.status === 'cancelled').length,
+    delayed: weeklyTasks.filter(t => t.status === 'delayed').length,
+    overdue: weeklyTasks.filter(t => t.status === 'overdue').length,
+  }
+
+  const totalTasks = taskStats.total
+  const statusPercentage = {
+    todo:        totalTasks > 0 ? Math.round((taskStats.todo        / totalTasks) * 100) : 0,
+    done:        totalTasks > 0 ? Math.round((taskStats.done        / totalTasks) * 100) : 0,
+    in_progress: totalTasks > 0 ? Math.round((taskStats.in_progress / totalTasks) * 100) : 0,
+    cancelled:   totalTasks > 0 ? Math.round((taskStats.cancelled   / totalTasks) * 100) : 0,
+    overdue:     totalTasks > 0 ? Math.round((taskStats.overdue     / totalTasks) * 100) : 0,
+    delayed:     totalTasks > 0 ? Math.round((taskStats.delayed     / totalTasks) * 100) : 0,
+  }
 
   const filtered = useMemo(() => {
     let result = [...tasks]
@@ -265,6 +290,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
           color="text-yellow-500"
           bg="bg-yellow-100/70 dark:bg-yellow-950/40"
           gradient="from-yellow-500 to-orange-500"
+          trend={{ value: weeklyTotal, isPositive: true, label: "this week", suffix: "" }}
         />
         <StatCard 
           title="In Progress"
@@ -273,6 +299,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
           color="text-blue-500"
           bg="bg-blue-100/70 dark:bg-blue-950/40"
           gradient="from-blue-500 to-cyan-500"
+          trend={{ value: statusPercentage.in_progress, isPositive: true, label: "of total" }}
         />
         <StatCard 
           title="Completed"
@@ -281,6 +308,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
           color="text-emerald-500"
           bg="bg-emerald-100/70 dark:bg-emerald-950/40"
           gradient="from-emerald-500 to-teal-500"
+          trend={{ value: statusPercentage.done, isPositive: true, label: "of total" }}
         />
         <StatCard 
           title="Total Time"
@@ -303,6 +331,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
           color="text-red-500"
           bg="bg-red-100/70 dark:bg-red-950/40"
           gradient="from-red-500 to-pink-500"
+          trend={{ value: statusPercentage.overdue, isPositive: statusPercentage.overdue === 0, label: "of total" }}
         />
         <StatCard 
           title="To Do"
@@ -311,6 +340,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
           color="text-rose-500"
           bg="bg-rose-100/70 dark:bg-rose-950/40"
           gradient="from-rose-500 to-pink-600"
+          trend={{ value: statusPercentage.todo, isPositive: true, label: "of total" }}
         />
       </div>
 
