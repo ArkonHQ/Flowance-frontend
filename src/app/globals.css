@@ -215,3 +215,34 @@
     @apply bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/30;
   }
 }
+
+
+/* When the right panel is open, push the main content left on PC (desktop >= 1536px) */
+@media (min-width: 1536px) {
+  body.panel-open main:not([data-slot="sidebar-inset"]) {
+    padding-right: 420px; /* 400px panel width + 20px space */
+    transition: padding-right 0.3s ease;
+  }
+  body.panel-open main:not([data-slot="sidebar-inset"]) .container {
+    margin-right: 0;
+    margin-left: auto;
+  }
+  
+  /* Hide sheet overlay on PC/large screens since I want to click on the page */
+  [data-slot="sheet-overlay"] {
+    display: none !important;
+    pointer-events: none !important;
+  }
+}
+
+/* Style for sheet overlay on non-PC screens (laptops, tablets, mobile) */
+@media (max-width: 1535px) {
+  [data-slot="sheet-overlay"] {
+    background-color: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+}
+
+main:not([data-slot="sidebar-inset"]) {
+  transition: padding-right 0.3s ease;
+}

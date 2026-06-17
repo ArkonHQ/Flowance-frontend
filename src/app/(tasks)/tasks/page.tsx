@@ -1,6 +1,7 @@
 import { getAllProjects, Project } from "@/lib/api/projects"
 import { getAllTasks } from "@/lib/api/tasks"
 import { Task } from "@/lib/api/tasks"
+import { getDashboard } from "@/lib/api/dashboard"
 import { cookies } from "next/headers"
 import { TaskPageContent } from "../components/TaskPageContent"
 
@@ -15,8 +16,14 @@ const TaskPage = async () => {
   const cookieStore = await cookies()
   const cookieHeader = cookieStore.toString()
   
-  const {tasks, totalHours} = await getAllTasks(cookieHeader)
-  const projects: Project[] = await getAllProjects(cookieHeader)
+  const [{tasks, totalHours}, lastWeekDashboard, projects] = await Promise.all([
+    getAllTasks(cookieHeader),
+    getDashboard(cookieHeader, '7days'),
+    getAllProjects(cookieHeader),
+  ])
+  
+  // Last week's total hours
+  const lastWeekHours = lastWeekDashboard.totalHours
   
   // Compute stats
   const total = tasks.length
@@ -30,7 +37,7 @@ const TaskPage = async () => {
 
   const stats = { total, todo, in_progress, done, cancelled, delayed, totalHours, overdue }
 
-  return <TaskPageContent initialTask={tasks} stats={stats} projects={projects} />
+  return <TaskPageContent initialTask={tasks} stats={stats} projects={projects} totalHours={totalHours} lastWeekHours={lastWeekHours} />
   
 }
 

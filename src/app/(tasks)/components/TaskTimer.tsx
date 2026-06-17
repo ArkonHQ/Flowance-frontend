@@ -179,7 +179,9 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
     }
   }
 
-  const dotColor = isDone
+  const dotColor = taskStatus === 'cancelled'
+    ? 'bg-red-500'
+    : taskStatus === 'done'
     ? 'bg-gray-400'
     : status === 'running'
     ? 'bg-green-500 animate-pulse'
@@ -189,7 +191,9 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
     ? 'bg-gray-500'
     : 'bg-gray-400'
 
-  const statusText = isDone
+  const statusText = taskStatus === 'cancelled'
+    ? 'Cancelled'
+    : taskStatus === 'done'
     ? 'Completed'
     : status === 'running'
     ? 'Running'
@@ -198,7 +202,7 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
     : status === 'stopped'
     ? 'Stopped'
     : 'Stopped'
-
+    
   const formatManualPreview = (hStr: string, mStr: string) => {
     const h = Math.max(0, parseInt(hStr || '0', 10) || 0)
     const m = Math.max(0, parseInt(mStr || '0', 10) || 0)
@@ -251,7 +255,7 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
             <div className="h-11 w-28 rounded-md bg-muted animate-pulse" />
           ) : isDone ? (
             <Button size="lg" disabled className="h-11 w-28 gap-1">
-              <Square className="h-4 w-4" /> Completed
+              <Square className="h-4 w-4" /> {taskStatus === 'cancelled' ? 'Cancelled' : 'Completed'}
             </Button>
           ) : (
             (!isActive || status === 'stopped') && (

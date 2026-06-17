@@ -4,6 +4,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetCl
 import { getTask, Task} from "@/lib/api/tasks"
 import { useEffect, useState } from "react"
 import TaskTimer from "./TaskTimer"
+import { useMediaQuery } from "@/hooks/useMediaQuery"
+import { cn } from "@/lib/utils"
 
 
 interface SidePanelProps {
@@ -63,14 +65,39 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
     }
   }, [open, taskId, refreshKey])
 
+  const isLargeScreen = useMediaQuery('(min-width: 1536px)')
+
+ useEffect(() => {
+  if (open && isLargeScreen) {
+    document.body.classList.add('panel-open');
+  } else {
+    document.body.classList.remove('panel-open');
+  }
+  return () => document.body.classList.remove('panel-open');
+}, [open, isLargeScreen]);
 
   return (
-    <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:w-[400px] overflow-y-auto">
+    <Sheet open={open} onOpenChange={onClose} modal={!isLargeScreen}>
+      <SheetContent 
+        className={cn("w-full sm:w-[360px] lg:w-[400px] overflow-y-auto border-l shadow-lg p-0",)}
+        side="right"
+        style={{ top: 80, bottom: 0, height: '100vh', position: 'fixed' }}
+        onPointerDownOutside={(e) => {
+          if (isLargeScreen) {
+            e.preventDefault();
+          }
+        }}
+        onInteractOutside={(e) => {
+          if (isLargeScreen) {
+            e.preventDefault();
+          }
+        }}
+        >
+        
         <SheetHeader>
-          <SheetTitle className="text-lg font-semibold mt-4">Task details</SheetTitle>
+          <SheetTitle className="text-lg font-semibold mt-4">{taskTitle}</SheetTitle>
           <SheetDescription className="mb-4">
-            Viewing: <span className="font-medium">{taskTitle}</span>
+          <span className="font-medium">{task?.description}</span>
           </SheetDescription>
         </SheetHeader>
 

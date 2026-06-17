@@ -20,16 +20,18 @@ import { isTaskInThisWeek } from "@/lib/utils/date"
 //TODO Assignees not ready now i put it for project until i add team collaboration features
 
 interface Props {
+  totalHours: number
+  lastWeekHours: number
   initialTask: Task[]
   stats: { total: number, todo: number, in_progress: number, done: number, cancelled: number, delayed: number, totalHours: number, overdue: number }
   projects: Project[]
 }
 
-export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
+export const TaskPageContent = ({ initialTask, stats, projects, totalHours, lastWeekHours }: Props) => {
   const [tasks, setTasks] = useState<Task[]>(initialTask) 
   const [taskStats, setTaskStats] = useState(stats) 
   const [statusFilter, setStatusFilter] = useState('all') 
-  const [currentPage, setCurrentPage] = useState(1) 
+  const [currentPage, setCurrentPage] = useState(1)
   const [selectedTask, setSelectedTask] = useState<{ id: number, title: string, projectTitle: string | null } | null>(null) 
   const [isPanelOpen, setIsPanelOpen] = useState(false) 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set()) 
@@ -46,15 +48,6 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
   const weeklyTasks = tasks.filter(isTaskInThisWeek)
   const weeklyTotal = weeklyTasks.length
 
-  const weeklyStatusCounts = {
-    todo: weeklyTasks.filter(t => t.status === 'todo').length,
-    in_progress: weeklyTasks.filter(t => t.status === 'in_progress').length,
-    done: weeklyTasks.filter(t => t.status === 'done').length,
-    cancelled: weeklyTasks.filter(t => t.status === 'cancelled').length,
-    delayed: weeklyTasks.filter(t => t.status === 'delayed').length,
-    overdue: weeklyTasks.filter(t => t.status === 'overdue').length,
-  }
-
   const totalTasks = taskStats.total
   const statusPercentage = {
     todo:        totalTasks > 0 ? Math.round((taskStats.todo        / totalTasks) * 100) : 0,
@@ -64,6 +57,8 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
     overdue:     totalTasks > 0 ? Math.round((taskStats.overdue     / totalTasks) * 100) : 0,
     delayed:     totalTasks > 0 ? Math.round((taskStats.delayed     / totalTasks) * 100) : 0,
   }
+
+
 
   const filtered = useMemo(() => {
     let result = [...tasks]
@@ -323,6 +318,24 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
           color="text-indigo-500"
           bg="bg-indigo-100/70 dark:bg-indigo-950/40"
           gradient="from-indigo-500 to-purple-500"
+          trend={(() => {
+            // Compute percentage difference
+            const current = taskStats.totalHours
+            const previous = lastWeekHours
+            
+            let percentChange = 0
+            if (previous > 0) {
+              percentChange = Math.round(((current - previous) / previous) * 100)
+            } else if (current > 0) {
+              percentChange = 100
+            }
+            return { 
+              value: percentChange, 
+              isPositive: percentChange > 0, 
+              label: 'from last week',
+              suffix: '%' 
+            }
+          })()}
         />
         <StatCard 
           title="Overdue"

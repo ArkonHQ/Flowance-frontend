@@ -40,6 +40,8 @@ const getTotalTaskHours = async (cookieHeader?: string): Promise<number> => {
     return Number(data.totalHours) || 0
 }
 
+
+
 export const getAllTasks = async ( cookieHeader?: string ): Promise<TaskResponse> => {
     const headers: Record<string, string> = {'Content-Type': 'application/json'}
     if (cookieHeader) headers['Cookie'] = cookieHeader;
