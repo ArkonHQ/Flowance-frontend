@@ -385,7 +385,7 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
           // Table Header (Hidden on Mobile)
           <div className="grid grid-3">
             {filtered.length > 0 && (
-              <div className="hidden md:grid grid-cols-[40px_1fr_1fr_1fr_110px_110px_100px_110px_40px] gap-4 py-3 px-5 text-xs font-semibold text-slate-700 dark:text-slate-300 border-slate-200/60 dark:border-border/25 z-10">
+              <div className="hidden md:grid grid-cols-[40px_2fr_1fr_130px_130px_130px_130px_130px_40px] gap-4 py-3 px-5 text-xs font-semibold text-slate-700 dark:text-slate-300 border-slate-200/60 dark:border-border/25 z-10">
                 <div className="flex items-center justify-center">
                   <Checkbox 
                     checked={isAllSelected}
@@ -397,10 +397,10 @@ export const TaskPageContent = ({ initialTask, stats, projects }: Props) => {
                 <div>Task</div>
                 <div>Project</div>
                 <div>Assignee</div>
-                <div>Status</div>
-                <div>Priority</div>
+                <div className="text-left">Status</div>
+                <div className="text-left">Priority</div>
                 <div>Due Date</div>
-                <div>Timer</div>
+                <div className="text-center">Timer</div>
               </div>
             )}
             {paginatedTasks.map((task) => {

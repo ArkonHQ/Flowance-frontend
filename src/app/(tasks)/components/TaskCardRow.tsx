@@ -15,7 +15,7 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { Task } from "@/lib/api/tasks"
 import { cn } from "@/lib/utils"
-import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { ExternalLink, MoreHorizontal, Pencil, Trash2, ArrowDown, ArrowUp, Minus } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import DeleteButton from "./DeleteTasks"
@@ -37,12 +37,12 @@ interface TaskCardRowProps {
   // 1.Define Colors if exist 
 const getStatusColor = (status: string) => {
   const statusColors: Record<string, string> = {
-    todo: "bg-blue-100 text-blue-700 border-blue-200",
-    in_progress: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    done: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    cancelled: "bg-red-100 text-red-700 border-red-200",
-    delayed: "bg-gray-100 text-gray-700 border-gray-200",
-    overdue: "bg-rose-100 text-rose-700 border-rose-200",
+    todo: "badge-status-todo",
+    in_progress: "badge-status-in_progress",
+    done: "badge-status-done",
+    cancelled: "badge-status-cancelled",
+    delayed: "badge-status-delayed",
+    overdue: "badge-status-overdue",
   }
 
   return statusColors[status] || statusColors.delayed
@@ -62,9 +62,9 @@ const statusDisplay = (status: string) => {
 
 const getPriorityColor = (priority: string) => {
   const priorityColors: Record<string, string> = {
-    low: "bg-green-100/70 text-green-700 border-green-200",
-    medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
-    high: "bg-red-100 text-red-700 border-red-200",
+    low: "badge-priority-low",
+    medium: "badge-priority-medium",
+    high: "badge-priority-high",
   }
   return priorityColors[priority] || priorityColors.medium
 }
@@ -112,7 +112,7 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
       role="group"
       aria-label={`Task row: ${title}`}
       className={cn(
-        "flex flex-wrap md:grid md:grid-cols-[40px_1fr_1fr_1fr_110px_110px_100px_110px_40px] gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 hover:shadow-xs transition-all group",
+        "flex flex-wrap md:grid md:grid-cols-[40px_2fr_1fr_130px_130px_130px_130px_130px_40px] gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 hover:shadow-xs transition-all group",
         isSelected ? "bg-primary/5 dark:bg-primary/10 border-primary/50" : "border-border/30 hover:border-border/60"
       )}
     >
@@ -144,16 +144,26 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+        <span className="text-muted-foreground/90 text-xs w-xs line-clamp-1 mt-2">{task.description}</span>
       </div>
 
       {/* 3. Project */}
       <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:block">
+        <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
         <Link
           href={`/projects/${task.projectId}`}
           className="hover:text-primary transition-colors cursor-pointer"
         >
           {projectTitle ?? task.project?.title ?? "No project"}
         </Link>
+         </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs break-words">
+            <p>{projectTitle ?? task.project?.title ?? "No project"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* 4. Assignee (Placeholder for now) */}
@@ -163,29 +173,36 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
 
       {/* 5. Status */}
       <div className="flex items-center">
-        <Badge variant="outline" className={cn("shrink-0 text-xs font-medium w-full md:w-auto justify-center", getStatusColor(task.status))}>
+        <div className={cn("inline-flex items-center border px-2.5 py-0.5 font-medium transition-colors shrink-0 text-sm w-full md:w-auto justify-center rounded-sm", getStatusColor(task.status))}>
+          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80 mr-1.5" aria-hidden="true" />
           {statusDisplay(task.status)}
-        </Badge>
+        </div>
       </div>
 
       {/* 6. Priority */}
       <div className="flex items-center">
-        <div className={cn("font-semibold text-xs text-center rounded px-2 py-1 w-full md:w-auto", getPriorityColor(task.priority))}>
+        <div className={cn("inline-flex items-center gap-1 border px-2.5 py-0.5 font-medium transition-colors shrink-0 text-sm w-full md:w-auto justify-center rounded-sm", getPriorityColor(task.priority))}>
+          {task.priority === "high" ? <ArrowUp className="w-3.5 h-3.5" /> : task.priority === "low" ? <ArrowDown className="w-3.5 h-3.5" /> : <Minus className="w-3.5 h-3.5" />}
           {(task.priority ?? "medium").charAt(0).toUpperCase() + (task.priority ?? "medium").slice(1)}
         </div>
       </div>
 
       {/* 7. Due Date */}
-      <div className="text-muted-foreground text-sm hidden md:block">
+      <div className={cn(
+        "text-sm hidden md:block",
+        task.status === 'overdue' || (task.deadline && new Date(task.deadline).getTime() < Date.now() && !['done', 'cancelled'].includes(task.status))
+          ? "text-red-600 dark:text-red-400 font-medium"
+          : "text-muted-foreground"
+      )}>
         <time dateTime={task.deadline ? new Date(task.deadline).toISOString() : undefined}>
-          {formatDate(task.deadline)}
+          {!task.deadline ? "-" : formatDate(task.deadline)}
         </time>
       </div>
 
       {/* 8. Timer */}
       <div className="flex items-center justify-end text-sm font-medium text-muted-foreground flex-1 md:flex-none">
         {timer?.elapsedSeconds ? (
-          <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md border w-full md:w-auto justify-center", timer.status === 'running' ? "bg-green-100/50 text-green-700 border-green-200" : "bg-secondary/50 border-transparent")}>
+          <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md border w-full md:w-auto justify-center", timer.status === 'running' ? "bg-green-100/50 dark:bg-green-300/20 text-green-700 border-green-200" : "bg-secondary/50 border-transparent")}>
             <Clock className="w-3.5 h-3.5" />
             <span className="tabular-nums">{formatTime(timer.elapsedSeconds)}</span>
           </div>

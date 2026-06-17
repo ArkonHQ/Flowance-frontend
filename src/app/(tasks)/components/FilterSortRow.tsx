@@ -65,7 +65,7 @@ const FilterSortRow = ({
             placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 pr-8"
+            className="pl-9 pr-8 py-6"
           />
         </div>
 
