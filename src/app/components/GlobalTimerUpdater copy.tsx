@@ -13,7 +13,6 @@ const GlobalTimerUpdater = () => {
 
       console.log(`[GlobalTimerUpdater] ticking ${runningIds.length} timers`)
 
-      const now = new Date()
       useTimerStore.setState((state) => {
         const updated = { ...state.timers }
         for (const t of runningIds) {

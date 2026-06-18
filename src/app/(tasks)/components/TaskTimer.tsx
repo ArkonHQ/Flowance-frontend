@@ -36,7 +36,8 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
     if (manualOpen) hoursRef.current?.focus()
   }, [manualOpen])
 
-  const isDone = taskStatus === 'done' || taskStatus === 'cancelled'
+  const isDone = taskStatus === 'done' || taskStatus === 'cancelled' || taskStatus === 'overdue'
+
 
   // Subscribe only to this task's timer slot
   const timer = useTimerStore((state) => state.timers[taskId])
@@ -182,25 +183,25 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
   const dotColor = taskStatus === 'cancelled'
     ? 'bg-red-500'
     : taskStatus === 'done'
-    ? 'bg-gray-400'
+    ? 'bg-emerald-400'
+    : taskStatus === 'overdue'
+    ? 'bg-rose-500'
     : status === 'running'
     ? 'bg-green-500 animate-pulse'
     : status === 'paused'
     ? 'bg-yellow-500'
-    : status === 'stopped'
-    ? 'bg-gray-500'
     : 'bg-gray-400'
 
   const statusText = taskStatus === 'cancelled'
     ? 'Cancelled'
     : taskStatus === 'done'
     ? 'Completed'
+    : taskStatus === 'overdue'
+    ? 'Overdue'
     : status === 'running'
     ? 'Running'
     : status === 'paused'
     ? 'Paused'
-    : status === 'stopped'
-    ? 'Stopped'
     : 'Stopped'
     
   const formatManualPreview = (hStr: string, mStr: string) => {
@@ -255,10 +256,10 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
             <div className="h-11 w-28 rounded-md bg-muted animate-pulse" />
           ) : isDone ? (
             <Button size="lg" disabled className="h-11 w-28 gap-1">
-              <Square className="h-4 w-4" /> {taskStatus === 'cancelled' ? 'Cancelled' : 'Completed'}
+              <Square className="h-4 w-4" /> {taskStatus === 'cancelled' ? 'Cancelled' : taskStatus === 'done' ? 'Completed' : taskStatus === 'overdue' && 'Overdue'  }
             </Button>
           ) : (
-            (!isActive || status === 'stopped') && (
+            (!isActive || status === 'idle') && (
               <Button size="lg" onClick={handleStart} disabled={loading} className="h-11 w-28 gap-1">
                 <Play className="h-4 w-4" /> Start
               </Button>
@@ -287,11 +288,6 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
             </>
           )}
 
-          {sessionLoaded && isActive && status === 'stopped' && (
-            <Button size="lg" onClick={handleStart} disabled={loading} className="h-11 w-28 gap-1">
-              <Play className="h-4 w-4" /> Start
-            </Button>
-          )}
         </div>
 
         {/* Manual time entry (popover) */}

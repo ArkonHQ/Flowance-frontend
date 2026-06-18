@@ -116,7 +116,7 @@ export const GlobalTimerDisplay = () => {
   const timers = useTimerStore((s) => s.timers)
   const { open } = useSidebar()
 
-  const activeTimers = Object.values(timers)
+  const activeTimers = Object.values(timers).filter((t) => t.status === 'running' || t.status === 'paused')
 
   // Show ONLY when sidebar is open and at least one timer is running
   if (!open || activeTimers.length === 0) return null

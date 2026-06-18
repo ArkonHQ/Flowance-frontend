@@ -3,13 +3,13 @@ import { create } from 'zustand';
 export interface SingleTimer {
   taskId: number;
   taskName: string;
-  status: 'running' | 'paused' | 'stopped';
+  status: 'running' | 'paused' | 'idle'
   startTime: Date;
   pausedAt: Date | null;
   totalPausedSeconds: number;
   elapsedSeconds: number;
 
-  /* Total hours already logged to DB for this task (from previous chunks) */
+  /* Total hours already logged to DB for this task */
   pastLoggedSeconds: number;
 }
 
@@ -17,7 +17,7 @@ interface MultiTimerState {
   timers: Record<number, SingleTimer>;
   /*
     false until loadSession() finishes backend reconciliation.
-    Use this in TaskTimer to show a skeleton instead of the Start button1
+    Use this in TaskTimer to show a skeleton instead of the Start button
     while the first network call is in flight.
    */
   sessionLoaded: boolean;
@@ -42,7 +42,7 @@ const LS_KEY = 'fcc_timer_cache';
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /* Fetch total past logged hours for a task and return as seconds */
-async function fetchPastLoggedSeconds(taskId: number): Promise<number> {
+const fetchPastLoggedSeconds = async (taskId: number): Promise<number> => {
   try {
     const res = await fetch(`${API_BASE}/tasks/${taskId}/timer/hours`, {
       credentials: 'include',
@@ -56,7 +56,7 @@ async function fetchPastLoggedSeconds(taskId: number): Promise<number> {
 }
 
 /* Serialize timers to plain JSON (Dates → ISO strings) for localStorage */
-function serializeTimers(timers: Record<number, SingleTimer>) {
+const serializeTimers = (timers: Record<number, SingleTimer>) => {
   const out: Record<string, any> = {};
   for (const key in timers) {
     const t = timers[key];
@@ -70,7 +70,7 @@ function serializeTimers(timers: Record<number, SingleTimer>) {
 }
 
 /* Deserialize timers from localStorage (ISO strings → Dates) */
-function deserializeTimers(raw: Record<string, any>): Record<number, SingleTimer> {
+const deserializeTimers = (raw: Record<string, any>): Record<number, SingleTimer> => {
   const out: Record<number, SingleTimer> = {};
   for (const key in raw) {
     const t = raw[key];
@@ -89,7 +89,7 @@ function deserializeTimers(raw: Record<string, any>): Record<number, SingleTimer
   correct timer on its very first render; no useEffect delay, no "Start"
   button flash.
  */
-function loadFromLocalStorage(): Record<number, SingleTimer> {
+  const loadFromLocalStorage = (): Record<number, SingleTimer> => {
   if (typeof window === 'undefined') return {};
   try {
     const raw = localStorage.getItem(LS_KEY);
@@ -108,7 +108,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
   sessionLoaded: false,
 
   getTimer: (taskId) => get().timers[taskId],
-  activeTimers: () => Object.values(get().timers),
+  activeTimers: () => Object.values(get().timers).filter(t => t.status === 'running' || t.status === 'paused'),
 
   _saveToLocalStorage: () => {
     try {
@@ -117,15 +117,50 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
   },
 
   _clearLocalStorage: () => {
-    try { localStorage.removeItem(LS_KEY); } catch { /* ignore */ }
+    try { localStorage.removeItem(LS_KEY); } catch { /* None */ }
   },
 
   // ─── Start ─────────────────────────────────────────────────────────────────
+  //  Fetches pastLoggedSeconds so the timer continues from the total already logged.
   startTimer: async (taskId, taskName) => {
-    if (get().timers[taskId]) return;
-
+    const existing = get().timers[taskId]
+    if(existing && existing.status === 'running') return
+    
     const now = new Date();
-    const pastLoggedSeconds = 0; // Always start from zero for a new session
+
+    if (existing && existing.status === 'idle') {
+      set((state) => ({
+        timers: {
+          ...state.timers,
+          [taskId]: {
+            ...existing,
+            status: 'running',
+            startTime: now,
+            pausedAt: null,
+            totalPausedSeconds: 0,
+            elapsedSeconds: existing.pastLoggedSeconds,
+          },
+        },
+        activeTimerId: taskId,
+      }))
+      get()._saveToLocalStorage()
+
+      try{
+        await fetch(`${API_BASE}/tasks/${taskId}/timer/start`, {
+          method: "POST",
+          headers: {'Content-Type': 'application/json'},
+          credentials: 'include',
+          body: JSON.stringify({ startTime: now.toISOString() })
+        })
+      }catch(err) {
+        console.error(err)
+      }
+      return
+    }
+
+
+
+    const pastLoggedSeconds = await fetchPastLoggedSeconds(taskId);
 
     set((state) => ({
       timers: {
@@ -277,83 +312,84 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
     const timer = get().timers[taskId];
     if (!timer) return;
 
-    const previousTimer = { ...timer };
     const now = new Date();
 
-    const removeTimer = () => {
-      set((state) => {
-        const nextTimers = { ...state.timers };
-        delete nextTimers[taskId];
-        return { timers: nextTimers };
-      });
-      get()._saveToLocalStorage();
-    };
-
-    const restoreTimer = () => {
-      set((state) => ({
-        timers: {
-          ...state.timers,
-          [taskId]: previousTimer,
-        },
-      }));
-      get()._saveToLocalStorage();
-    };
-
+    // If already paused just mark as idle
     if (timer.status === 'paused') {
-      removeTimer();
-      await get().deleteSession();
-      return;
+      set((state) => ({
+        timers:{
+          ...state.timers,
+          [taskId]: {
+            ...timer,
+            status: 'idle',
+            elapsedSeconds: timer.pastLoggedSeconds,
+          },
+        },
+        activeTimerId: null,
+      }))
+      get()._saveToLocalStorage()
+      await get().deleteSession()
+      return
     }
 
-    const totalSeconds =
-      (now.getTime() - new Date(timer.startTime).getTime()) / 1000 - timer.totalPausedSeconds;
-    const hours = totalSeconds / 3600;
+    const totalSeconds = (now.getTime() - timer.startTime.getTime()) / 1000 - timer.totalPausedSeconds
 
-    if (totalSeconds <= 0) {
-      console.warn(`[Timer] Task ${taskId} had 0 seconds — skipping log.`);
-      removeTimer();
-      await get().deleteSession();
-      return;
+    const hours = totalSeconds / 3600
+
+    if(hours <= 0){
+      set((state) => ({
+        timers:{
+          ...state.timers,
+          [taskId]:{
+            ...timer,
+            status: 'idle',
+            elapsedSeconds: timer.pastLoggedSeconds,
+          },
+        },
+        activeTimerId: null,
+      }))
+
+      get()._saveToLocalStorage()
+      await get().deleteSession()
+      return 
     }
 
-    removeTimer();
-
-    try {
+    try{
       const res = await fetch(`${API_BASE}/tasks/${taskId}/timer/stop`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          startTime: timer.startTime.toISOString(),
-          endTime: now.toISOString(),
-          hours,
-          manual: false,
-        }),
-      });
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({startTime: now.toISOString()}),
+        credentials: 'include'
+      })
+      const data = await res.json()
+      const loggedHours = data?.hours ?? hours
+      const loggedSeconds = loggedHours * 3600
+      const newPast = timer.pastLoggedSeconds + loggedSeconds
 
-      const text = await res.text().catch(() => null);
-      let data: any = null;
-      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      set((state) => ({
+        timers:{
+          ...state.timers,
+          [taskId]: {
+            ...timer,
+            status: 'idle',
+            pastLoggedSeconds: newPast,
+            elapsedSeconds: newPast,
+            startTime: new Date(),
+            pausedAt: null,
+            totalPausedSeconds: 0,
+          },
+        },
+        activeTimerId: null
+      }))
 
-      if (!res.ok) {
-        console.error('[Timer] Stop failed:', res.status, text);
-        throw new Error('Failed to log time');
-      }
-
-      const loggedHours = data?.hours ?? hours;
-      console.log(`[Timer] Stopped task ${taskId}, logged ${loggedHours.toFixed(4)}h`);
-
-      try {
-        window.dispatchEvent(
-          new CustomEvent('taskTimeLogged', { detail: { taskId, hours: loggedHours } })
-        );
-      } catch { /* SSR */ }
-    } catch (err) {
-      console.error('[Timer] stopTimer error:', err);
-      restoreTimer();
-    } finally {
-      await get().deleteSession();
+      get()._saveToLocalStorage()
+      window.dispatchEvent(new CustomEvent('taskTimeLogged', {detail: {taskId, hours: loggedHours}}))
+    }catch (err) {
+      console.error('[Timer] stopTimer error:', err)
+    }finally{
+      await get().deleteSession()
     }
+
   },
 
   // ─── Load Session (reconcile with backend on page load) ────────────────────
@@ -364,6 +400,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
   //   1. Confirm the running session's authoritative startTime.
   //   2. Clear any stale 'running' timers if the backend has no session.
   //   3. Set sessionLoaded = true so the TaskTimer can stop showing skeleton UI.
+  //   4.  Fetch fresh pastLoggedSeconds to ensure cumulative total.
   //
   loadSession: async () => {
     try {
@@ -379,27 +416,25 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
 
       if (data?.session) {
         const s = data.session;
-        set((state) => {
-          const existingTimer = state.timers[s.taskId];
-          const pastLoggedSeconds = existingTimer ? existingTimer.pastLoggedSeconds : 0;
+        //  Fresh fetch for pastLoggedSeconds (important for accumulative timer)
+        const pastLoggedSeconds = await fetchPastLoggedSeconds(s.taskId);
 
-          return {
-            sessionLoaded: true,
-            timers: {
-              ...state.timers,
-              [s.taskId]: {
-                taskId: s.taskId,
-                taskName: s.taskName,
-                status: 'running',
-                startTime: new Date(s.startTime),
-                pausedAt: null,
-                totalPausedSeconds: s.totalPausedSeconds,
-                elapsedSeconds: pastLoggedSeconds,
-                pastLoggedSeconds,
-              },
+        set((state) => ({
+          sessionLoaded: true,
+          timers: {
+            ...state.timers,
+            [s.taskId]: {
+              taskId: s.taskId,
+              taskName: s.taskName,
+              status: 'running',
+              startTime: new Date(s.startTime),
+              pausedAt: null,
+              totalPausedSeconds: s.totalPausedSeconds,
+              elapsedSeconds: pastLoggedSeconds,
+              pastLoggedSeconds,
             },
-          };
-        });
+          },
+        }));
         get()._saveToLocalStorage();
         console.log(`[Timer] Backend confirmed running session for task ${s.taskId}`);
       } else {
@@ -461,6 +496,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
 }));
 
 // ─── 1-second tick — only updates running timers ──────────────────────────────
+//  Reduced from 50ms to 1000ms for performance.
 if (typeof window !== 'undefined') {
   setInterval(() => {
     const state = useTimerStore.getState();
