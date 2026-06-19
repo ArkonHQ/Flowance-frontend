@@ -8,6 +8,7 @@ export type Task = {
     project: Project,
     title: string,
     description: string | null,
+    summery: string | null ,
     status: 'todo' | 'in_progress' | 'done' | 'delayed' | 'cancelled' | 'overdue',
     priority: 'low' | 'medium' | 'high',
     deadline: Date | string,
@@ -20,7 +21,6 @@ export type Task = {
 }
 
 export type Mission = {
-
     id: number,
     name: string,
     completed: boolean,
@@ -29,10 +29,6 @@ export type Mission = {
     completedById: number | null
     position: number
     completedAt: Date | null,
-    updatedAt: Date | null,
-    deletedAt: Date | null,
-    createdAt: Date,
-
 }
 
 
@@ -78,7 +74,7 @@ export const addMission = async (taskId: number, text: string, assigneeId?: numb
     return data.mission
 }
 
-export const toggleMission = async (taskId: number, missionId: number, cookieHeaders?: string): Promise<Mission> => {
+export const toggleMission = async (missionId: number, taskId: number, cookieHeaders?: string): Promise<Mission> => {
 
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -186,7 +182,7 @@ export const getTask = async (taskId: number, cookieHeader?: string): Promise<Ta
     return data.task
 }
 
-export const createTask = async (taskData: { title: string, status: Task['status'], priority: Task['priority'], deadline: Date | string, projectId: number }, cookieHeader?: string): Promise<Task> => {
+export const createTask = async (taskData: { title: string, summery?: string | null, status: Task['status'], priority: Task['priority'], deadline: Date | string, projectId: number }, cookieHeader?: string): Promise<Task> => {
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader
@@ -243,4 +239,19 @@ export const getTaskByProject = async (processId: number, cookieHeader?: string)
 
     const data = await res.json()
     return data.tasks
+}
+
+export const updateTaskStatus = async (taskId: number, status: string, cookieHeader?: string): Promise<Task> => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (cookieHeader) headers['Cookie'] = cookieHeader
+
+    const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ status }),
+        credentials: "include",
+    })
+    if (!res.ok) throw new Error(`Failed to update task status: ${res.status}`)
+    const data = await res.json()
+    return data.task
 }

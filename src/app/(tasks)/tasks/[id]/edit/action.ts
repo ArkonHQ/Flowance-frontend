@@ -21,6 +21,7 @@ export const updateTaskAction =  async (prevState: UpdateTaskState | null, formD
   const title = formData.get('title') as string
   const projectId = Number(formData.get('projectId'))
   const description = formData.get('description') as string
+  const summery = formData.get('summery') as string | null
   const status = formData.get('status') as 'todo' | 'in_progress' | 'done' | 'cancelled' | 'delayed' 
   const deadline = (formData.get('deadline') as Date | string) || new Date().toISOString()
   
@@ -29,7 +30,7 @@ export const updateTaskAction =  async (prevState: UpdateTaskState | null, formD
 
   try {
     
-    await updateTask(taskId, { title, projectId, description, status, deadline }, cookieHeader)
+    await updateTask(taskId, { title, projectId, description, summery: summery || null, status, deadline }, cookieHeader)
 
   }catch (err: any) {
     return { error: err.message || 'Something went wrong' }

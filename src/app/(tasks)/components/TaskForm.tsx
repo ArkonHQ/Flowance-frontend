@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { SelectItem, SelectTrigger, SelectValue, Select, SelectContent } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 
 
 
@@ -46,6 +47,18 @@ export const TaskForm = ({ projects }: TaskFormProps) => {
               required
               className="bg-card/70"
                 />
+          </div>
+
+          {/* Summery */}
+          <div className="space-y-2">
+            <Label htmlFor="summery">Summary</Label>
+            <Textarea
+              id="summery"
+              name="summery"
+              placeholder="Brief summary of what this task involves..."
+              className="bg-card/70 resize-none"
+              rows={3}
+            />
           </div>
 
           {/* Project */}

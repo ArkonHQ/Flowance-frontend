@@ -144,7 +144,7 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <span className="text-muted-foreground/90 text-xs w-29 line-clamp-1 mt-2">{task.description}</span>
+        <span className="text-muted-foreground/90 text-xs w-29 line-clamp-1 mt-2">{task.summery}</span>
       </div>
 
       {/* 3. Project */}

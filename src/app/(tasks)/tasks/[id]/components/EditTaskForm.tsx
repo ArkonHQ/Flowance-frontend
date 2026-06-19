@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 
 
 
@@ -74,6 +75,18 @@ export const EditTaskForm = ({ task, project}: props) => {
                     />
                 </Label>
               </div>
+                {/* Summery */}
+                <div className="space-y-2">
+                  <Label htmlFor="summery">Summary</Label>
+                  <Textarea
+                    id="summery"
+                    name="summery"
+                    placeholder="Enter task summary (optional)"
+                    defaultValue={task.summery || ''}
+                    className="bg-card/70 resize-none"
+                    rows={3}
+                  />
+                </div>
               {/* Description */}
               <div className="space-y-2">
                 <Label htmlFor="description">

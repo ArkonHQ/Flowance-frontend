@@ -85,6 +85,14 @@ export const TaskDetail = ({ task }: TaskDetailProps) => {
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {task.summery && (
+          <div className="flex items-start gap-2">
+            <FileText className="h-4 w-4 mt-0.5 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">Summary: </span>{task.summery}
+            </p>
+          </div>
+        )}
         {task.description && (
           <div className="flex items-start gap-2">
             <FileText className="h-4 w-4 mt-0.5 text-muted-foreground" />

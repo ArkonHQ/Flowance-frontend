@@ -18,8 +18,9 @@ export const handleCreateTask = async (prevState: CreateTaskState | null, formDa
   
   
   const title = formData.get('title') as string
+  const summery = formData.get('summery') as string | null
   const projectId = Number(formData.get('projectId'))
-  const statusRaw = formData.get('status') 
+  const statusRaw = formData.get('status')
   const validStatusValues = ['todo', 'in_progress', 'done', 'delayed', 'cancelled'] as const
   // Default to 'in_progress' if missing or invalid
   const status = typeof statusRaw === 'string' && validStatusValues.includes(statusRaw as any)
@@ -42,7 +43,7 @@ export const handleCreateTask = async (prevState: CreateTaskState | null, formDa
   if (!projectId) return { error: 'Please select a project' }
 
   try {
-    await createTask({ title, status, priority, deadline, projectId }, cookieHeader)
+    await createTask({ title, summery: summery || null, status, priority, deadline, projectId }, cookieHeader)
   
   }catch (err: any) {
     return { error: err.message || 'Something went wrong' }
