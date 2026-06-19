@@ -15,7 +15,7 @@ export type Task = {
     completedAt: Date | null,
     projectId: number,
     ownerId: string,
-    createdAt: Date,
+    createdAt: string,
     updatedAt: Date,
     deletedAt: Date | null
 }

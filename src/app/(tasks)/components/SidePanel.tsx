@@ -9,9 +9,12 @@ import { cn } from "@/lib/utils"
 import { MissionItem } from "./MissionsItem"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Plus } from "lucide-react"
+import { FolderKanbanIcon, Loader2, Plus, Calendar, AlignLeft, ArrowUp, ArrowDown, Minus, Clock, TagsIcon, Trash2, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { Progress } from "@/components/ui/progress"
+import { formatCompletedAt } from "@/lib/utils/date"
+import DeleteButton from "./DeleteTasks"
+import Link from "next/link"
 
 
 interface SidePanelProps {
@@ -19,6 +22,7 @@ interface SidePanelProps {
   taskTitle: string
   projectTitle: string
   open: boolean
+  onDelete: (id: number) => void
   onClose: () => void
   onTimeLogged?: () => void
   onTaskUpdated?: (updatedTask: Task) => void
@@ -44,8 +48,19 @@ const getPriorityColor = (priority: string) => {
   return priorityColors[priority] || priorityColors.medium
 }
 
+const displayStatus = (status: string) => {
+  const statusDisplay: Record<string, string> = {
+    todo: 'To Do',
+    in_progress: 'In Progress',
+    done: 'Done',
+    cancelled: 'Cancelled',
+    overdue: 'Overdue',
+    dealyed: 'Delayed'
+  }
+  return statusDisplay[status] || statusDisplay.todo
+}
 
-const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeLogged, onTaskUpdated }: SidePanelProps) => {
+const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeLogged, onTaskUpdated, onDelete }: SidePanelProps) => {
 
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(false)
@@ -227,7 +242,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
         setTask(updatedTask)
         toast.success('All remaining missions done! Task completed.')
       } else if (newMissions.length === 0 && task?.status === 'done') {
-        // Optional: If no missions left, maybe keep it done or revert? Usually leave it alone.
+        // Optional: If no missions left, maybe keep it done or revert? Usually leave it alone. //Todo if no mission left leave it  alone, but I can add something if I think about a good feature
       }
       
     } catch (error) {
@@ -276,7 +291,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
   return (
     <Sheet open={open} onOpenChange={onClose} modal={!isLargeScreen}>
       <SheetContent 
-        className={cn("w-full sm:w-[360px] lg:w-[400px] overflow-y-auto border-l shadow-lg p-0",)}
+        className={cn("w-full sm:w-[360px] lg:w-[400px] overflow-y-auto rounded-lg border-2 border-card shadow-lg p-0",)}
         side="right"
         style={{ top: 80, bottom: 0, height: 'calc(100vh - 80px)', position: 'fixed' }}
         onPointerDownOutside={(e) => {
@@ -292,30 +307,54 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
         >
         
         <SheetHeader className="px-6 pt-6">
+          {task && (
+            <div>
+          <span className={`rounded-lg border px-2 py-0.5 text-sm font-bold tracking-wider ${getStatusColor(task.status)}`}>
+            {displayStatus(task.status)}
+            </span>
+            </div> 
+          )}
           <SheetTitle className="text-lg font-semibold mt-4">{taskTitle}</SheetTitle>
-          <SheetDescription className="mb-4">
+          <SheetDescription>
           <span className="font-medium">{task?.summery}</span>
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-4 px-6 pb-6">
+        <div className="space-y-4 px-6 pb-6">
           {loading && <p className="text-sm text-muted-foreground italic">Loading task...</p>}
           {!loading && !task && <p className="text-sm text-muted-foreground italic">No task details available.</p>}
           {!loading && task && (
-            <div className="border rounded-lg p-4 space-y-4 bg-card/50">
-              <div className="flex justify-between items-start gap-2">
-                <h3 className="font-medium leading-tight">{task.title}</h3>
-                <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusColor(task.status)}`}>
-                  {task.status.replace(/_/g, ' ')}
-                </span>
-              </div>
-
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p><span className="font-semibold text-foreground">Project:</span> {task.project?.title ?? projectTitle ?? 'No project'}</p>
-                <p><span className="font-semibold text-foreground">Priority:</span> {task.priority}</p>
-                <p><span className="font-semibold text-foreground">Deadline:</span> {new Date(task.deadline).toLocaleDateString()}</p>
-                {task.description && <p><span className="font-semibold text-foreground">Description:</span> {task.description}</p>}
-                {task.summery && <p><span className="font-semibold text-foreground">Summary:</span> {task.summery}</p>}
+            <div className="rounded-lg space-y-4">
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <p className="flex items-center">
+                  <span className="flex items-center gap-2 w-24 text-muted-foreground"><FolderKanbanIcon className="h-4 w-4" />Project</span>
+                  <span className="flex-1 text-center text-foreground font-medium">{task.project?.title || projectTitle || 'No project'}</span>
+                </p>
+                <div className="flex items-center">
+                  <span className="flex items-center gap-2 w-24 text-muted-foreground"><ArrowUp className="h-4 w-4" />Priority</span>
+                  <div className="flex-1 flex justify-center">
+                    <div className={cn("inline-flex items-center gap-1 border px-2.5 py-0.5 font-medium transition-colors shrink-0 text-xs justify-center rounded-sm", getPriorityColor(task.priority))}>
+                      {task.priority === "high" ? <ArrowUp className="w-3.5 h-3.5" /> : task.priority === "low" ? <ArrowDown className="w-3.5 h-3.5" /> : <Minus className="w-3.5 h-3.5" />}
+                      {(task.priority ?? "medium").charAt(0).toUpperCase() + (task.priority ?? "medium").slice(1)}
+                    </div>
+                  </div>
+                </div>
+                <p className="flex items-center">
+                  <span className="flex items-center gap-2 w-24 text-muted-foreground"><Calendar className="h-4 w-4" />Deadline</span>
+                  <span className="flex-1 text-center text-foreground font-medium">{new Date(task.deadline).toLocaleDateString()}</span>
+                </p>
+                {task.createdAt && (
+                  <p className="flex items-start mt-2">
+                    <span className="flex items-center gap-2 w-24 text-muted-foreground"><Clock className="h-4 w-4" />Created At</span>
+                    <span className="flex-1 text-center text-foreground font-medium">{formatCompletedAt(task.createdAt)}</span>
+                  </p>
+                )}
+                {task.summery && (
+                  <p className="flex items-start mt-2">
+                    <span className="flex items-center gap-2 w-24 text-muted-foreground"><TagsIcon className="h-4 w-4" />Tags</span>
+                    <span className="flex-1 text-center text-foreground font-medium">{task.summery}</span>
+                  </p>
+                )}
               </div>
 
               <TaskTimer 
@@ -327,6 +366,13 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                   onTimeLogged?.()
                 }}
               />
+              {task.description && (
+                <div className="items-center wrap-break-word">
+                  <h1 className="flex items-center gap2 w-24 mb-2">Descriptoin</h1>
+                  <span className="flex-1 text-muted-foreground font-medium">{task.description}</span>
+                </div>
+                
+              )}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Missions</span>
@@ -370,6 +416,23 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                     {adding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
                   </Button>
                 </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Link href={`/tasks/${task.id}/edit`} className="flex-1 ">
+              <Button className="w-full">
+                <Pencil className="h-4 w4" />
+                Edit Task
+              </Button>
+              </Link>
+              <DeleteButton
+                taskId={task.id}
+                taskName={task.title}
+                onDeleted={onDelete}
+              >
+                <Button variant="destructive" size="icon" className="shrink-0 w-14">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </DeleteButton>
               </div>
             </div>
           )}

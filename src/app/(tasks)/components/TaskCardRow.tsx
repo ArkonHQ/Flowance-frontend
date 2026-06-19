@@ -92,7 +92,7 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
 
   const handleOpenPanel = (e: React.MouseEvent) => {
     e.preventDefault()
-    onOpenPanel(task.id, task.title ?? "Untitled task", task.project?.title ?? null)
+    onOpenPanel(task.id, task.title ?? "Untitled task", projectTitle ?? task.project?.title ?? null)
   }
 
   const formatTime = (seconds: number) => {
@@ -229,7 +229,7 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onSelect={() => onOpenPanel(task.id, task.title ?? "Untitled task", task.project?.title ?? null) }>
+            <DropdownMenuItem onSelect={() => onOpenPanel(task.id, task.title ?? "Untitled task", projectTitle ?? task.project?.title ?? null) }>
               <div className="flex items-center gap-2 cursor-pointer">
                 <ExternalLink className="h-4 w-4" />
                 View details

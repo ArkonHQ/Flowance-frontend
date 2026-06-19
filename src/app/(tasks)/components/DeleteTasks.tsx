@@ -34,7 +34,7 @@ export default function DeleteButton({
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
+  
   const handleDelete = async () => {
     setLoading(true);
     try {
