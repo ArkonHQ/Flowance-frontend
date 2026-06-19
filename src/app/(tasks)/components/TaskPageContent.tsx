@@ -136,7 +136,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
   const handleOpenPanel = (taskId: number, taskTitle: string, projectTitle: string | null) => {
     setSelectedTask({ id: taskId, title: taskTitle, projectTitle }) 
     setIsPanelOpen(true) 
-  } 
+  }
 
 
   const totalItems = filtered.length
@@ -238,6 +238,10 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
     } catch (err: any) {
       toast.error(`Failed to delete some tasks: ${err.message || 'Error'}`, { id: toastId })
     }
+  }
+
+  const handleTaskUpdated = (updatedTask: Task) => {
+    setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t))
   }
 
   useEffect(() => {
@@ -477,6 +481,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
       </div>
 
       <TaskSidePanel 
+        onTaskUpdated={handleTaskUpdated}
         taskId={selectedTask?.id ?? null}
         taskTitle={selectedTask?.title ?? ''}
         projectTitle={selectedTask?.projectTitle ?? ''}

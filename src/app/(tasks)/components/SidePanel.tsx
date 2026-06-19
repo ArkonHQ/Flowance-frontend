@@ -15,12 +15,13 @@ import { Progress } from "@/components/ui/progress"
 
 
 interface SidePanelProps {
-  taskId: number
+  taskId: number | null
   taskTitle: string
   projectTitle: string
   open: boolean
   onClose: () => void
   onTimeLogged?: () => void
+  onTaskUpdated?: (updatedTask: Task) => void
 }
 
 const getStatusColor = (status: string) => {
@@ -44,7 +45,7 @@ const getPriorityColor = (priority: string) => {
 }
 
 
-const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeLogged }: SidePanelProps) => {
+const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeLogged, onTaskUpdated }: SidePanelProps) => {
 
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(false)
@@ -79,10 +80,13 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
       }
 
       fetchMission()
+    } else {
+      setMissions([])
     }
   }, [open, taskId])
 
   const handleToggleMission = async (missionId: number, completed: boolean) => {
+    if (!taskId) return;
 
     setMissions(prev => prev.map(m =>
       m.id === missionId ? {...m, completed} : m
@@ -103,6 +107,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
       if (task?.status !== 'done') {
         const updatedTask = await updateTaskStatus(taskId, 'done')
         setTask(updatedTask)
+        onTaskUpdated?.(updatedTask)
         toast.success('All missions done! Task completed.')
       }
     }else{
@@ -110,6 +115,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
       if (task?.status === 'done') {
         const updatedTask = await updateTaskStatus(taskId, 'in_progress')
         setTask(updatedTask)
+        onTaskUpdated?.(updatedTask)
         toast.info('Task re‑opened because a mission was unchecked.')
       }
     }
@@ -251,6 +257,8 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
     }
 
     fetchTask()
+    } else {
+      setTask(null)
     }
   }, [open, taskId, refreshKey])
 
@@ -270,7 +278,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
       <SheetContent 
         className={cn("w-full sm:w-[360px] lg:w-[400px] overflow-y-auto border-l shadow-lg p-0",)}
         side="right"
-        style={{ top: 80, bottom: 0, height: '100vh', position: 'fixed' }}
+        style={{ top: 80, bottom: 0, height: 'calc(100vh - 80px)', position: 'fixed' }}
         onPointerDownOutside={(e) => {
           if (isLargeScreen) {
             e.preventDefault();
@@ -283,14 +291,14 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
         }}
         >
         
-        <SheetHeader>
+        <SheetHeader className="px-6 pt-6">
           <SheetTitle className="text-lg font-semibold mt-4">{taskTitle}</SheetTitle>
           <SheetDescription className="mb-4">
           <span className="font-medium">{task?.summery}</span>
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-4 px-6 pb-6">
           {loading && <p className="text-sm text-muted-foreground italic">Loading task...</p>}
           {!loading && !task && <p className="text-sm text-muted-foreground italic">No task details available.</p>}
           {!loading && task && (
@@ -335,6 +343,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                   <MissionItem
                     key={mission.id}
                     {...mission}
+                    createdAt={new Date ()}
                     isLoading={updatingId === mission.id}
                     onToggle={handleToggleMission}
                     onEdit={handleUpdateMission}

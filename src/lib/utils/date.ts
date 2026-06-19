@@ -1,3 +1,5 @@
+import { formatDistanceToNow, format, isToday  } from "date-fns"
+
 
 export const getThisWeekRange = ():{start: Date, end: Date} => {
 
@@ -21,3 +23,25 @@ export const isTaskInThisWeek = (task: {createdAt: Date | string}): boolean => {
   const date = new Date(task.createdAt)
   return date >= start && date < end
 } 
+
+/**
+ * Format completedAt conditionally:
+ * - If completedAt is today → show time (ex: "2:30 PM")
+ * - If completedAt is before today → show date (ex: "Jun 20, 2025")
+ * - If null → return empty string
+ */
+
+export const formatCompletedAt = (completedAt: string | null): string => {
+  if (!completedAt) return ''
+  
+  const now = new Date()
+  const date = new Date(completedAt)
+  
+  // if completed today show only the time
+  if (isToday(date)) {
+    return format(date, 'h:mm a')
+  }
+
+  // If completed more than 1 day ago show full date
+  return format(date, 'MMM dd, yyyy')
+}

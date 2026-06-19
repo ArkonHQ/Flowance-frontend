@@ -28,7 +28,7 @@ export type Mission = {
     assigneeId: number | null,
     completedById: number | null
     position: number
-    completedAt: Date | null,
+    completedAt: string | null,
 }
 
 
