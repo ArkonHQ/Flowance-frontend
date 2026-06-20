@@ -10,7 +10,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useActionState } from "react"
 import { handleCreateProject } from "../projects/new/action"
 import type { Client } from "@/lib/api/clients"
-
+import { TagSelector } from "@/components/ui/tag-selector"
+import { useState } from "react"
 
 
 interface ProjectFormProps {
@@ -19,6 +20,7 @@ interface ProjectFormProps {
 
 export const ProjectForm = ({ clients }: ProjectFormProps) => {
   const [state, formAction, isPending] = useActionState(handleCreateProject, null)
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([])
 
   return (
     <div className="relative overflow-hidden border border-border/30 bg-card/50 backdrop-blur-md shadow-sm rounded-xl">
@@ -79,6 +81,15 @@ export const ProjectForm = ({ clients }: ProjectFormProps) => {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tags">Tags</Label>
+            <TagSelector
+              selectedTagIds={selectedTagIds}
+              onChange={setSelectedTagIds}
+            />
+            <input type="hidden" name="tagIds" value={JSON.stringify(selectedTagIds)} />
           </div>
 
           <div className="flex items-center gap-4 pt-2">

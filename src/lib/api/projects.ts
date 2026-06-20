@@ -1,7 +1,9 @@
 import { Client } from "./clients";
-
+import { Tag } from "./tags"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
+
+
 
 export type Project = {
     id: number;
@@ -13,6 +15,7 @@ export type Project = {
     status: 'planning' | 'active' | 'completed' | 'on_hold' | 'cancelled'
     clientId: number;
     ownerId: string;
+    tags?: Tag[];
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;
@@ -53,37 +56,37 @@ export const getProject = async (projectId: number, cookieHeader?: string): Prom
 }
 
 // POST create project
-export const createProject = async (projectData: { title: string, status: Project['status'], clientId: number, deadline: Date | string, budget: number }, cookieHeader?: string): Promise<Project> => {
-    const headers: Record<string, string> = {'Content-Type': 'application/json'}
-    if (cookieHeader) headers['Cookie'] = cookieHeader
+export const createProject = async (data: Partial<Project> & { tagIds?: number[] }, cookieHeaders?: string): Promise<Project> => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (cookieHeaders) headers['Cookie'] = cookieHeaders
     
     
     const res = await fetch(`${API_BASE}/projects`, {
         method: 'POST',
         headers,
         credentials: 'include',
-        body: JSON.stringify(projectData),
+        body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to create project: ${res.status}`);
-    const data = await res.json();
-    return data.project;
+    const responseData = await res.json();
+    return responseData.project;
 }
 
 // PUT update project
-export const updateProject = async (projectId: number, updates: Partial<Omit<Project, 'id' | 'ownerId'>>, cookieHeader?: string): Promise<Project> => {
-    const headers: Record<string, string> = {'Content-Type': 'application/json'}
-    if (cookieHeader) headers['Cookie'] = cookieHeader
+export const updateProject = async (id: number, data: Partial<Project> & { tagIds?: number[] }, cookieHeaders?: string): Promise<Project> => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (cookieHeaders) headers['Cookie'] = cookieHeaders
     
     
-    const res = await fetch(`${API_BASE}/projects/${projectId}`, {
-        method: 'PUT',
+    const res = await fetch(`${API_BASE}/projects/${id}`, {
+        method: 'PATCH',
         headers,
         credentials: 'include',
-        body: JSON.stringify(updates),
+        body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(`Failed to update project: ${res.status}`);
-    const data = await res.json();
-    return data.project;
+    const responseData = await res.json();
+    return responseData.project;
 }
 
 // DELETE project

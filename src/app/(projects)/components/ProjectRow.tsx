@@ -1,5 +1,6 @@
 'use client'
 import { Badge } from "@/components/ui/badge"; 
+import { IconRenderer } from "@/components/ui/icon-picker";
 import Link from "next/link";
 import { Project } from "@/lib/api/projects";
 import { Progress } from "@/components/ui/progress";
@@ -47,13 +48,29 @@ export const ProjectRow = ({ project, clientName }: ProjectRowProps) => {
     <div className='grid grid-cols-12 gap-4 items-center px-5 py-4 bg-card/50 backdrop-blur-md rounded-xl border border-card/30 shadow-sm hover:shadow-lg transition-all'>
       
       {/* Title + status - col-span-4 */}
-      <div className='col-span-4 flex items-center gap-3 min-w-0'>
-        <Badge variant="outline" className={cn("capitalize font-medium", getStatusColor(project.status))}>
-          {statusDisplay}
-        </Badge>
-        <Link href={`/projects/${project.id}`} className='font-semibold truncate hover:text-primary'>
-         {project.title} 
-         </Link>
+      <div className='col-span-4 flex flex-col gap-1.5 min-w-0'>
+        <div className='flex items-center gap-3'>
+          <Badge variant="outline" className={cn("capitalize font-medium shrink-0", getStatusColor(project.status))}>
+            {statusDisplay}
+          </Badge>
+          <Link href={`/projects/${project.id}`} className='font-semibold truncate hover:text-primary'>
+           {project.title} 
+           </Link>
+        </div>
+        {project.tags && project.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-0.5">
+            {project.tags.map(tag => (
+              <Badge 
+                key={tag.id}
+                style={{ backgroundColor: tag.color || '#e5e7eb' }}
+                className="flex items-center gap-1 text-xs py-0 h-5 text-gray-800"
+              >
+                <IconRenderer icon={tag.icon || 'TagIcon'} className="h-3 w-3" />
+                {tag.name}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Description - col-span-3 */}

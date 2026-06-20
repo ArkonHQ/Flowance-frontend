@@ -9,12 +9,14 @@ import { cn } from "@/lib/utils"
 import { MissionItem } from "./MissionsItem"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FolderKanbanIcon, Loader2, Plus, Calendar, AlignLeft, ArrowUp, ArrowDown, Minus, Clock, TagsIcon, Trash2, Pencil } from "lucide-react"
+import { FolderKanbanIcon, Loader2, Plus, Calendar, AlignLeft, ArrowUp, ArrowDown, Minus, Clock, TagsIcon, Trash2, Pencil, Badge } from "lucide-react"
 import { toast } from "sonner"
 import { Progress } from "@/components/ui/progress"
 import { formatCompletedAt } from "@/lib/utils/date"
 import DeleteButton from "./DeleteTasks"
 import Link from "next/link"
+import { DynamicIcon } from 'lucide-react/dynamic';
+import { TagSelector } from "@/components/ui/tag-selector"
 
 
 interface SidePanelProps {
@@ -349,12 +351,24 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                     <span className="flex-1 text-center text-foreground font-medium">{formatCompletedAt(task.createdAt)}</span>
                   </p>
                 )}
-                {task.summery && (
-                  <p className="flex items-start mt-2">
-                    <span className="flex items-center gap-2 w-24 text-muted-foreground"><TagsIcon className="h-4 w-4" />Tags</span>
-                    <span className="flex-1 text-center text-foreground font-medium">{task.summery}</span>
-                  </p>
-                )}
+                <div className="flex flex-col gap-2 mt-4 mb-2">
+                  <span className="flex items-center gap-2 text-muted-foreground uppercase text-xs font-semibold tracking-wider"><TagsIcon className="h-4 w-4" />Tags</span>
+                  <TagSelector 
+                    selectedTagIds={task.tags?.map(t => t.id) || []}
+                    compact={true}
+                    onChange={async (newTagIds) => {
+                      if (!taskId) return;
+                      try {
+                        const updatedTask = await updateTask(taskId, { tagIds: newTagIds });
+                        setTask(updatedTask);
+                        onTaskUpdated?.(updatedTask);
+                        toast.success('Tags updated');
+                      } catch(e) {
+                        toast.error("Failed to update tags");
+                      }
+                    }}
+                  />
+                </div>
               </div>
 
               <TaskTimer 

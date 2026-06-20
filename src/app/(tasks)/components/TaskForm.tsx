@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { handleCreateTask } from "../tasks/new/action"
 import { Project } from "@/lib/api/projects"
 import { CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,16 +10,28 @@ import { Input } from "@/components/ui/input"
 import { SelectItem, SelectTrigger, SelectValue, Select, SelectContent } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { TagSelector } from "@/components/ui/tag-selector"
+import { Task } from "@/lib/api/tasks"
 
 
 
 interface TaskFormProps {
   projects: Project[]
+  task?: Task
 }
 
-export const TaskForm = ({ projects }: TaskFormProps) => {
+export const TaskForm = ({ projects, task }: TaskFormProps) => {
 
   const [state, formAction, isPending] = useActionState(handleCreateTask, null)
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([])
+  
+
+  useEffect(() => {
+    if (task) {
+      setSelectedTagIds(task.tags?.map(t => t.id) || [])
+    }
+  }, [task])
+
 
 
   return (
@@ -30,6 +42,7 @@ export const TaskForm = ({ projects }: TaskFormProps) => {
           <CardTitle className="text-xl font-semibold">Task Details</CardTitle>
         </CardHeader>
         <form action={formAction} className="space-y-6">
+          <input type="hidden" name="tagIds" value={JSON.stringify(selectedTagIds)} />
           {state?.error && (
             <Alert
               variant={'destructive'}>
@@ -61,6 +74,13 @@ export const TaskForm = ({ projects }: TaskFormProps) => {
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="tags">Tags</Label>
+            <TagSelector
+                selectedTagIds={selectedTagIds}
+                onChange={setSelectedTagIds}
+              />  
+          </div>
           {/* Project */}
           <div className="space-y-2">
             <Label htmlFor="projectId">Project</Label>
@@ -81,11 +101,11 @@ export const TaskForm = ({ projects }: TaskFormProps) => {
           {/* Status */}
 
           <div className="space-y-2 ">
-            <Label htmlFor="status">
-              <Select name="status">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" /> 
-                </SelectTrigger>
+            <Label htmlFor="status">Status</Label>
+            <Select name="status">
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" /> 
+              </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todo">To Do</SelectItem>
                   <SelectItem value="in_progress">In Progress</SelectItem>
@@ -94,7 +114,6 @@ export const TaskForm = ({ projects }: TaskFormProps) => {
                   <SelectItem value="delayed">Delayed</SelectItem>
                 </SelectContent>
               </Select>
-            </Label>
           </div>
           <div className="flex items-center gap-4 pt-2">
             <Button 

@@ -27,6 +27,8 @@ export const updateProjectAction = async (prevState: EditProjectState | null, fo
   const status = formData.get('status') as 'planning' | 'active' | 'completed' | 'on_hold' | 'cancelled'
   const deadline = (formData.get('deadline') as Date | string) || new Date().toISOString()
   const budget = Number(formData.get('budget'))
+  const tagIdsRaw = formData.get('tagIds') as string | null
+  const tagIds = tagIdsRaw ? JSON.parse(tagIdsRaw) : undefined
   // 4.Validate
   if(!title || title.trim().length < 3) return { error: 'Title must be at least 3 characters' }
   if (!clientId) return { error: 'Please select a client' }
@@ -36,7 +38,7 @@ export const updateProjectAction = async (prevState: EditProjectState | null, fo
   // 5.Call the update API
   try{
 
-    await updateProject(projectId, {title, clientId, status, deadline, budget}, cookieHeader)
+    await updateProject(projectId, {title, clientId, status, deadline, budget, tagIds}, cookieHeader)
 
   }catch(err: any) {
     return { error: err.message || 'Something went wrong'}

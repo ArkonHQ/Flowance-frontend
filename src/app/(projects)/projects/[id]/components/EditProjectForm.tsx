@@ -2,8 +2,9 @@
 
 import { Client } from "@/lib/api/clients"
 import { Project } from "@/lib/api/projects"
-import { useActionState } from "react"
+import { useActionState, useState } from "react"
 import { updateProjectAction } from "../edit/action"
+import { TagSelector } from "@/components/ui/tag-selector"
 import { CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
@@ -21,6 +22,7 @@ interface Props {
 export const EditProjectFrom = ({ project, clients }: Props) => {
 
   const [state, formAction, isPending] = useActionState(updateProjectAction, null)
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>(project.tags?.map(t => t.id) || [])
 
   return (
     <div className="relative overflow-hidden border border-border/30 bg-card/50 shadow-sm backdrop-blur-md rounded-xl">
@@ -106,6 +108,15 @@ export const EditProjectFrom = ({ project, clients }: Props) => {
                                 <SelectItem value="cancelled">Cancelled</SelectItem> 
                               </SelectContent>
                             </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tags">Tags</Label>
+                    <TagSelector
+                      selectedTagIds={selectedTagIds}
+                      onChange={setSelectedTagIds}
+                    />
+                    <input type="hidden" name="tagIds" value={JSON.stringify(selectedTagIds)} />
                   </div>
 
                   {/* Buttons */}

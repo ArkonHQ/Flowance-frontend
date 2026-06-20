@@ -1,10 +1,12 @@
 import { Project } from "./projects"
+import { Tag } from "./tags"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
 export type Task = {
     id: number,
     progress: number
+    tags: Tag[]
     project: Project,
     title: string,
     description: string | null,
@@ -182,7 +184,7 @@ export const getTask = async (taskId: number, cookieHeader?: string): Promise<Ta
     return data.task
 }
 
-export const createTask = async (taskData: { title: string, summery?: string | null, status: Task['status'], priority: Task['priority'], deadline: Date | string, projectId: number }, cookieHeader?: string): Promise<Task> => {
+export const createTask = async (taskData: { title: string, summery?: string | null, status: Task['status'], priority: Task['priority'], deadline: Date | string, projectId: number, tagIds?: number[] }, cookieHeader?: string): Promise<Task> => {
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader
@@ -198,7 +200,7 @@ export const createTask = async (taskData: { title: string, summery?: string | n
     return data.task
 }
 
-export const updateTask = async (taskId: number, updates: Partial<Omit<Task, 'id' | 'ownerId'>>, cookieHeader?: string): Promise<Task> => {
+export const updateTask = async (taskId: number, updates: Partial<Omit<Task, 'id' | 'ownerId'>> & { tagIds?: number[] }, cookieHeader?: string): Promise<Task> => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader
 
