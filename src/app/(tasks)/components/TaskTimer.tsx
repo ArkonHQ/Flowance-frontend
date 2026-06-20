@@ -36,7 +36,7 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
     if (manualOpen) hoursRef.current?.focus()
   }, [manualOpen])
 
-  const isDone = taskStatus === 'done' || taskStatus === 'cancelled' || taskStatus === 'overdue'
+  const isDone = taskStatus === 'done' || taskStatus === 'cancelled'
 
 
   // Subscribe only to this task's timer slot
@@ -256,7 +256,7 @@ const TaskTimer = ({ taskId, taskName, onTimeLogged, taskStatus, startTime }: Ta
             <div className="h-11 w-28 rounded-md bg-muted animate-pulse" />
           ) : isDone ? (
             <Button size="lg" disabled className="h-11 w-28 gap-1">
-              <Square className="h-4 w-4" /> {taskStatus === 'cancelled' ? 'Cancelled' : taskStatus === 'done' ? 'Completed' : taskStatus === 'overdue' && 'Overdue'  }
+              <Square className="h-4 w-4" /> {taskStatus === 'cancelled' ? 'Cancelled' : taskStatus === 'done' ? 'Completed' : 'Completed' }
             </Button>
           ) : (
             (!isActive || status === 'idle') && (

@@ -38,9 +38,14 @@ export const updateProjectAction = async (prevState: EditProjectState | null, fo
   // 5.Call the update API
   try{
 
+    console.log("Updating project with payload:", {projectId, title, clientId, status, deadline, budget, tagIds});
+
     await updateProject(projectId, {title, clientId, status, deadline, budget, tagIds}, cookieHeader)
 
   }catch(err: any) {
+
+    console.error("Error updating project:", err);
+      
     return { error: err.message || 'Something went wrong'}
   }
 

@@ -128,24 +128,39 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
       </div>
       
       {/* 2. Title */}
-      <div className="min-w-0 flex-1 md:flex-none">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href={`/tasks/${task.id}`}
-                className="font-semibold truncate hover:text-primary transition-colors block"
-                onClick={handleOpenPanel}
-              >
-                {title}
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs break-words">
-              <p>{title}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <span className="text-muted-foreground/90 text-xs w-29 line-clamp-1 mt-2">{task.summery}</span>
+      <div className="min-w-0 flex-1 md:flex-none flex flex-col gap-1.5 justify-center">
+        <div className="flex flex-wrap items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={`/tasks/${task.id}`}
+                  className="font-semibold truncate hover:text-primary transition-colors block"
+                  onClick={handleOpenPanel}
+                >
+                  {title}
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs break-words">
+                <p>{title}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {task.tags && task.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {task.tags.map(tag => (
+                <Badge
+                  key={tag.id}
+                  style={{ backgroundColor: tag.color || '#e5e7eb' }}
+                  className="px-1.5 py-0 text-[10px] text-white rounded font-medium shadow-sm"
+                >
+                  {tag.name}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+        <span className="text-muted-foreground/90 text-xs w-29 line-clamp-1">{task.summery}</span>
       </div>
 
       {/* 3. Project */}

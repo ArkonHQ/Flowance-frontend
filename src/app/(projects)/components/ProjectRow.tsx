@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import DeleteButton from "./DeleteProject"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 interface ProjectRowProps {
@@ -53,24 +54,27 @@ export const ProjectRow = ({ project, clientName }: ProjectRowProps) => {
           <Badge variant="outline" className={cn("capitalize font-medium shrink-0", getStatusColor(project.status))}>
             {statusDisplay}
           </Badge>
+          {project.tags && project.tags.length > 0 && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div 
+                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-sm cursor-help transition-transform hover:scale-110"
+                    style={{ color: project.tags[0].color || '#6b7280', backgroundColor: `${project.tags[0].color || '#6b7280'}18` }}
+                  >
+                    <IconRenderer icon={project.tags[0].icon || 'TagIcon'} className="h-4 w-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs font-medium">
+                  {project.tags[0].name}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           <Link href={`/projects/${project.id}`} className='font-semibold truncate hover:text-primary'>
            {project.title} 
            </Link>
         </div>
-        {project.tags && project.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-0.5">
-            {project.tags.map(tag => (
-              <Badge 
-                key={tag.id}
-                style={{ backgroundColor: tag.color || '#e5e7eb' }}
-                className="flex items-center gap-1 text-xs py-0 h-5 text-gray-800"
-              >
-                <IconRenderer icon={tag.icon || 'TagIcon'} className="h-3 w-3" />
-                {tag.name}
-              </Badge>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Description - col-span-3 */}

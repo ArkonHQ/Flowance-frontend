@@ -356,6 +356,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                   <TagSelector 
                     selectedTagIds={task.tags?.map(t => t.id) || []}
                     compact={true}
+                    noIcon={true}
                     onChange={async (newTagIds) => {
                       if (!taskId) return;
                       try {

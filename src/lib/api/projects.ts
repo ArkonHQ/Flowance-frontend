@@ -79,7 +79,7 @@ export const updateProject = async (id: number, data: Partial<Project> & { tagId
     
     
     const res = await fetch(`${API_BASE}/projects/${id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers,
         credentials: 'include',
         body: JSON.stringify(data),

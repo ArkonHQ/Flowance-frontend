@@ -78,6 +78,7 @@ export const TaskForm = ({ projects, task }: TaskFormProps) => {
             <Label htmlFor="tags">Tags</Label>
             <TagSelector
                 selectedTagIds={selectedTagIds}
+                noIcon={true}
                 onChange={setSelectedTagIds}
               />  
           </div>

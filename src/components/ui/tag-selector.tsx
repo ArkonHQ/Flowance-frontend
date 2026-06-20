@@ -3,6 +3,7 @@
 import { createTag, getTags, Tag, updateTag } from "@/lib/api/tags"
 import { Badge } from "@/components/ui/badge"
 import { Plus, X, Edit2, ChevronDown } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip"
 import { useEffect, useState, useMemo } from "react"
 import { IconRenderer } from "./icon-picker"
 import { IconPickerDialog } from "./ready-icon-picker"
@@ -23,11 +24,14 @@ interface TagSelectorProps {
   disabled?: boolean
   entityType?: string
   compact?: boolean
+  iconOnly?: boolean
+  noIcon?: boolean
+  maxTags?: number
   onChange: (tagIds: number[]) => void
 }
 
 
-export const TagSelector = ({ selectedTagIds, disabled, compact, onChange }: TagSelectorProps) => {
+export const TagSelector = ({ selectedTagIds, disabled, compact, iconOnly, noIcon, maxTags, onChange }: TagSelectorProps) => {
 
   const [availableTags, setAvailableTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(false)
@@ -57,9 +61,16 @@ export const TagSelector = ({ selectedTagIds, disabled, compact, onChange }: Tag
     fetchTags()
   }, [])
 
+  const isAtMaxTags = maxTags !== undefined && selectedTagIds.length >= maxTags
+
   const handleAdding = (tagId: number) => {
     if (!selectedTagIds.includes(tagId)){
-      onChange([...selectedTagIds, tagId])
+      if (maxTags !== undefined && maxTags === 1) {
+        // Replace the current tag instead of adding
+        onChange([tagId])
+      } else if (!isAtMaxTags) {
+        onChange([...selectedTagIds, tagId])
+      }
     }
   }
 
@@ -79,7 +90,11 @@ export const TagSelector = ({ selectedTagIds, disabled, compact, onChange }: Tag
         icon: newTagIcon
       })
       setAvailableTags(prev => [...prev, newTag])
-      onChange([...selectedTagIds, newTag.id])
+      if (maxTags !== undefined && maxTags === 1) {
+        onChange([newTag.id])
+      } else if (!isAtMaxTags) {
+        onChange([...selectedTagIds, newTag.id])
+      }
       setNewTagName('')
       setNewTagColor('#6b7280')
       setNewTagIcon('TagIcon')
@@ -116,33 +131,73 @@ export const TagSelector = ({ selectedTagIds, disabled, compact, onChange }: Tag
 
   return (
     <div className="space-y-3">
-      {/* Seleceted Tags */}
+      {/* Selected Tags */}
       <div className="flex flex-wrap gap-2">
-        {selectedTags.map(t => (
-          <Badge 
-            key={t.id}
-            style={{ backgroundColor: t.color || '#e5e7eb' }}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-sm text-white rounded-md font-medium"
-            >
-              <DynamicIcon name={t.icon} className="h-5 w-5" />
-              {t.name}
-              {!disabled && (
-                <button 
-                  type="button"
-                  onClick={() => handleRemoving(t.id)}
-                  className="ml-1 text-white/70 hover:text-white"
+        {iconOnly ? (
+          // Icon-only mode: render just the colored icon with tooltip
+          <>
+            {selectedTags.map(t => (
+              <TooltipProvider key={t.id}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="relative group">
+                      <div
+                        className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-sm transition-transform hover:scale-110 cursor-default"
+                        style={{ color: t.color || '#6b7280', backgroundColor: `${t.color || '#6b7280'}18` }}
+                      >
+                        <DynamicIcon name={t.icon} className="h-4.5 w-4.5" />
+                      </div>
+                      {!disabled && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoving(t.id)}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                        >
+                          <X className="h-2.5 w-2.5" />
+                        </button>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    {t.name}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
+            {selectedTags.length === 0 && (
+              <span className="text-sm text-muted-foreground">No tags</span>
+            )}
+          </>
+        ) : (
+          // Default mode: full badge with icon + name or just name if noIcon is true
+          <>
+            {selectedTags.map(t => (
+              <Badge
+                key={t.id}
+                style={{ backgroundColor: t.color || '#e5e7eb' }}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-sm text-white rounded-md font-medium"
+              >
+                {!noIcon && <DynamicIcon name={t.icon} className="h-5 w-5" />}
+                {t.name}
+                {!disabled && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoving(t.id)}
+                    className="ml-1 text-white/70 hover:text-white"
                   >
                     <X className="h-3 w-3" />
                   </button>
-              )}
-            </Badge>
-        ))}
-        {selectedTags.length === 0 && (
-          <span className="text-sm text-muted-foreground">No tags</span> 
+                )}
+              </Badge>
+            ))}
+            {selectedTags.length === 0 && (
+              <span className="text-sm text-muted-foreground">No tags</span>
+            )}
+          </>
         )}
       </div>
 
-      {!disabled && (
+      {!disabled && !(isAtMaxTags && maxTags !== 1) && (
         <div className="flex flex-wrap gap-2">
           {/* Custom Tag Dropdown */}
           <Popover open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
@@ -171,13 +226,13 @@ export const TagSelector = ({ selectedTagIds, disabled, compact, onChange }: Tag
                         <div className="flex flex-col gap-3 p-3 bg-muted/40 rounded-lg border border-border/50 shadow-sm animate-in fade-in zoom-in-95 duration-200">
                           <div className="flex items-center gap-2">
                              <div className="w-8 h-8 rounded-md flex items-center justify-center text-white shrink-0 shadow-sm" style={{ backgroundColor: editColor }}>
-                               <DynamicIcon name={editIcon} className="h-5 w-5" />
+                               {!noIcon && <DynamicIcon name={editIcon} className="h-5 w-5" />}
                              </div>
                              <span className="text-sm font-medium">{tag.name}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <ColorPicker color={editColor} onChange={setEditColor} />
-                            <IconPickerDialog value={editIcon} onChange={setEditIcon} />
+                            {!noIcon && <IconPickerDialog value={editIcon} onChange={setEditIcon} />}
                             <div className="flex gap-1 ml-auto">
                               <Button type="button" size="sm" variant="ghost" className="h-8 px-2" onClick={() => setEditingTagId(null)}>Cancel</Button>
                               <Button type="button" size="sm" className="h-8 px-3 shadow-sm" onClick={() => handleEditSave(tag)}>Save</Button>
@@ -195,7 +250,7 @@ export const TagSelector = ({ selectedTagIds, disabled, compact, onChange }: Tag
                             }}
                           >
                             <div className="w-6 h-6 rounded-md flex items-center justify-center text-white shrink-0 shadow-sm" style={{ backgroundColor: tag.color || '#e5e7eb' }}>
-                               <DynamicIcon name={tag.icon} className="h-4 w-4" />
+                               {!noIcon && <DynamicIcon name={tag.icon} className="h-4 w-4" />}
                             </div>
                             <span className="text-sm font-medium">{tag.name}</span>
                           </button>
@@ -214,11 +269,13 @@ export const TagSelector = ({ selectedTagIds, disabled, compact, onChange }: Tag
                     onChange={setNewTagColor}
                     disabled={isCreating}
                   />
-                  <IconPickerDialog
-                    value={newTagIcon}
-                    onChange={setNewTagIcon}
-                    disabled={isCreating}
-                  />
+                  {!noIcon && (
+                    <IconPickerDialog
+                      value={newTagIcon}
+                      onChange={setNewTagIcon}
+                      disabled={isCreating}
+                    />
+                  )}
                   <Input 
                     type="text"
                     placeholder="New tag..."

@@ -87,6 +87,8 @@ export const ProjectForm = ({ clients }: ProjectFormProps) => {
             <Label htmlFor="tags">Tags</Label>
             <TagSelector
               selectedTagIds={selectedTagIds}
+              maxTags={1}
+              iconOnly={true}
               onChange={setSelectedTagIds}
             />
             <input type="hidden" name="tagIds" value={JSON.stringify(selectedTagIds)} />
