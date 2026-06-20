@@ -16,12 +16,12 @@ export const ProjectIcon = ({ project, className = "w-5 h-5", iconClassName = "h
   
 
   const IconElement = (
-    <div
+    <span
       className={`rounded-md flex items-center justify-center shrink-0 shadow-sm ${showTooltip ? 'cursor-help transition-transform hover:scale-110' : ''} ${className}`}
       style={{ color: tag.color || '#6b7280', backgroundColor: `${tag.color || '#6b7280'}18` }}
     >
       <IconRenderer icon={tag.icon || 'TagIcon'} className={iconClassName} />
-    </div>
+    </span>
   );
 
   if (showTooltip) {

@@ -172,11 +172,12 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
           <TooltipTrigger asChild>
         <Link
           href={`/projects/${task.projectId}`}
-          className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
+          className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer max-w-full"
         >
+          {task.project && <ProjectIcon project={task.project} className="w-5 h-5 shrink-0" />}
           <span className="truncate">
-          {task.project && <ProjectIcon project={task.project} />}
-            {projectTitle ?? task.project?.title ?? "No project"}</span>
+            {projectTitle ?? task.project?.title ?? "No project"}
+          </span>
         </Link>
          </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs break-words">

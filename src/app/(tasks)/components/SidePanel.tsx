@@ -329,19 +329,18 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
           {!loading && task && (
             <div className="rounded-lg space-y-4">
               <div className="space-y-3 text-sm text-muted-foreground">
-                <p className="flex items-center">
+                <div className="flex items-center">
                   <span className="flex items-center gap-2 w-24 text-muted-foreground"><FolderKanbanIcon className="h-4 w-4" />Project</span>
                   <span className="flex-1 flex justify-center items-center gap-2 text-foreground font-medium">
                     <Link 
                       href={`/projects/${task.project?.id}`}
-                      className="text-foreground font-medium hover:underline hover:text-primary"
+                      className="text-foreground font-medium hover:underline hover:text-primary flex items-center gap-2 justify-center"
                     >
-
-                      <ProjectIcon project={task.project} />
-                      {task.project?.title || projectTitle || 'No project'}
+                      {task.project && <ProjectIcon project={task.project} className="w-5 h-5 shrink-0" />}
+                      <span>{task.project?.title || projectTitle || 'No project'}</span>
                     </Link>
                   </span>
-                </p>
+                </div>
                 <div className="flex items-center">
                   <span className="flex items-center gap-2 w-24 text-muted-foreground"><ArrowUp className="h-4 w-4" />Priority</span>
                   <div className="flex-1 flex justify-center">
@@ -351,15 +350,15 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                     </div>
                   </div>
                 </div>
-                <p className="flex items-center">
+                <div className="flex items-center">
                   <span className="flex items-center gap-2 w-24 text-muted-foreground"><Calendar className="h-4 w-4" />Deadline</span>
                   <span className="flex-1 text-center text-foreground font-medium">{new Date(task.deadline).toLocaleDateString()}</span>
-                </p>
+                </div>
                 {task.createdAt && (
-                  <p className="flex items-start mt-2">
+                  <div className="flex items-start mt-2">
                     <span className="flex items-center gap-2 w-24 text-muted-foreground"><Clock className="h-4 w-4" />Created At</span>
                     <span className="flex-1 text-center text-foreground font-medium">{formatCompletedAt(task.createdAt)}</span>
-                  </p>
+                  </div>
                 )}
                 <div className="flex flex-col gap-2 mt-4 mb-2">
                   <span className="flex items-center gap-2 text-muted-foreground uppercase text-xs font-semibold tracking-wider"><TagsIcon className="h-4 w-4" />Tags</span>
