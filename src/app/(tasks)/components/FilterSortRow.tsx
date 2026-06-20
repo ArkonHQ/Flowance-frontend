@@ -10,6 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Search, X } from "lucide-react"
+import { ProjectIcon } from "@/components/ui/project-icon"
+import { Project } from "@/lib/api/projects"
 
 
 interface FilterSortRowProps {
@@ -31,7 +33,7 @@ interface FilterSortRowProps {
 
   // Data for dropdown options
   assignees: { id: number, name: string }[]
-  projects: { id: number, name: string }[]
+  projects: { id: number, name: string, project?: Project }[]
   priorities: string[]
   sortOptions: { value: string, label: string }[]
 
@@ -99,7 +101,10 @@ const FilterSortRow = ({
             <SelectItem value="all">All projects</SelectItem>
             {projects.map((p) => (
               <SelectItem key={p.id} value={p.id.toString()}>
-                {p.name}
+                <div className="flex items-center gap-2">
+                  {p.project && <ProjectIcon project={p.project} />}
+                  {p.name}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>

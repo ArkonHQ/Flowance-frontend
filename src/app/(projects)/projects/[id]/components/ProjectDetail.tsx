@@ -7,6 +7,7 @@ import { CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Project } from "@/lib/api/projects"
 import { Building, Calendar, FileText } from "lucide-react"
 import Link from "next/link"
+import { ProjectIcon } from "@/components/ui/project-icon"
 
 
 
@@ -38,11 +39,12 @@ export const ProjectDetail = ({ project }: Props) => {
     <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-indigo-500 to-blue-500" />
     
     <CardHeader className="pt-5 flex-row items-start justify-between space-y-0">
-        <div>
-          <CardTitle className="text-2xl font-bold">
+        <div className="flex-1">
+          <CardTitle className="text-2xl font-bold flex items-center gap-3">
+            <ProjectIcon project={project} className="w-8 h-8" iconClassName="w-5 h-5" />
             {project.title}
           </CardTitle>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-2">
             <Badge variant={'outline'} className={getStatusColor(project.status)}>
               {statusDisplay}
             </Badge>

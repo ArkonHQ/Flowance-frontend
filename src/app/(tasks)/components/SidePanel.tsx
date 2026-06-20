@@ -10,6 +10,7 @@ import { MissionItem } from "./MissionsItem"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { FolderKanbanIcon, Loader2, Plus, Calendar, AlignLeft, ArrowUp, ArrowDown, Minus, Clock, TagsIcon, Trash2, Pencil, Badge } from "lucide-react"
+import { ProjectIcon } from "@/components/ui/project-icon"
 import { toast } from "sonner"
 import { Progress } from "@/components/ui/progress"
 import { formatCompletedAt } from "@/lib/utils/date"
@@ -330,7 +331,16 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
               <div className="space-y-3 text-sm text-muted-foreground">
                 <p className="flex items-center">
                   <span className="flex items-center gap-2 w-24 text-muted-foreground"><FolderKanbanIcon className="h-4 w-4" />Project</span>
-                  <span className="flex-1 text-center text-foreground font-medium">{task.project?.title || projectTitle || 'No project'}</span>
+                  <span className="flex-1 flex justify-center items-center gap-2 text-foreground font-medium">
+                    <Link 
+                      href={`/projects/${task.project?.id}`}
+                      className="text-foreground font-medium hover:underline hover:text-primary"
+                    >
+
+                      <ProjectIcon project={task.project} />
+                      {task.project?.title || projectTitle || 'No project'}
+                    </Link>
+                  </span>
                 </p>
                 <div className="flex items-center">
                   <span className="flex items-center gap-2 w-24 text-muted-foreground"><ArrowUp className="h-4 w-4" />Priority</span>

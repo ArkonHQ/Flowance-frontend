@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { ProjectIcon } from "@/components/ui/project-icon"
 
 
 
@@ -116,7 +117,10 @@ export const EditTaskForm = ({ task, project}: props) => {
                     <SelectContent>
                     {project.map((p) => (
                     <SelectItem key={p.id} value={String(p.id)}>
-                      {p.title}
+                      <div className="flex items-center gap-2">
+                        <ProjectIcon project={p} showTooltip={false} />
+                        {p.title}
+                      </div>
                     </SelectItem>
                   ))}
                   </SelectContent>

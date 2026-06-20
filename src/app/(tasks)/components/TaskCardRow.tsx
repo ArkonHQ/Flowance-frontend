@@ -21,6 +21,8 @@ import { useState } from "react"
 import DeleteButton from "./DeleteTasks"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { IconRenderer } from "@/components/ui/icon-picker"
+import { ProjectIcon } from "@/components/ui/project-icon"
+import { Project } from "@/lib/api/projects"
 
 
 
@@ -30,7 +32,7 @@ interface TaskCardRowProps {
   task: Task
   projectTitle?: string | null
   onDelete: (id:number) => void
-  onOpenPanel: (taskId: number, taskTitle: string, projectTitle: string | null) => void
+  onOpenPanel: (taskId: number, taskTitle: string, project: Project | null) => void
   isSelected: boolean
   onToggle: (id: number) => void
 }
@@ -93,7 +95,7 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
 
   const handleOpenPanel = (e: React.MouseEvent) => {
     e.preventDefault()
-    onOpenPanel(task.id, task.title ?? "Untitled task", projectTitle ?? task.project?.title ?? null)
+    onOpenPanel(task.id, task.title ?? "Untitled task", task.project ?? null)
   }
 
   const formatTime = (seconds: number) => {
@@ -170,9 +172,11 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
           <TooltipTrigger asChild>
         <Link
           href={`/projects/${task.projectId}`}
-          className="hover:text-primary transition-colors cursor-pointer"
+          className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer"
         >
-          {projectTitle ?? task.project?.title ?? "No project"}
+          <span className="truncate">
+          {task.project && <ProjectIcon project={task.project} />}
+            {projectTitle ?? task.project?.title ?? "No project"}</span>
         </Link>
          </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs break-words">
@@ -245,7 +249,7 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onSelect={() => onOpenPanel(task.id, task.title ?? "Untitled task", projectTitle ?? task.project?.title ?? null) }>
+            <DropdownMenuItem onSelect={() => onOpenPanel(task.id, task.title ?? "Untitled task", task.project ?? null) }>
               <div className="flex items-center gap-2 cursor-pointer">
                 <ExternalLink className="h-4 w-4" />
                 View details

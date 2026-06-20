@@ -32,7 +32,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
   const [taskStats, setTaskStats] = useState(stats) 
   const [statusFilter, setStatusFilter] = useState('all') 
   const [currentPage, setCurrentPage] = useState(1)
-  const [selectedTask, setSelectedTask] = useState<{ id: number, title: string, projectTitle: string | null } | null>(null) 
+  const [selectedTask, setSelectedTask] = useState<{ id: number, title: string, projectTitle: string | null, project?: Project | null } | null>(null) 
   const [isPanelOpen, setIsPanelOpen] = useState(false) 
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set()) 
   
@@ -129,13 +129,11 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
     }
   } 
 
-  const projectLookup = useMemo(() => {
-    return new Map(projects.map((project) => [project.id, project.title])) 
-  }, [projects]) 
+  const projectLookup = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects])
 
-  const handleOpenPanel = (taskId: number, taskTitle: string, projectTitle: string | null) => {
-    setSelectedTask({ id: taskId, title: taskTitle, projectTitle }) 
-    setIsPanelOpen(true) 
+  const handleOpenPanel = (taskId: number, taskTitle: string, project: Project | null) => {
+    setSelectedTask({ id: taskId, title: taskTitle, projectTitle: project?.title ?? null, project })
+    setIsPanelOpen(true)
   }
 
 
@@ -374,7 +372,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
             sortBy={sortBy}
             onSortChange={setSortBy}
             assignees={projects.map(p => ({ id: p.id, name: p.title }))}
-            projects={projects.map((project) => ({ id: project.id, name: project.title }))}
+            projects={projects.map((project) => ({ id: project.id, name: project.title, project }))}
             priorities={['low', 'medium', 'high']}
             sortOptions={[
               { value: 'dueDate', label: 'Due Date' },
@@ -451,11 +449,13 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
               </div>
             )}
             {paginatedTasks.map((task) => {
-              const projectTitle = task.project?.title ?? projectLookup.get(task.projectId) ?? null 
+              const fullProject = task.project ?? projectLookup.get(task.projectId)
+              const taskWithProject = { ...task, project: fullProject }
+              const projectTitle = fullProject?.title ?? null 
               return (
                 <TaskCardRow
                   key={task.id}
-                  task={task}
+                  task={taskWithProject}
                   projectTitle={projectTitle}
                   onDelete={handleDelete}
                   onOpenPanel={handleOpenPanel}

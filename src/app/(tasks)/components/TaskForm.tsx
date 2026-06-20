@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { TagSelector } from "@/components/ui/tag-selector"
 import { Task } from "@/lib/api/tasks"
+import { ProjectIcon } from "@/components/ui/project-icon"
 
 
 
@@ -92,7 +93,10 @@ export const TaskForm = ({ projects, task }: TaskFormProps) => {
                 <SelectContent>
                 {projects.map((p) => (
                   <SelectItem key={p.id} value={String(p.id)}>
-                    {p.title}
+                    <div className="flex items-center gap-2">
+                      <ProjectIcon project={p} showTooltip={false} />
+                      {p.title}
+                    </div>
                   </SelectItem>
                 ))}
                 </SelectContent>
