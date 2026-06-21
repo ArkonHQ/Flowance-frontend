@@ -432,7 +432,7 @@ export const InvoicesContent = ({ initialInvoices, clients, projects }: Props) =
       {selectedIds.size > 0 && (
         <InvoicesBulkActions
           selectedCount={selectedIds.size}
-          onBulkStatusChange={(status) => handleBulkStatusChange(status)}
+          onBulkStatusChange={(status) => handleBulkStatusChange(status as Invoice['status'])}
           onBulkDelete={handleBulkDelete}
           onClearSelection={() => setSelectedIds(new Set())}
         />

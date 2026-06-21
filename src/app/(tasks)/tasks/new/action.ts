@@ -18,7 +18,7 @@ export const handleCreateTask = async (prevState: CreateTaskState | null, formDa
   
   
   const title = formData.get('title') as string
-  const summery = formData.get('summery') as string | null
+  const summary = formData.get('summary') as string | null
   const projectId = Number(formData.get('projectId'))
   const tagIdsRaw = formData.get('tagIds') as string | null
   const tagIds = tagIdsRaw ? JSON.parse(tagIdsRaw) : []
@@ -48,7 +48,7 @@ export const handleCreateTask = async (prevState: CreateTaskState | null, formDa
   try {
     await createTask({ 
       title, 
-      summery: summery || undefined, 
+      summary: summary || undefined, 
       status, 
       priority, 
       deadline, 

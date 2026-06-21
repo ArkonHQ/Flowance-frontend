@@ -479,33 +479,34 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
           </div>
         )}
       </div>
-
-      <TaskSidePanel 
-        onTaskUpdated={handleTaskUpdated}
-        taskId={selectedTask?.id ?? null}
-        taskTitle={selectedTask?.title ?? ''}
-        projectTitle={selectedTask?.projectTitle ?? ''}
-        open={isPanelOpen}
-        onClose={() => setIsPanelOpen(false)}
-        onTimeLogged={refreshTasksAndStats}
-      />
-
-      {selectedIds.size > 0 && (
-        <TasksBulkActions
-          selectedCount={selectedIds.size}
-          onBulkStatusChange={(status) => handleBulkStatusChange(status)}
-          onBulkPriorityChange={handleBulkPriorityChange}
-          onBulkDelete={handleBulkDelete}
-          onClearSelection={() => setSelectedIds(new Set())}
-        />
-      )}
-      <TaskForm 
-        projects={projects}
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onTaskCreated={refreshTasksAndStats}
-      />
     </motion.div>
+
+    <TaskSidePanel 
+      onTaskUpdated={handleTaskUpdated}
+      taskId={selectedTask?.id ?? null}
+      taskTitle={selectedTask?.title ?? ''}
+      projectTitle={selectedTask?.projectTitle ?? ''}
+      open={isPanelOpen}
+      onClose={() => setIsPanelOpen(false)}
+      onTimeLogged={refreshTasksAndStats}
+      onDelete={handleDelete}
+    />
+
+    {selectedIds.size > 0 && (
+      <TasksBulkActions
+        selectedCount={selectedIds.size}
+        onBulkStatusChange={(status) => handleBulkStatusChange(status)}
+        onBulkPriorityChange={handleBulkPriorityChange}
+        onBulkDelete={handleBulkDelete}
+        onClearSelection={() => setSelectedIds(new Set())}
+      />
+    )}
+    <TaskForm 
+      projects={projects}
+      isOpen={isCreateModalOpen}
+      onClose={() => setIsCreateModalOpen(false)}
+      onTaskCreated={refreshTasksAndStats}
+    />
     </TooltipProvider>
   )
 }

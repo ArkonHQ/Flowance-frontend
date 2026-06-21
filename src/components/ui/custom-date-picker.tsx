@@ -68,7 +68,6 @@ export function CustomDatePicker({
             onChange(newDate)
             setOpen(false)
           }}
-          initialFocus
           className="rounded-xl"
         />
       </PopoverContent>

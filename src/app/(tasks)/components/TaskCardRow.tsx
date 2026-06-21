@@ -162,7 +162,7 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
             </div>
           )}
         </div>
-        <span className="text-muted-foreground/90 text-xs w-29 line-clamp-1">{task.summery}</span>
+        <span className="text-muted-foreground/90 text-xs w-29 line-clamp-1">{task.summary}</span>
       </div>
 
       {/* 3. Project */}

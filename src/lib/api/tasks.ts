@@ -10,7 +10,7 @@ export type Task = {
     project: Project,
     title: string,
     description: string | null,
-    summery: string | null ,
+    summary: string | null ,
     status: 'todo' | 'in_progress' | 'done' | 'delayed' | 'cancelled' | 'overdue',
     priority: 'low' | 'medium' | 'high',
     deadline: Date | string,
@@ -184,7 +184,7 @@ export const getTask = async (taskId: number, cookieHeader?: string): Promise<Ta
     return data.task
 }
 
-export const createTask = async (taskData: { title: string, summery?: string | null, status: Task['status'], priority: Task['priority'], deadline: Date | string, projectId: number, tagIds?: number[] }, cookieHeader?: string): Promise<Task> => {
+export const createTask = async (taskData: { title: string, summary?: string | null, status: Task['status'], priority: Task['priority'], deadline: Date | string, projectId: number, tagIds?: number[] }, cookieHeader?: string): Promise<Task> => {
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader

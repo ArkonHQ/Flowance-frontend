@@ -22,7 +22,7 @@ export const TasksBulkActions = ({
   onClearSelection,
 }: TasksBulkActionsProps) => {
   return (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 w-fit max-w-[95vw] animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
+    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-40 w-fit max-w-[95vw] animate-in fade-in slide-in-from-bottom-6 duration-500 ease-out">
       <div className="bg-background/95 backdrop-blur-2xl border border-border px-5 py-2.5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex items-center gap-4 text-foreground">
         <div className="flex items-center gap-3 pr-4 border-r border-border">
           <div className="h-7 w-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-lg shadow-primary/20">

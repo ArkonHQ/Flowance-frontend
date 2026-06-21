@@ -118,12 +118,12 @@ export const EditTaskForm = ({ task, project }: Props) => {
 
             {/* Summary */}
             <div className="space-y-1.5">
-              <Label htmlFor="summery" className="text-xs font-semibold tracking-wide text-foreground/80">Summary</Label>
+              <Label htmlFor="summary" className="text-xs font-semibold tracking-wide text-foreground/80">Summary</Label>
               <Textarea
-                id="summery"
-                name="summery"
+                id="summary"
+                name="summary"
                 placeholder="Enter task summary (optional)"
-                defaultValue={task.summery || ""}
+                defaultValue={task.summary || ""}
                 className="bg-muted/20 border-border/40 focus:border-indigo-500/60 rounded-xl resize-none"
                 rows={3}
               />
