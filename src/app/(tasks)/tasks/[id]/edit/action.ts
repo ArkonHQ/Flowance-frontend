@@ -26,11 +26,14 @@ export const updateTaskAction =  async (prevState: UpdateTaskState | null, formD
   const deadline = (formData.get('deadline') as Date | string) || new Date().toISOString()
   
 
+  const tagIdsRaw = formData.get('tagIds') as string | null
+  const tagIds = tagIdsRaw ? JSON.parse(tagIdsRaw) : undefined
+  
   if (!title || title.trim().length < 3) return { error: 'Title must be at least 3 characters' }
 
   try {
     
-    await updateTask(taskId, { title, projectId, description, summery: summery || null, status, deadline }, cookieHeader)
+    await updateTask(taskId, { title, projectId, description, summery: summery || null, status, deadline, tagIds }, cookieHeader)
 
   }catch (err: any) {
     return { error: err.message || 'Something went wrong' }

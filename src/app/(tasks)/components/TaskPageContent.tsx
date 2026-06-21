@@ -13,6 +13,7 @@ import { StatCard } from "@/components/ui/StatCard"
 import { TaskCardRow } from "./TaskCardRow" 
 import { PaginationFooter } from "@/app/components/pagination-footer" 
 import TaskSidePanel from "./SidePanel" 
+import { TaskForm } from "./TaskForm"
 import { TasksBulkActions } from "./tasks-bulk-actions" 
 import FilterSortRow from "./FilterSortRow" 
 import { isTaskInThisWeek } from "@/lib/utils/date"
@@ -34,6 +35,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedTask, setSelectedTask] = useState<{ id: number, title: string, projectTitle: string | null, project?: Project | null } | null>(null) 
   const [isPanelOpen, setIsPanelOpen] = useState(false) 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set()) 
   
   // Filter/Sort State 
@@ -270,12 +272,10 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
         <div>
           <h2 className="text-2xl font-bold">Tasks</h2>
         </div>
-        <Link href='/tasks/new'>
-          <Button className="gap-2">
-            <PlusIcon className="h-4 w-4" />
-            New Task
-          </Button>
-        </Link>
+        <Button className="gap-2" onClick={() => setIsCreateModalOpen(true)}>
+          <PlusIcon className="h-4 w-4" />
+          New Task
+        </Button>
       </div>
 
       {/* Stats Bar */}
@@ -499,6 +499,12 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
           onClearSelection={() => setSelectedIds(new Set())}
         />
       )}
+      <TaskForm 
+        projects={projects}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onTaskCreated={refreshTasksAndStats}
+      />
     </motion.div>
     </TooltipProvider>
   )
