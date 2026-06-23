@@ -1,8 +1,10 @@
+'use client'
+
 import { FormModal } from "@/components/forms/FormModal"
-import { PrioritySelector } from "@/components/forms/PrioritySelector"
-import { StatusSelector } from "@/components/forms/StatusSelector"
-import { SubtaskEditor } from "@/components/forms/SubtaskEditor"
-import { useTaskFormState } from "@/components/hooks/use-task-form"
+import { Priority, PrioritySelector } from "@/components/forms/PrioritySelector"
+import { Status, StatusSelector } from "@/components/forms/StatusSelector"
+import { Subtask, SubtaskEditor } from "@/components/forms/SubtaskEditor"
+import { useEditTaskForm } from "@/components/hooks/use-edit-task-form"
 import { Button } from "@/components/ui/button"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
 import { Input } from "@/components/ui/input"
@@ -13,55 +15,113 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TagSelector } from "@/components/ui/tag-selector"
 import { Textarea } from "@/components/ui/textarea"
 import { Project } from "@/lib/api/projects"
-import { createTask, addMission as apiAddMission, Task, updateTask, updateMission as apiUpdateMission, deleteMission } from "@/lib/api/tasks"
-import { AnimatePresence, motion } from "framer-motion"
-import { ArrowUpRight, X, Sparkles, Road, Pencil, ListTodo } from "lucide-react"
-import { ReactNode, useState } from "react"
+import { deleteMission, updateTask, getMissions, addMission as apiAddMission, updateMission as apiUpdateMission } from "@/lib/api/tasks"
+import { AnimatePresence } from "framer-motion"
+import { ArrowUpRight, ListTodo, Pencil, X } from "lucide-react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 
-interface TaskFormProps {
-  projects: Project[]
-  onClose: () => void
-  isOpen: boolean
-  onTaskCreated?: (task: Task) => void
+const globalMissionsCache: Record<number, {id: number, name: string}[]> = {}
+
+interface TaskToEdit {
+  id: number
+  title: string
+  summary?: string
+  description?: string
+  status: Status
+  priority?: Priority
+  deadline: Date | string
+  tagIds: number[]
+  missions?: { id: number, name: string }[]
+  projectId: number
+
 }
 
-export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormProps) => {
+interface Props {
+  task: TaskToEdit
+  isOpen: boolean
+  onClose: () => void
+  projects: Project[]
+  onTaskUpdated?: () => void
 
-  const {
-    // values
-    title, summary, description, projectId, status, priority, selectedTagIds, missions, date,
-    // setters
-    setTitle, setSummary, setDescription, setProjectId, setStatus, setPriority, setSelectedTagIds, setDate,
-    // mission helpers
-    addMission, updateMission, removeMission,
-    // actions
-    resetForm,
-  } = useTaskFormState()
+}
+
+export const EditTaskForm = ({
+  task,
+  isOpen,
+  onClose,
+  projects,
+  onTaskUpdated
+}: Props) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submittingStep, setSubmittingStep] = useState('')
+  const [fetchedInitialMissions, setFetchedInitialMissions] = useState<{id: number, name: string}[]>(globalMissionsCache[task.id] || [])
 
+
+  // Map the task to the exact shape the hook expects
+  const initialValues = {
+    id: task.id,
+    title: task.title,
+    summary: task.summary || '',
+    description: task.description || '',
+    status: task.status,
+    priority: task.priority || 'medium',
+    deadline: new Date(task.deadline),
+    tagIds: task.tagIds,
+    missions: task.missions?.map(m => ({ id: m.id, name: m.name })) ?? globalMissionsCache[task.id] ?? [],
+    projectId: task.projectId,
+  }
+
+  const {
+    title, setTitle,
+    summary, setSummary,
+    description, setDescription,
+    status, setStatus,
+    priority, setPriority,
+    date, setDate,
+    selectedTagIds, setSelectedTagIds,
+    missions, setMissions,
+    projectId, setProjectId,
+    formattedDeadline,
+    addMission,
+    updateMission,
+    removeMission,
+    resetForm,
+  } = useEditTaskForm(initialValues)
+
+  useEffect(() => {
+    if (isOpen) {
+      if (globalMissionsCache[task.id]) {
+        setMissions(globalMissionsCache[task.id])
+        setFetchedInitialMissions(globalMissionsCache[task.id])
+      }
+      
+      getMissions(task.id).then((serverMissions) => {
+        const formatted = serverMissions.map(m => ({ id: m.id, name: m.name }))
+        globalMissionsCache[task.id] = formatted
+        setMissions(formatted)
+        setFetchedInitialMissions(formatted)
+      }).catch(console.error)
+    }
+  }, [isOpen, task.id, setMissions])
 
   const handleSubmit = async (e: React.FormEvent) => {
-
     e.preventDefault()
-    // 1. Validation
+
+    if (!projectId) return toast.error("Please select a project workspace")
+
+    if (!title.trim() || title.length < 3) return toast.error("Task title must be at least 3 characters")
 
     if (!projects) return toast.error("Please select a project")
 
-    if (!title.trim()) return toast.error("Type a name for your task")
-
-    if (!projectId) return toast.error("Please select a project workspace!")
+    setIsSubmitting(true)
+    setSubmittingStep('Updating task...')
 
     try {
-      setIsSubmitting(true)
-      setSubmittingStep("Creating your task...")
 
-      // 5.CREATING MODE
-
-      // 5.1 Creating the task first (we need its id for the missions)
-      const taskObj = await createTask({
+      // Update tha main task
+      await updateTask(task.id, {
         title: title.trim(),
         summary: summary.trim() || undefined,
         description: description.trim() || undefined,
@@ -69,43 +129,57 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
         priority,
         deadline: date || new Date(),
         tagIds: selectedTagIds,
-        projectId: Number(projectId)
+        projectId: projectId,
       })
 
-      // 5.2 adding mission one by one using for loop
-      if (missions.length > 0) {
+      // Sync misison get current missino IDs
+      const currentMissionIds = missions.map(m => m.id)
+      const initialMissionIds = fetchedInitialMissions.map(m => m.id)
+      const deletedMissionIds = initialMissionIds.filter(id => !currentMissionIds.includes(id))
 
-        for (let m = 0; m < missions.length; m++) {
+      // Loop throgh the deleted IDs and remove them 
+      for (const missionId of deletedMissionIds) {
+        setSubmittingStep(`Deleting mission ${deletedMissionIds.indexOf(missionId) + 1} of ${deletedMissionIds.length}...`)
+        await deleteMission(task.id, missionId)
+      }
 
-          setSubmittingStep(`Adding mission ${m + 1} of ${missions.length}...`)
+      // if there's no id then create it else update it if there's a change on name by the user
 
-          const missionName = missions[m].name.trim()
-          if (missionName) {
-            await apiAddMission(taskObj.id, missionName)
+      // Add new mission
+      for (let m = 0; m < missions.length; m++) {
+        setSubmittingStep(`Saving mission ${m + 1} of ${missions.length}...`)
+
+        const mission = missions[m]
+        if (!initialMissionIds.includes(mission.id)) {
+          await apiAddMission(task.id, mission.name)
+
+        } else {
+          // Existing mission update if the name changed
+          const original = fetchedInitialMissions.find(m => m.id === mission.id)
+
+          if (original && original.name !== mission.name) {
+            await apiUpdateMission(task.id, mission.id, { name: mission.name })
           }
         }
       }
 
-      // 6. Success feedback and cleanup
-      setSubmittingStep("Task and mission created successfully!")
+      globalMissionsCache[task.id] = missions.map(m => ({ id: m.id, name: m.name }))
+      toast.success("Task updated successfully!")
       resetForm()
       onClose()
-      onTaskCreated?.(taskObj)
+      onTaskUpdated?.()
 
-    } catch (err) {
-
-      // 7. Failure ---error handling---
-      console.error(err)
-      toast.error("Could not save. Please try again.")
+    } catch (error) {
+      console.error(error)
+      toast.error("Could not update task. Please try again.")
     } finally {
-      // 8. Always stop loading no matter what :)
-      setSubmittingStep('')
+
       setIsSubmitting(false)
+      setSubmittingStep('')
     }
   }
 
-
-  return (
+   return (
     <FormModal isOpen={isOpen} onClose={onClose} maxWidth="max-w-4xl" >
       <AnimatePresence>
         {isSubmitting &&
@@ -119,8 +193,8 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border/20 px-6 py-5 shrink-0 bg-muted/5">
           <div className="flex items-center gap-2">
-            <ListTodo className="h-5 w-5" />
-            <h2 className="text-xl font-bold tracking-tight text-foreground">Create New Task</h2>
+            <Pencil className="h-5 w-5 text-indigo-500" />
+            <h2 className="text-xl font-bold tracking-tight text-foreground">Edit Task</h2>
           </div>
           <Button
             type="button"
@@ -293,7 +367,7 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
               disabled={isSubmitting}
               className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/20 h-10 px-6 text-xs flex items-center gap-1.5 transition-all"
             >
-              <span>{isSubmitting ? "Creating..." : 'Create Task'}</span>
+              <span>{isSubmitting ? "Updating..." : 'Update Task'}</span>
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Button>
           </div>

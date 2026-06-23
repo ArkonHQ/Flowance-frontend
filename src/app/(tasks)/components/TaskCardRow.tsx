@@ -35,6 +35,7 @@ interface TaskCardRowProps {
   onOpenPanel: (taskId: number, taskTitle: string, project: Project | null) => void
   isSelected: boolean
   onToggle: (id: number) => void
+  onEdit?: () => void
 }
 
   // 1.Define Colors if exist 
@@ -87,7 +88,7 @@ const formatDate = (date: Date | string | undefined | null) => {
 
 
 
-export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelected, onToggle }: TaskCardRowProps) => {
+export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelected, onToggle, onEdit }: TaskCardRowProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const timer = useTimerStore((state) => state.timers[task.id])
 
@@ -257,11 +258,11 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
               </div>
             </DropdownMenuItem>
 
-            <DropdownMenuItem asChild>
-              <Link href={`/tasks/${task.id}/edit`} className="flex items-center gap-2">
+            <DropdownMenuItem onSelect={onEdit}>
+              <div className="flex items-center gap-2 cursor-pointer w-full">
                 <Pencil className="h-4 w-4" />
                 Edit task
-              </Link>
+              </div>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />

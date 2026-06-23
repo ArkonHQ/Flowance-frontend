@@ -8,6 +8,8 @@ import { useEffect, useState, useMemo } from "react"
 import { IconRenderer } from "./icon-picker"
 import { IconPickerDialog } from "./ready-icon-picker"
 
+let globalCachedTags: Tag[] | null = null;
+
 const DynamicIcon = ({ name, className }: { name?: string, className?: string }) => {
   if (!name) return <IconRenderer icon="TagIcon" className={className} />
   return <IconRenderer icon={name} className={className} />
@@ -46,15 +48,20 @@ export const TagSelector = ({ selectedTagIds, disabled, compact, iconOnly, noIco
   const [editIcon, setEditIcon] = useState('')
 
   useEffect(() => {
-    setLoading(true)
+    if (globalCachedTags) {
+      setAvailableTags(globalCachedTags)
+    } else {
+      setLoading(true)
+    }
+
     const fetchTags = async () =>{
-      
       try {
         const tags = await getTags()
+        globalCachedTags = tags
         setAvailableTags(tags)
-      }catch (err) {
+      } catch (err) {
         console.error(err)
-      }finally{
+      } finally {
         setLoading(false)
       }
     }

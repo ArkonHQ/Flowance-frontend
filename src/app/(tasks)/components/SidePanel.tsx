@@ -29,6 +29,7 @@ interface SidePanelProps {
   onClose: () => void
   onTimeLogged?: () => void
   onTaskUpdated?: (updatedTask: Task) => void
+  onEdit?: () => void
 }
 
 const getStatusColor = (status: string) => {
@@ -63,7 +64,7 @@ const displayStatus = (status: string) => {
   return statusDisplay[status] || statusDisplay.todo
 }
 
-const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeLogged, onTaskUpdated, onDelete }: SidePanelProps) => {
+const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeLogged, onTaskUpdated, onDelete, onEdit }: SidePanelProps) => {
 
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(false)
@@ -442,12 +443,13 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                 </div>
               </div>
               <div className="flex gap-2 mt-4">
-                <Link href={`/tasks/${task.id}/edit`} className="flex-1 ">
-              <Button className="w-full">
-                <Pencil className="h-4 w4" />
+              <Button className="flex-1" onClick={() => {
+                if (onEdit) onEdit()
+                onClose()
+              }}>
+                <Pencil className="h-4 w-4 mr-2" />
                 Edit Task
               </Button>
-              </Link>
               <DeleteButton
                 taskId={task.id}
                 taskName={task.title}

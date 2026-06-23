@@ -14,6 +14,7 @@ import { TaskCardRow } from "./TaskCardRow"
 import { PaginationFooter } from "@/app/components/pagination-footer" 
 import TaskSidePanel from "./SidePanel" 
 import { TaskForm } from "./TaskForm"
+import { EditTaskForm } from "./EditTaskForm"
 import { TasksBulkActions } from "./tasks-bulk-actions" 
 import FilterSortRow from "./FilterSortRow" 
 import { isTaskInThisWeek } from "@/lib/utils/date"
@@ -36,6 +37,8 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
   const [selectedTask, setSelectedTask] = useState<{ id: number, title: string, projectTitle: string | null, project?: Project | null } | null>(null) 
   const [isPanelOpen, setIsPanelOpen] = useState(false) 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set()) 
   
   // Filter/Sort State 
@@ -136,6 +139,11 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
   const handleOpenPanel = (taskId: number, taskTitle: string, project: Project | null) => {
     setSelectedTask({ id: taskId, title: taskTitle, projectTitle: project?.title ?? null, project })
     setIsPanelOpen(true)
+  }
+
+  const handleEditTask = (task: Task) => {
+    setTaskToEdit(task)
+    setIsEditModalOpen(true)
   }
 
 
@@ -459,6 +467,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
                   projectTitle={projectTitle}
                   onDelete={handleDelete}
                   onOpenPanel={handleOpenPanel}
+                  onEdit={() => handleEditTask(taskWithProject)}
                   isSelected={selectedIds.has(task.id)}
                   onToggle={handleToggle}
                 />
@@ -490,6 +499,10 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
       onClose={() => setIsPanelOpen(false)}
       onTimeLogged={refreshTasksAndStats}
       onDelete={handleDelete}
+      onEdit={() => {
+        const fullTask = tasks.find(t => t.id === selectedTask?.id)
+        if (fullTask) handleEditTask(fullTask)
+      }}
     />
 
     {selectedIds.size > 0 && (
@@ -504,9 +517,34 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
     <TaskForm 
       projects={projects}
       isOpen={isCreateModalOpen}
-      onClose={() => setIsCreateModalOpen(false)}
+      onClose={() => {
+        setIsCreateModalOpen(false)
+      }}
       onTaskCreated={refreshTasksAndStats}
     />
+    {taskToEdit && (
+      <EditTaskForm 
+        task={{
+          id: taskToEdit.id,
+          title: taskToEdit.title,
+          summary: taskToEdit.summary || undefined,
+          description: taskToEdit.description || undefined,
+          status: taskToEdit.status as 'todo' | 'in_progress' | 'done' | 'cancelled' | 'delayed',
+          priority: taskToEdit.priority as 'low' | 'medium' | 'high',
+          deadline: taskToEdit.deadline,
+          tagIds: taskToEdit.tags?.map(t => t.id) || [],
+          missions: taskToEdit.missions?.map(m => ({ id: m.id, name: m.name })),
+          projectId: taskToEdit.projectId,
+        }}
+        projects={projects}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setTaskToEdit(null)
+        }}
+        onTaskUpdated={refreshTasksAndStats}
+      />
+    )}
     </TooltipProvider>
   )
 }

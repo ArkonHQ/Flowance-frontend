@@ -13,8 +13,8 @@ export interface Subtask {
 
 interface SubtaskEditorProps {
   items: Subtask[]
-  onAdd: (name: string) => void
-  onUpdate: (name: string, id: number) => void
+  onAdd: (name: string, id: number) => void
+  onUpdate: (id: number, name: string) => void
   onRemove: (id: number) => void
   placeholder?: string 
 }
@@ -27,7 +27,7 @@ export const SubtaskEditor = ({items, onAdd, onUpdate, onRemove, placeholder}: S
   const handleAdd = () => {
     const trimmedValue = inputValue.trim()
     if(!trimmedValue) return 
-    onAdd(trimmedValue)
+    onAdd(trimmedValue, Date.now())
     setInputValue('')
   }
 
@@ -74,7 +74,7 @@ export const SubtaskEditor = ({items, onAdd, onUpdate, onRemove, placeholder}: S
                   <Input
                     type="text"
                     value={item.name}
-                    onChange={(e) => onUpdate(e.target.value, item.id)}
+                    onChange={(e) => onUpdate(item.id, e.target.value)}
                     className="flex-1 bg-transparent border-none text-xs focus:ring-0 focus:outline-none py-0 px-1 font-medium"
                   />
                   <Button

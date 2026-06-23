@@ -23,7 +23,6 @@ interface UseTaskFormOptions {
 export const useTaskFormState = (options: UseTaskFormOptions = {}) => {
   
   const {
-    
   initTitle = '',
   initSummary = '',
   initDescription = '',
@@ -33,8 +32,8 @@ export const useTaskFormState = (options: UseTaskFormOptions = {}) => {
   initTagIds = [],
   initMissions = [],
   initDate = new Date(),
-  
 } = options
+
 
   const [title, setTitle] = useState(initTitle)
   const [summary, setSummary] = useState(initSummary)
@@ -45,7 +44,6 @@ export const useTaskFormState = (options: UseTaskFormOptions = {}) => {
   const [missions, setMissions] = useState<Subtask[]>(initMissions)
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>(initTagIds)
   const [date, setDate] = useState<Date | undefined>(initDate)
-
 
   const formattedDeadline = date ? format(date, 'yyyy-MM-dd') : ''
 
