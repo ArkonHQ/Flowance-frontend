@@ -320,7 +320,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
           )}
           <SheetTitle className="text-lg font-semibold mt-4">{taskTitle}</SheetTitle>
           <SheetDescription>
-          <span className="font-medium">{task?.summary}</span>
+          <span className="font-medium wrap-break-word">{task?.summary}</span>
           </SheetDescription>
         </SheetHeader>
 

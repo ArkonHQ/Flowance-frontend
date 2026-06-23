@@ -26,6 +26,8 @@ interface FilterSortRowProps {
   onAssigneeChange: (assignee: string | null) => void
   projectFilter: string | null
   onProjectChange: (project: string | null) => void
+  tagFilter: string | null
+  onTagChange: (tag: string | null) => void
 
   //Sort
   sortBy: string
@@ -35,6 +37,7 @@ interface FilterSortRowProps {
   assignees: { id: number, name: string }[]
   projects: { id: number, name: string, project?: Project }[]
   priorities: string[]
+  tags: { name: string, id: number, color?: string } []
   sortOptions: { value: string, label: string }[]
 
 }
@@ -51,6 +54,9 @@ const FilterSortRow = ({
   onPriorityChange,
   sortBy,
   onSortChange,
+  onTagChange,
+  tagFilter,
+  tags,
   assignees,
   projects,
   priorities,
@@ -128,13 +134,38 @@ const FilterSortRow = ({
           </SelectContent>
         </Select>
 
+        {/* Tags Filter */}
+        <Select
+          value={tagFilter?.toString() ?? 'all'} 
+          onValueChange={(value) => onTagChange(value === "all" ? null : value)}
+          >
+            <SelectTrigger className="w-[130px] py-6">
+              <SelectValue placeholder="Tags" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All tags</SelectItem>
+              {tags.map((t) => (
+                <SelectItem key={t.id} value={t.id.toString()}>
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full shrink-0" 
+                      style={{ backgroundColor: t.color || '#e5e7eb' }} 
+                    />
+                    <span className="truncate">{t.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
         {/* Active filters count */}
-        {(assigneeFilter || projectFilter || priorityFilter) && (
+        {(assigneeFilter || projectFilter || priorityFilter || tagFilter) && (
           <Button
             onClick={() => {
               onAssigneeChange(null)
               onProjectChange(null)
               onPriorityChange(null)
+              onTagChange(null)
             }}
             variant={'destructive'}
             className="flex items-center gap-1"

@@ -46,6 +46,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null) 
   const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null)
   const [projectFilter, setProjectFilter] = useState<string | null>(null)
+  const [tagFilter, setTagFilter] = useState<string | null >(null)
   const [sortBy, setSortBy] = useState('')
 
 
@@ -92,6 +93,12 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
       result = result.filter((task) => task.ownerId === assigneeFilter)
     }
 
+    if (tagFilter) {
+      result = result.filter((task) => 
+      task.tags.some((tag) => tag.id.toString() === tagFilter))
+
+    }
+
     switch (sortBy) {
       case 'dueDate':
         result.sort(
@@ -111,7 +118,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
     }
 
     return result
-  }, [tasks, searchQuery, statusFilter, priorityFilter, assigneeFilter, projectFilter, sortBy])
+  }, [tasks, searchQuery, statusFilter, priorityFilter, assigneeFilter, projectFilter, sortBy, tagFilter])
 
 
   const pageSize = 7 
@@ -264,7 +271,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
   useEffect(() => {
     setCurrentPage(1)
     setSelectedIds(new Set())
-  }, [searchQuery, priorityFilter, assigneeFilter, projectFilter, statusFilter])
+  }, [searchQuery, priorityFilter, assigneeFilter, projectFilter, statusFilter, tagFilter])
 
   return (
     <TooltipProvider>
@@ -378,7 +385,10 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
             priorityFilter={priorityFilter}
             onPriorityChange={setPriorityFilter}
             sortBy={sortBy}
+            tagFilter={tagFilter}
+            onTagChange={setTagFilter}
             onSortChange={setSortBy}
+            tags={Array.from(new Map(tasks.flatMap(t => t.tags || []).map(tag => [tag.id, tag])).values())}
             assignees={projects.map(p => ({ id: p.id, name: p.title }))}
             projects={projects.map((project) => ({ id: project.id, name: project.title, project }))}
             priorities={['low', 'medium', 'high']}
