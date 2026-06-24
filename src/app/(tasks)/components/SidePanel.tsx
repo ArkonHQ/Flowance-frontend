@@ -29,6 +29,7 @@ interface SidePanelProps {
   onClose: () => void
   onTimeLogged?: () => void
   onTaskUpdated?: (updatedTask: Task) => void
+  onMissionsChanged?: (taskId: number, missions: Mission[]) => void
   onEdit?: () => void
 }
 
@@ -64,7 +65,7 @@ const displayStatus = (status: string) => {
   return statusDisplay[status] || statusDisplay.todo
 }
 
-const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeLogged, onTaskUpdated, onDelete, onEdit }: SidePanelProps) => {
+const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeLogged, onTaskUpdated, onMissionsChanged, onDelete, onEdit }: SidePanelProps) => {
 
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(false)
@@ -113,7 +114,9 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
     setTogglingMission(missionId)
     try{
       const updated = await toggleMission(missionId, taskId)
-      setMissions(prev => prev.map(m => m.id === missionId ? updated : m))
+      const newMissions = missions.map(m => m.id === missionId ? updated : m)
+      setMissions(newMissions)
+      onMissionsChanged?.(taskId, newMissions)
       
        // After successful toggle, compute the updated list
       const updatedMissions = missions.map(m =>
@@ -164,7 +167,9 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
 
     try{
       const created = await addMission(taskId, text)
-      setMissions(prev => [...prev, created])
+      const newMissions = [...missions, created]
+      setMissions(newMissions)
+      onMissionsChanged?.(taskId, newMissions)
       toast.success('Mission added')
 
       if (task?.status === 'done') {
@@ -238,9 +243,10 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
     try {
     // 4. Call API
       await deleteMission(taskId, missionId)
+      const newMissions = previousMission.filter(m => m.id !== missionId)
+      onMissionsChanged?.(taskId, newMissions)
       toast.success('Mission deleted successfully')
       
-      const newMissions = previousMission.filter(m => m.id !== missionId)
       if (newMissions.length > 0 && newMissions.every(m => m.completed) && task?.status !== 'done') {
         const updatedTask = await updateTaskStatus(taskId, 'done')
         setTask(updatedTask)

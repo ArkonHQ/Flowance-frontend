@@ -2,7 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -166,10 +165,17 @@
   --shadow-2xl: var(--shadow-2xl);
 
   --grid-template-columns-15: repeat(15, minmax(0, 1fr));
+
+  --animate-spin-around: spin-around 0.8s linear infinite;
+  @keyframes spin-around {
+  0% {
+    transform: rotate(-90deg);
+    }
+  100% {
+    transform: rotate(270deg);
+    }
+  }
 }
-
-
-
 
 @layer base {
   button, 
@@ -216,7 +222,6 @@
   }
 }
 
-
 /* When the right panel is open, push the main content left on PC (desktop >= 1536px) */
 @media (min-width: 1536px) {
   body.panel-open main:not([data-slot="sidebar-inset"]) {
@@ -227,7 +232,7 @@
     margin-right: 0;
     margin-left: auto;
   }
-  
+
   /* Hide sheet overlay on PC/large screens since I want to click on the page */
   [data-slot="sheet-overlay"] {
     display: none !important;

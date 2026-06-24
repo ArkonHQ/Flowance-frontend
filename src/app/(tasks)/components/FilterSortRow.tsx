@@ -37,7 +37,7 @@ interface FilterSortRowProps {
   assignees: { id: number, name: string }[]
   projects: { id: number, name: string, project?: Project }[]
   priorities: string[]
-  tags: { name: string, id: number, color?: string } []
+  tags: { name: string, id: number, color?: string }[]
   sortOptions: { value: string, label: string }[]
 
 }
@@ -136,27 +136,27 @@ const FilterSortRow = ({
 
         {/* Tags Filter */}
         <Select
-          value={tagFilter?.toString() ?? 'all'} 
+          value={tagFilter?.toString() ?? 'all'}
           onValueChange={(value) => onTagChange(value === "all" ? null : value)}
-          >
-            <SelectTrigger className="w-[130px] py-6">
-              <SelectValue placeholder="Tags" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All tags</SelectItem>
-              {tags.map((t) => (
-                <SelectItem key={t.id} value={t.id.toString()}>
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full shrink-0" 
-                      style={{ backgroundColor: t.color || '#e5e7eb' }} 
-                    />
-                    <span className="truncate">{t.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        >
+          <SelectTrigger className="w-[130px] py-6">
+            <SelectValue placeholder="Tags" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All tags</SelectItem>
+            {tags.map((t) => (
+              <SelectItem key={t.id} value={t.id.toString()}>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: t.color || '#e5e7eb' }}
+                  />
+                  <span className="truncate">{t.name}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Active filters count */}
         {(assigneeFilter || projectFilter || priorityFilter || tagFilter) && (
@@ -175,17 +175,17 @@ const FilterSortRow = ({
           </Button>
         )}
       </div>
-      
+
       {/* Sort */}
       {sortBy && (
-          <Button
-            onClick={() => onSortChange('')}
-            variant={'destructive'}
-            >
-            <X className="h-4 w-4" />
-            Clear sort
-          </Button>
-        )}
+        <Button
+          onClick={() => onSortChange('')}
+          variant={'destructive'}
+        >
+          <X className="h-4 w-4" />
+          Clear sort
+        </Button>
+      )}
       <div className="ml-auto flex items-center">
         <Select value={sortBy} onValueChange={onSortChange}>
           <SelectTrigger className="w-[160px] py-6">
@@ -200,10 +200,10 @@ const FilterSortRow = ({
           </SelectContent>
         </Select>
 
-        
+
       </div>
     </div>
-    
+
   )
 }
 

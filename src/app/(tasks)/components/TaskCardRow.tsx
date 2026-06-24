@@ -23,6 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { IconRenderer } from "@/components/ui/icon-picker"
 import { ProjectIcon } from "@/components/ui/project-icon"
 import { Project } from "@/lib/api/projects"
+import { MissionProgress } from "./MissionProgress"
 
 
 
@@ -99,6 +100,9 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
     onOpenPanel(task.id, task.title ?? "Untitled task", task.project ?? null)
   }
 
+  const missionTotal = task.missions?.length || 0
+  const completedMissions = task.missions?.filter(mis => mis.completed)?.length || 0
+
   const formatTime = (seconds: number) => {
     const total = Math.max(0, Math.floor(seconds))
     if (total === 0) return "0s"
@@ -111,12 +115,26 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
     return `${secs}s`
   }
 
+  const getDueDateStatus = () => {
+    if (['done', 'cancelled'].includes(task.status)) return 'normal';
+    if (task.status === 'overdue') return 'overdue';
+    if (!task.deadline) return 'normal';
+
+    const timeRemaining = new Date(task.deadline).getTime() - Date.now();
+    if (timeRemaining < 0) return 'overdue';
+    if (timeRemaining <= 24 * 60 * 60 * 1000) return 'soon';
+    
+    return 'normal';
+  };
+
+  const dueDateStatus = getDueDateStatus();
+
   return (
     <div
       role="group"
       aria-label={`Task row: ${title}`}
       className={cn(
-        "flex flex-wrap md:grid md:grid-cols-[40px_2fr_1fr_130px_130px_130px_130px_130px_40px] gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 hover:shadow-xs transition-all group",
+        "flex flex-wrap md:grid md:grid-cols-[40px_minmax(200px,350px)_140px_110px_110px_130px_100px_110px_40px] gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 hover:shadow-xs transition-all group",
         isSelected ? "bg-primary/5 dark:bg-primary/10 border-primary/50" : "border-border/30 hover:border-border/60"
       )}
     >
@@ -138,7 +156,7 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
               <TooltipTrigger asChild>
                 <Link
                   href={`/tasks/${task.id}`}
-                  className="font-semibold truncate hover:text-primary transition-colors block"
+                  className="font-semibold truncate hover:text-primary transition-colors block text-sm"
                   onClick={handleOpenPanel}
                 >
                   {title}
@@ -149,86 +167,72 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          {task.tags && task.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {task.tags.map(tag => (
-                <Badge
-                  key={tag.id}
-                  style={{ backgroundColor: tag.color || '#e5e7eb' }}
-                  className="px-1.5 py-0 text-[10px] text-white rounded font-medium shadow-sm"
-                >
-                  {tag.name}
-                </Badge>
-              ))}
-            </div>
-          )}
         </div>
-        <span className="text-muted-foreground/90 text-xs w-29 line-clamp-1">{task.summary}</span>
+        <span className="text-muted-foreground/90 text-xs w-full line-clamp-1">{task.summary}</span>
       </div>
 
-      {/* 3. Project */}
-      <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:block">
-        <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-        <Link
-          href={`/projects/${task.projectId}`}
-          className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer max-w-full"
-        >
-          {task.project && <ProjectIcon project={task.project} className="w-5 h-5 shrink-0" />}
-          <span className="truncate">
-            {projectTitle ?? task.project?.title ?? "No project"}
-          </span>
-        </Link>
-         </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-xs break-words">
-            <p>{projectTitle ?? task.project?.title ?? "No project"}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      {/* 3. Project / Tags */}
+      <div className="md:w-auto text-sm text-muted-foreground truncate flex flex-wrap gap-1">
+        {task.tags.map(tag => (
+          <Badge 
+            key={tag.id}
+            style={{ 
+              backgroundColor: `${tag.color || '#6b7280'}40`,
+              color: tag.color || '#6b7280'
+            }}
+            className="px-2 py-0.5 text-[10px] rounded-md font-medium border border-transparent shadow-none hover:bg-opacity-80 transition-colors"
+          >
+            {tag.name}
+          </Badge>
+        ))}
       </div>
 
-      {/* 4. Assignee (Placeholder for now) */}
-      <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:block">
-        -
-      </div>
-
-      {/* 5. Status */}
+      {/* 4. Priority */}
       <div className="flex items-center">
-        <div className={cn("inline-flex items-center border px-2.5 py-0.5 font-medium transition-colors shrink-0 text-sm w-full md:w-auto justify-center rounded-sm", getStatusColor(task.status))}>
-          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80 mr-1.5" aria-hidden="true" />
-          {statusDisplay(task.status)}
-        </div>
-      </div>
-
-      {/* 6. Priority */}
-      <div className="flex items-center">
-        <div className={cn("inline-flex items-center gap-1 border px-2.5 py-0.5 font-medium transition-colors shrink-0 text-sm w-full md:w-auto justify-center rounded-sm", getPriorityColor(task.priority))}>
-          {task.priority === "high" ? <ArrowUp className="w-3.5 h-3.5" /> : task.priority === "low" ? <ArrowDown className="w-3.5 h-3.5" /> : <Minus className="w-3.5 h-3.5" />}
+        <div className={cn("inline-flex items-center gap-1 border px-2 py-0.5 font-medium transition-colors shrink-0 text-xs w-full md:w-auto justify-center rounded-full", getPriorityColor(task.priority))}>
+          {task.priority === "high" ? <ArrowUp className="w-3 h-3" /> : task.priority === "low" ? <ArrowDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
           {(task.priority ?? "medium").charAt(0).toUpperCase() + (task.priority ?? "medium").slice(1)}
         </div>
       </div>
 
-      {/* 7. Due Date */}
+      {/* 5. Due Date */}
       <div className={cn(
-        "text-sm hidden md:block",
-        task.status === 'overdue' || (task.deadline && new Date(task.deadline).getTime() < Date.now() && !['done', 'cancelled'].includes(task.status))
-          ? "text-red-600 dark:text-red-400 font-medium"
-          : "text-muted-foreground"
+        "text-sm hidden md:flex items-center gap-1.5 flex-wrap",
+        dueDateStatus === 'overdue' ? "text-red-600 dark:text-red-400 font-medium" :
+        dueDateStatus === 'soon' ? "text-amber-600 dark:text-amber-500 font-medium" :
+        "text-muted-foreground"
       )}>
         <time dateTime={task.deadline ? new Date(task.deadline).toISOString() : undefined}>
           {!task.deadline ? "-" : formatDate(task.deadline)}
         </time>
+        {dueDateStatus === 'overdue' && (
+          <span className="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-sm bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+            Overdue
+          </span>
+        )}
       </div>
 
-      {/* 8. Timer */}
-      <div className="flex items-center justify-end text-sm font-medium text-muted-foreground flex-1 md:flex-none">
+      {/* 6. Assignee (Placeholder for now) */}
+      <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:block">
+        <MissionProgress completed={completedMissions} total={missionTotal} animate={false} size={40}/>
+      </div>
+
+      {/* 7. Timer */}
+      <div className="flex items-center justify-center text-sm font-medium text-muted-foreground flex-1 md:flex-none">
         {timer?.elapsedSeconds ? (
           <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md border w-full md:w-auto justify-center", timer.status === 'running' ? "bg-green-100/50 dark:bg-green-300/20 text-green-700 border-green-200" : "bg-secondary/50 border-transparent")}>
             <Clock className="w-3.5 h-3.5" />
             <span className="tabular-nums">{formatTime(timer.elapsedSeconds)}</span>
           </div>
         ) : <span className="hidden md:inline text-muted-foreground/50">-</span>}
+      </div>
+
+      {/* 8. Status */}
+      <div className="flex items-center">
+        <div className={cn("inline-flex items-center border px-2 py-0.5 font-medium transition-colors shrink-0 text-xs w-full md:w-auto justify-center rounded-full", getStatusColor(task.status))}>
+          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80 mr-1.5" aria-hidden="true" />
+          {statusDisplay(task.status)}
+        </div>
       </div>
 
       {/* 9. Actions */}

@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "framer-motion"
 export interface Subtask {
   id: number
   name: string
+  completed: boolean
 }
 
 interface SubtaskEditorProps {
@@ -16,11 +17,12 @@ interface SubtaskEditorProps {
   onAdd: (name: string, id: number) => void
   onUpdate: (id: number, name: string) => void
   onRemove: (id: number) => void
+  onToggleCompleted?: (id: number, completed: boolean) => void
   placeholder?: string 
 }
 
 
-export const SubtaskEditor = ({items, onAdd, onUpdate, onRemove, placeholder}: SubtaskEditorProps) => {
+export const SubtaskEditor = ({items, onAdd, onUpdate, onRemove, placeholder, onToggleCompleted}: SubtaskEditorProps) => {
 
   const [inputValue, setInputValue] = useState('')
 
@@ -71,6 +73,7 @@ export const SubtaskEditor = ({items, onAdd, onUpdate, onRemove, placeholder}: S
                   <span className="text-[9px] font-semibold text-muted-foreground/60 w-4 text-center">
                     {index +1}
                   </span>
+                  
                   <Input
                     type="text"
                     value={item.name}
