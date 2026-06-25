@@ -198,7 +198,7 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
                   <Label htmlFor="project" className="text-xs font-semibold tracking-wide text-foreground/80">
                     Project & Workspace <span className="text-rose-500">*</span>
                   </Label>
-                  <Select value={String(projectId)} onValueChange={(val) => setProjectId(Number(val))}>
+                  <Select value={String(projectId)} onValueChange={(val) => setProjectId(val)}>
                     <SelectTrigger className="h-10 bg-muted/20 border-border/40 focus:border-indigo-500/60 rounded-xl">
                       <SelectValue placeholder="Select target project" />
                     </SelectTrigger>

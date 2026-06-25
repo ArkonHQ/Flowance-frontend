@@ -69,7 +69,7 @@ export const EditTaskForm = ({
     priority: task.priority || 'medium',
     deadline: new Date(task.deadline),
     tagIds: task.tagIds,
-    missions: task.missions?.map(m => ({ id: m.id, name: m.name })) ?? globalMissionsCache[task.id] ?? [],
+    missions: (task.missions?.map(m => ({ id: m.id, name: m.name, completed: (m as any).completed ?? false })) ?? globalMissionsCache[task.id] ?? []) as any[],
     projectId: task.projectId,
   }
 
@@ -93,14 +93,14 @@ export const EditTaskForm = ({
   useEffect(() => {
     if (isOpen) {
       if (globalMissionsCache[task.id]) {
-        setMissions(globalMissionsCache[task.id])
+        setMissions(globalMissionsCache[task.id] as any[])
         setFetchedInitialMissions(globalMissionsCache[task.id])
       }
       
       getMissions(task.id).then((serverMissions) => {
-        const formatted = serverMissions.map(m => ({ id: m.id, name: m.name }))
+        const formatted = serverMissions.map(m => ({ id: m.id, name: m.name, completed: m.completed || false }))
         globalMissionsCache[task.id] = formatted
-        setMissions(formatted)
+        setMissions(formatted as any[])
         setFetchedInitialMissions(formatted)
       }).catch(console.error)
     }

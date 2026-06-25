@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useTimerStore } from "@/store/timerStore"
-import { Clock } from "lucide-react"
+import { Clock, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenuContent,
@@ -37,6 +37,8 @@ interface TaskCardRowProps {
   isSelected: boolean
   onToggle: (id: number) => void
   onEdit?: () => void
+  onToggleFocus: (taskId: number) => void
+  isFocused: boolean
 }
 
   // 1.Define Colors if exist 
@@ -89,9 +91,10 @@ const formatDate = (date: Date | string | undefined | null) => {
 
 
 
-export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelected, onToggle, onEdit }: TaskCardRowProps) => {
+export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPanel, isSelected, onToggle, onEdit }: TaskCardRowProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const timer = useTimerStore((state) => state.timers[task.id])
+
 
   const title = task.title ?? "Untitled task"
 
@@ -161,12 +164,28 @@ export const TaskCardRow = ({ task, projectTitle, onDelete, onOpenPanel, isSelec
                 >
                   {title}
                 </Link>
+                
               </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs break-words">
+              <TooltipContent side="top" className="max-w-xs wrap-break-words">
                 <p>{title}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          <button
+                  onClick={(e) => {
+                     onToggleFocus(task.id) 
+                     e.stopPropagation()
+                    }}
+                  className="p-1 hover:text-amber-400 transition-colors"
+                  title= {isFocused ? 'Unfocus' : 'Focus'}
+                  >
+                    <Star className={`h-4 w-4 ${
+                      isFocused
+                        ? "fill-amber-400 text-amber-400"
+                        : 'text-muted-foreground'
+                    }`}
+                    />
+                  </button>
         </div>
         <span className="text-muted-foreground/90 text-xs w-full line-clamp-1">{task.summary}</span>
       </div>

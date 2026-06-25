@@ -1,23 +1,24 @@
 'use client'
-import { motion } from "framer-motion" 
+import { motion } from "framer-motion"
 import { Task, getAllTasks, updateTask, deleteTask } from "@/lib/api/tasks"
 import { Project } from "@/lib/api/projects"
-import { useState, useMemo, useEffect } from "react" 
-import { Button } from "@/components/ui/button" 
-import Link from "next/link" 
-import { toast } from 'sonner' 
-import { Checkbox } from "@/components/ui/checkbox" 
-import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, Clock, FilterX } from "lucide-react" 
+import { useState, useMemo, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { toast } from 'sonner'
+import { Checkbox } from "@/components/ui/checkbox"
+import { Briefcase, PlusIcon, ListTodo, Activity, CheckCircle, Clock, FilterX } from "lucide-react"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { StatCard } from "@/components/ui/StatCard" 
-import { TaskCardRow } from "./TaskCardRow" 
-import { PaginationFooter } from "@/app/components/pagination-footer" 
-import TaskSidePanel from "./SidePanel" 
+import { StatCard } from "@/components/ui/StatCard"
+import { TaskCardRow } from "./TaskCardRow"
+import { PaginationFooter } from "@/app/components/pagination-footer"
+import TaskSidePanel from "./SidePanel"
 import { TaskForm } from "./TaskForm"
 import { EditTaskForm } from "./EditTaskForm"
-import { TasksBulkActions } from "./tasks-bulk-actions" 
-import FilterSortRow from "./FilterSortRow" 
+import { TasksBulkActions } from "./tasks-bulk-actions"
+import FilterSortRow from "./FilterSortRow"
 import { isTaskInThisWeek } from "@/lib/utils/date"
+import { FocusedTask } from "./FocusedTask"
 
 //TODO Assignees not ready now i put it for project until i add team collaboration features
 
@@ -30,24 +31,80 @@ interface Props {
 }
 
 export const TaskPageContent = ({ initialTask, stats, projects, totalHours, lastWeekHours }: Props) => {
-  const [tasks, setTasks] = useState<Task[]>(initialTask) 
-  const [taskStats, setTaskStats] = useState(stats) 
-  const [statusFilter, setStatusFilter] = useState('all') 
+  const [tasks, setTasks] = useState<Task[]>(initialTask)
+  const [taskStats, setTaskStats] = useState(stats)
+  const [statusFilter, setStatusFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
-  const [selectedTask, setSelectedTask] = useState<{ id: number, title: string, projectTitle: string | null, project?: Project | null } | null>(null) 
-  const [isPanelOpen, setIsPanelOpen] = useState(false) 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null)
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set()) 
-  
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+
   // Filter/Sort State 
-  const [searchQuery, setSearchQuery] = useState('') 
-  const [priorityFilter, setPriorityFilter] = useState<string | null>(null) 
+  const [searchQuery, setSearchQuery] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
   const [assigneeFilter, setAssigneeFilter] = useState<string | null>(null)
   const [projectFilter, setProjectFilter] = useState<string | null>(null)
-  const [tagFilter, setTagFilter] = useState<string | null >(null)
+  const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState('')
+
+
+  // Persist selected task for side panel
+  const [selectedTask, setSelectedTask] = useState<{ id: number, title: string, projectTitle: string | null, project?: Project | null } | null>(() => {
+    if (typeof window === 'undefined') return null
+    const saved = localStorage.getItem('fcc_selected_task')
+    return saved ? JSON.parse(saved) : null
+  })
+
+  // Sync selectedTask to localStorage whenever it changes for side panel in order to remember selected task after refresh
+  useEffect(() => {
+    if (selectedTask) {
+      localStorage.setItem('fcc_selected_task', JSON.stringify(selectedTask))
+    } else {
+      localStorage.removeItem('fcc_selected_task')
+    }
+  }, [selectedTask])
+
+  // Side panel state persisted in localStorage to survive refreshes
+  const [isPanelOpen, setIsPanelOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    const saved = localStorage.getItem('fcc_side_panel_open')
+    return saved ? JSON.parse(saved) : false
+  })
+
+  // Focused task state persisted in localStorage so it survives refreshes
+  const [focusedTaskId, setFocusedTaskId] = useState<number | null>(() => {
+    if (typeof window === 'undefined') return null
+    const saved = localStorage.getItem('fcc_focused_task_id')
+    return saved ? Number(saved) : null
+  })
+
+  // Sync to localStorage whenever it changes for side panel
+  useEffect(() => {
+    if (isPanelOpen) {
+      localStorage.setItem('fcc_side_panel_open', JSON.stringify(isPanelOpen))
+    } else {
+      localStorage.removeItem('fcc_side_panel_open')
+    }
+  }, [isPanelOpen])
+
+  // Sync to localStorage whenever it changes for focused task
+  useEffect(() => {
+    if (focusedTaskId !== null) {
+      localStorage.setItem('fcc_focused_task_id', String(focusedTaskId))
+    } else {
+      localStorage.removeItem('fcc_focused_task_id')
+    }
+  }, [focusedTaskId])
+
+  // Focus handler
+  const handleToggleFocus = (taskId: number) => {
+    setFocusedTaskId(prev => (prev === taskId ? null : taskId))
+  }
+
+  const focusedTask = focusedTaskId
+    ? tasks.find(f => f.id === focusedTaskId) ?? null
+    : null
 
 
   // Compute weekly stats
@@ -56,12 +113,12 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
 
   const totalTasks = taskStats.total
   const statusPercentage = {
-    todo:        totalTasks > 0 ? Math.round((taskStats.todo        / totalTasks) * 100) : 0,
-    done:        totalTasks > 0 ? Math.round((taskStats.done        / totalTasks) * 100) : 0,
+    todo: totalTasks > 0 ? Math.round((taskStats.todo / totalTasks) * 100) : 0,
+    done: totalTasks > 0 ? Math.round((taskStats.done / totalTasks) * 100) : 0,
     in_progress: totalTasks > 0 ? Math.round((taskStats.in_progress / totalTasks) * 100) : 0,
-    cancelled:   totalTasks > 0 ? Math.round((taskStats.cancelled   / totalTasks) * 100) : 0,
-    overdue:     totalTasks > 0 ? Math.round((taskStats.overdue     / totalTasks) * 100) : 0,
-    delayed:     totalTasks > 0 ? Math.round((taskStats.delayed     / totalTasks) * 100) : 0,
+    cancelled: totalTasks > 0 ? Math.round((taskStats.cancelled / totalTasks) * 100) : 0,
+    overdue: totalTasks > 0 ? Math.round((taskStats.overdue / totalTasks) * 100) : 0,
+    delayed: totalTasks > 0 ? Math.round((taskStats.delayed / totalTasks) * 100) : 0,
   }
 
 
@@ -94,8 +151,8 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
     }
 
     if (tagFilter) {
-      result = result.filter((task) => 
-      task.tags.some((tag) => tag.id.toString() === tagFilter))
+      result = result.filter((task) =>
+        task.tags.some((tag) => tag.id.toString() === tagFilter))
 
     }
 
@@ -121,25 +178,25 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
   }, [tasks, searchQuery, statusFilter, priorityFilter, assigneeFilter, projectFilter, sortBy, tagFilter])
 
 
-  const pageSize = 7 
+  const pageSize = 7
 
   const refreshTasksAndStats = async () => {
     try {
-      const { tasks: refreshedTasks, totalHours } = await getAllTasks() 
-      setTasks(refreshedTasks) 
-      const total = refreshedTasks.length 
-      const todo = refreshedTasks.filter(t => t.status === 'todo').length 
-      const in_progress = refreshedTasks.filter(t => t.status === 'in_progress').length 
-      const done = refreshedTasks.filter(t => t.status === 'done').length 
-      const cancelled = refreshedTasks.filter(t => t.status === 'cancelled').length 
-      const delayed = refreshedTasks.filter(t => t.status === 'delayed').length 
-      const overdue = refreshedTasks.filter(t => t.status === 'overdue').length 
+      const { tasks: refreshedTasks, totalHours } = await getAllTasks()
+      setTasks(refreshedTasks)
+      const total = refreshedTasks.length
+      const todo = refreshedTasks.filter(t => t.status === 'todo').length
+      const in_progress = refreshedTasks.filter(t => t.status === 'in_progress').length
+      const done = refreshedTasks.filter(t => t.status === 'done').length
+      const cancelled = refreshedTasks.filter(t => t.status === 'cancelled').length
+      const delayed = refreshedTasks.filter(t => t.status === 'delayed').length
+      const overdue = refreshedTasks.filter(t => t.status === 'overdue').length
 
-      setTaskStats({ total, todo, in_progress, done, cancelled, delayed, totalHours, overdue }) 
+      setTaskStats({ total, todo, in_progress, done, cancelled, delayed, totalHours, overdue })
     } catch (error) {
-      console.error('Failed to refresh tasks and stats after time logging:', error) 
+      console.error('Failed to refresh tasks and stats after time logging:', error)
     }
-  } 
+  }
 
   const projectLookup = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects])
 
@@ -164,8 +221,8 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
   }
 
   const handleDelete = (id: number) => {
-    setTasks(prev => prev.filter(t => t.id !== id)) 
-  } 
+    setTasks(prev => prev.filter(t => t.id !== id))
+  }
 
   const handleToggle = (id: number) => {
     setSelectedIds(prev => {
@@ -260,7 +317,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
   }
 
   const handleMissionsChanged = (taskId: number, missions: any[]) => {
-    setTasks(prev => prev.map(t => 
+    setTasks(prev => prev.map(t =>
       t.id === taskId ? { ...t, missions } : t
     ))
   }
@@ -281,107 +338,107 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
 
   return (
     <TooltipProvider>
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-      className="container mx-auto py-8 px-4 md:px-6 space-y-8 pb-28"
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+        className="container mx-auto py-8 px-4 md:px-6 space-y-8 pb-28"
       >
 
-      {/* Header */}
-      <div className="flex items-end justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Tasks</h2>
+        {/* Header */}
+        <div className="flex items-end justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Tasks</h2>
+          </div>
+          <Button className="gap-2" onClick={() => setIsCreateModalOpen(true)}>
+            <PlusIcon className="h-4 w-4" />
+            New Task
+          </Button>
         </div>
-        <Button className="gap-2" onClick={() => setIsCreateModalOpen(true)}>
-          <PlusIcon className="h-4 w-4" />
-          New Task
-        </Button>
-      </div>
 
-      {/* Stats Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-        <StatCard 
-          title="Total Tasks"
-          value={taskStats.total.toString()} 
-          icon={Briefcase}
-          color="text-yellow-500"
-          bg="bg-yellow-100/70 dark:bg-yellow-950/40"
-          gradient="from-yellow-500 to-orange-500"
-          trend={{ value: weeklyTotal, isPositive: true, label: "this week", suffix: "" }}
-        />
-        <StatCard 
-          title="In Progress"
-          value={taskStats.in_progress.toString()} 
-          icon={Activity}
-          color="text-blue-500"
-          bg="bg-blue-100/70 dark:bg-blue-950/40"
-          gradient="from-blue-500 to-cyan-500"
-          trend={{ value: statusPercentage.in_progress, isPositive: true, label: "of total" }}
-        />
-        <StatCard 
-          title="Completed"
-          value={taskStats.done.toString()} 
-          icon={CheckCircle}
-          color="text-emerald-500"
-          bg="bg-emerald-100/70 dark:bg-emerald-950/40"
-          gradient="from-emerald-500 to-teal-500"
-          trend={{ value: statusPercentage.done, isPositive: true, label: "of total" }}
-        />
-        <StatCard 
-          title="Total Time"
-          value={(() => {
-            const h = Math.floor(taskStats.totalHours) 
-            const m = Math.round((taskStats.totalHours - h) * 60) 
-            if (h === 0 && m === 0 && taskStats.totalHours > 0) return "< 1m" 
-            if (h === 0) return `${m}m` 
-            return `${h}h ${m}m` 
-          })()}
-          icon={Clock}
-          color="text-indigo-500"
-          bg="bg-indigo-100/70 dark:bg-indigo-950/40"
-          gradient="from-indigo-500 to-purple-500"
-          trend={(() => {
-            // Compute percentage difference
-            const current = taskStats.totalHours
-            const previous = lastWeekHours
-            
-            let percentChange = 0
-            if (previous > 0) {
-              percentChange = Math.round(((current - previous) / previous) * 100)
-            } else if (current > 0) {
-              percentChange = 100
-            }
-            return { 
-              value: percentChange, 
-              isPositive: percentChange > 0, 
-              label: 'from last week',
-              suffix: '%' 
-            }
-          })()}
-        />
-        <StatCard 
-          title="Overdue"
-          value={taskStats.overdue.toString()} 
-          icon={Clock}
-          color="text-red-500"
-          bg="bg-red-100/70 dark:bg-red-950/40"
-          gradient="from-red-500 to-pink-500"
-          trend={{ value: statusPercentage.overdue, isPositive: statusPercentage.overdue === 0, label: "of total" }}
-        />
-        <StatCard 
-          title="To Do"
-          value={taskStats.todo.toString()} 
-          icon={ListTodo}
-          color="text-rose-500"
-          bg="bg-rose-100/70 dark:bg-rose-950/40"
-          gradient="from-rose-500 to-pink-600"
-          trend={{ value: statusPercentage.todo, isPositive: true, label: "of total" }}
-        />
-      </div>
+        {/* Stats Bar */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          <StatCard
+            title="Total Tasks"
+            value={taskStats.total.toString()}
+            icon={Briefcase}
+            color="text-yellow-500"
+            bg="bg-yellow-100/70 dark:bg-yellow-950/40"
+            gradient="from-yellow-500 to-orange-500"
+            trend={{ value: weeklyTotal, isPositive: true, label: "this week", suffix: "" }}
+          />
+          <StatCard
+            title="In Progress"
+            value={taskStats.in_progress.toString()}
+            icon={Activity}
+            color="text-blue-500"
+            bg="bg-blue-100/70 dark:bg-blue-950/40"
+            gradient="from-blue-500 to-cyan-500"
+            trend={{ value: statusPercentage.in_progress, isPositive: true, label: "of total" }}
+          />
+          <StatCard
+            title="Completed"
+            value={taskStats.done.toString()}
+            icon={CheckCircle}
+            color="text-emerald-500"
+            bg="bg-emerald-100/70 dark:bg-emerald-950/40"
+            gradient="from-emerald-500 to-teal-500"
+            trend={{ value: statusPercentage.done, isPositive: true, label: "of total" }}
+          />
+          <StatCard
+            title="Total Time"
+            value={(() => {
+              const h = Math.floor(taskStats.totalHours)
+              const m = Math.round((taskStats.totalHours - h) * 60)
+              if (h === 0 && m === 0 && taskStats.totalHours > 0) return "< 1m"
+              if (h === 0) return `${m}m`
+              return `${h}h ${m}m`
+            })()}
+            icon={Clock}
+            color="text-indigo-500"
+            bg="bg-indigo-100/70 dark:bg-indigo-950/40"
+            gradient="from-indigo-500 to-purple-500"
+            trend={(() => {
+              // Compute percentage difference
+              const current = taskStats.totalHours
+              const previous = lastWeekHours
 
-      <div className="flex">
-          <FilterSortRow 
+              let percentChange = 0
+              if (previous > 0) {
+                percentChange = Math.round(((current - previous) / previous) * 100)
+              } else if (current > 0) {
+                percentChange = 100
+              }
+              return {
+                value: percentChange,
+                isPositive: percentChange > 0,
+                label: 'from last week',
+                suffix: '%'
+              }
+            })()}
+          />
+          <StatCard
+            title="Overdue"
+            value={taskStats.overdue.toString()}
+            icon={Clock}
+            color="text-red-500"
+            bg="bg-red-100/70 dark:bg-red-950/40"
+            gradient="from-red-500 to-pink-500"
+            trend={{ value: statusPercentage.overdue, isPositive: statusPercentage.overdue === 0, label: "of total" }}
+          />
+          <StatCard
+            title="To Do"
+            value={taskStats.todo.toString()}
+            icon={ListTodo}
+            color="text-rose-500"
+            bg="bg-rose-100/70 dark:bg-rose-950/40"
+            gradient="from-rose-500 to-pink-600"
+            trend={{ value: statusPercentage.todo, isPositive: true, label: "of total" }}
+          />
+        </div>
+
+        <div className="flex">
+          <FilterSortRow
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             assigneeFilter={assigneeFilter}
@@ -403,40 +460,51 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
               { value: 'priority', label: 'Priority' },
               { value: 'title', label: 'Title' },
             ]}
-            
+
 
           />
-      </div>
+        </div>
 
-      {/* Search and List Section */}
-      <div className="space-y-4 border p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm">
-        {tasks.length > 0 && (
-          <div className="flex flex-col md:flex-row gap-6 items-start md:items-end justify-between mb-4 border-border/40 py-5 border-b rounded-md">
-            <nav className="flex flex-wrap gap-8 md:gap-12 text-base font-medium text-gray-500 mx-4">
-              <button onClick={() => setStatusFilter('all')} className={statusFilter === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>All Tasks <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.total}</span></button>
-              <button onClick={() => setStatusFilter('todo')} className={statusFilter === 'todo' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>To Do <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.todo}</span></button>
-              <button onClick={() => setStatusFilter('in_progress')} className={statusFilter === 'in_progress' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>In Progress <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.in_progress}</span></button>
-              <button onClick={() => setStatusFilter('done')} className={statusFilter === 'done' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Completed <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.done}</span></button>
-              <button onClick={() => setStatusFilter('overdue')} className={statusFilter === 'overdue' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Overdue <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.overdue}</span></button>
-            </nav>
-          </div>
-        )}
-
-        {tasks.length === 0 ? (
-          <div className="py-20 text-center border-2 border-dashed border-border/20 rounded-2xl bg-card/20 backdrop-blur-sm">
-            <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Briefcase className="h-6 w-6 text-muted-foreground/50" />
+        {/* Search and List Section */}
+        <div className="space-y-4 border p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm">
+          {tasks.length > 0 && (
+            <div className="flex flex-col md:flex-row gap-6 items-start md:items-end justify-between mb-4 border-border/40 py-5 border-b rounded-md">
+              <nav className="flex flex-wrap gap-8 md:gap-12 text-base font-medium text-gray-500 mx-4">
+                <button onClick={() => setStatusFilter('all')} className={statusFilter === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>All Tasks <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.total}</span></button>
+                <button onClick={() => setStatusFilter('todo')} className={statusFilter === 'todo' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>To Do <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.todo}</span></button>
+                <button onClick={() => setStatusFilter('in_progress')} className={statusFilter === 'in_progress' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>In Progress <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.in_progress}</span></button>
+                <button onClick={() => setStatusFilter('done')} className={statusFilter === 'done' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Completed <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.done}</span></button>
+                <button onClick={() => setStatusFilter('overdue')} className={statusFilter === 'overdue' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Overdue <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{taskStats.overdue}</span></button>
+              </nav>
             </div>
-            <h3 className="text-lg font-medium">No tasks yet</h3>
-            <p className="text-muted-foreground mt-1">No tasks have been created yet.</p>
-            <Link href='/tasks/new' className="inline-block mt-4">
-              <Button variant='outline' className="dark:bg-gray-950 bg-white/20 backdrop-blur-md border hover:bg-indigo-400 transition-all">
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Create Task
-              </Button>
-            </Link>
-          </div>
-        ) : filtered.length === 0 ? (
+          )}
+
+          {focusedTask && (
+            <FocusedTask
+              task={focusedTask}
+              onClose={() => setFocusedTaskId(null)}
+              onEdit={() => handleEditTask(focusedTask)}
+              onDelete={(id) => { handleDelete(id); setFocusedTaskId(null) }}
+              onOpenPanel={handleOpenPanel}
+              onTimeLogged={refreshTasksAndStats}
+            />
+          )}
+
+          {tasks.length === 0 ? (
+            <div className="py-20 text-center border-2 border-dashed border-border/20 rounded-2xl bg-card/20 backdrop-blur-sm">
+              <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Briefcase className="h-6 w-6 text-muted-foreground/50" />
+              </div>
+              <h3 className="text-lg font-medium">No tasks yet</h3>
+              <p className="text-muted-foreground mt-1">No tasks have been created yet.</p>
+              <Link href='/tasks/new' className="inline-block mt-4">
+                <Button variant='outline' className="dark:bg-gray-950 bg-white/20 backdrop-blur-md border hover:bg-indigo-400 transition-all">
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  Create Task
+                </Button>
+              </Link>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="py-20 text-center border-2 border-dashed border-border/20 rounded-2xl bg-card/20 backdrop-blur-sm">
               <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
                 <FilterX className="h-6 w-6 text-muted-foreground/50" />
@@ -444,125 +512,127 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
               <h3 className="text-lg font-medium">No tasks match your search</h3>
               <p className="text-muted-foreground mt-1">Try adjusting your search for "{searchQuery}" </p>
               <Button variant="link" onClick={() => {
-                setSearchQuery('') 
+                setSearchQuery('')
                 setStatusFilter('all')
               }} className="mt-2 text-primary">
                 Clear search
               </Button>
             </div>
-        ) : (
-          // Table Header (Hidden on Mobile)
-          <div className="grid grid-3">
-            {filtered.length > 0 && (
-              <div className="hidden md:grid grid-cols-[40px_minmax(200px,350px)_140px_110px_110px_130px_100px_110px_40px] gap-4 py-3 px-5 text-xs font-semibold text-slate-700 dark:text-slate-300 border-slate-200/60 dark:border-border/25 z-10">
-                <div className="flex items-center justify-center">
-                  <Checkbox 
-                    checked={isAllSelected}
-                    onCheckedChange={(checked) => handleSelectAll(!!checked)}
-                    aria-label="Select all tasks on current page"
-                    className="border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
+          ) : (
+            // Table Header (Hidden on Mobile)
+            <div className="grid grid-3">
+              {filtered.length > 0 && (
+                <div className="hidden md:grid grid-cols-[40px_minmax(200px,350px)_140px_110px_110px_130px_100px_110px_40px] gap-4 py-3 px-5 text-xs font-semibold text-slate-700 dark:text-slate-300 border-slate-200/60 dark:border-border/25 z-10">
+                  <div className="flex items-center justify-center">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                      aria-label="Select all tasks on current page"
+                      className="border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                  </div>
+                  <div>Task</div>
+                  <div>Tags</div>
+                  <div className="text-left">Priority</div>
+                  <div>Due Date</div>
+                  <div>Missions</div>
+                  <div className="text-center">Timer</div>
+                  <div className="text-left">Status</div>
+                  <div></div>
                 </div>
-                <div>Task</div>
-                <div>Tags</div>
-                <div className="text-left">Priority</div>
-                <div>Due Date</div>
-                <div>Missions</div>
-                <div className="text-center">Timer</div>
-                <div className="text-left">Status</div>
-                <div></div>
-              </div>
-            )}
-            {paginatedTasks.map((task) => {
-              const fullProject = task.project ?? projectLookup.get(task.projectId)
-              const taskWithProject = { ...task, project: fullProject }
-              const projectTitle = fullProject?.title ?? null 
-              return (
-                <TaskCardRow
-                  key={task.id}
-                  task={taskWithProject}
-                  projectTitle={projectTitle}
-                  onDelete={handleDelete}
-                  onOpenPanel={handleOpenPanel}
-                  onEdit={() => handleEditTask(taskWithProject)}
-                  isSelected={selectedIds.has(task.id)}
-                  onToggle={handleToggle}
-                />
-              )
-            })}
-          </div>
-        )}
-        {filtered.length > 0 && (
-          <div className="mt-4 rounded-2xl border-t border-border/40 bg-background px-5 py-4 backdrop-blur-md">
-            <PaginationFooter 
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              pageSize={pageSize}
-              onChangePage={handlePageChange}
-              label='tasks'
-            />
-          </div>
-        )}
-      </div>
-    </motion.div>
+              )}
+              {paginatedTasks.map((task) => {
+                const fullProject = task.project ?? projectLookup.get(task.projectId)
+                const taskWithProject = { ...task, project: fullProject }
+                const projectTitle = fullProject?.title ?? null
+                return (
+                  <TaskCardRow
+                    key={task.id}
+                    task={taskWithProject}
+                    onToggleFocus={handleToggleFocus}
+                    isFocused={focusedTaskId === task.id}
+                    projectTitle={projectTitle}
+                    onDelete={handleDelete}
+                    onOpenPanel={handleOpenPanel}
+                    onEdit={() => handleEditTask(taskWithProject)}
+                    isSelected={selectedIds.has(task.id)}
+                    onToggle={handleToggle}
+                  />
+                )
+              })}
+            </div>
+          )}
+          {filtered.length > 0 && (
+            <div className="mt-4 rounded-2xl border-t border-border/40 bg-background px-5 py-4 backdrop-blur-md">
+              <PaginationFooter
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                onChangePage={handlePageChange}
+                label='tasks'
+              />
+            </div>
+          )}
+        </div>
+      </motion.div>
 
-    <TaskSidePanel 
-      onTaskUpdated={handleTaskUpdated}
-      onMissionsChanged={handleMissionsChanged}
-      taskId={selectedTask?.id ?? null}
-      taskTitle={selectedTask?.title ?? ''}
-      projectTitle={selectedTask?.projectTitle ?? ''}
-      open={isPanelOpen}
-      onClose={() => setIsPanelOpen(false)}
-      onTimeLogged={refreshTasksAndStats}
-      onDelete={handleDelete}
-      onEdit={() => {
-        const fullTask = tasks.find(t => t.id === selectedTask?.id)
-        if (fullTask) handleEditTask(fullTask)
-      }}
-    />
-
-    {selectedIds.size > 0 && (
-      <TasksBulkActions
-        selectedCount={selectedIds.size}
-        onBulkStatusChange={(status) => handleBulkStatusChange(status)}
-        onBulkPriorityChange={handleBulkPriorityChange}
-        onBulkDelete={handleBulkDelete}
-        onClearSelection={() => setSelectedIds(new Set())}
-      />
-    )}
-    <TaskForm 
-      projects={projects}
-      isOpen={isCreateModalOpen}
-      onClose={() => {
-        setIsCreateModalOpen(false)
-      }}
-      onTaskCreated={refreshTasksAndStats}
-    />
-    {taskToEdit && (
-      <EditTaskForm 
-        task={{
-          id: taskToEdit.id,
-          title: taskToEdit.title,
-          summary: taskToEdit.summary || undefined,
-          description: taskToEdit.description || undefined,
-          status: taskToEdit.status as 'todo' | 'in_progress' | 'done' | 'cancelled' | 'delayed',
-          priority: taskToEdit.priority as 'low' | 'medium' | 'high',
-          deadline: taskToEdit.deadline,
-          tagIds: taskToEdit.tags?.map(t => t.id) || [],
-          missions: taskToEdit.missions?.map(m => ({ id: m.id, name: m.name })),
-          projectId: taskToEdit.projectId,
+      <TaskSidePanel
+        onTaskUpdated={handleTaskUpdated}
+        onMissionsChanged={handleMissionsChanged}
+        taskId={selectedTask?.id ?? null}
+        taskTitle={selectedTask?.title ?? ''}
+        projectTitle={selectedTask?.projectTitle ?? ''}
+        open={isPanelOpen}
+        onClose={() => setIsPanelOpen(false)}
+        onTimeLogged={refreshTasksAndStats}
+        onDelete={handleDelete}
+        onEdit={() => {
+          const fullTask = tasks.find(t => t.id === selectedTask?.id)
+          if (fullTask) handleEditTask(fullTask)
         }}
+      />
+
+      {selectedIds.size > 0 && (
+        <TasksBulkActions
+          selectedCount={selectedIds.size}
+          onBulkStatusChange={(status) => handleBulkStatusChange(status)}
+          onBulkPriorityChange={handleBulkPriorityChange}
+          onBulkDelete={handleBulkDelete}
+          onClearSelection={() => setSelectedIds(new Set())}
+        />
+      )}
+      <TaskForm
         projects={projects}
-        isOpen={isEditModalOpen}
+        isOpen={isCreateModalOpen}
         onClose={() => {
-          setIsEditModalOpen(false)
-          setTaskToEdit(null)
+          setIsCreateModalOpen(false)
         }}
-        onTaskUpdated={refreshTasksAndStats}
+        onTaskCreated={refreshTasksAndStats}
       />
-    )}
+      {taskToEdit && (
+        <EditTaskForm
+          task={{
+            id: taskToEdit.id,
+            title: taskToEdit.title,
+            summary: taskToEdit.summary || undefined,
+            description: taskToEdit.description || undefined,
+            status: taskToEdit.status as 'todo' | 'in_progress' | 'done' | 'cancelled' | 'delayed',
+            priority: taskToEdit.priority as 'low' | 'medium' | 'high',
+            deadline: taskToEdit.deadline,
+            tagIds: taskToEdit.tags?.map(t => t.id) || [],
+            missions: taskToEdit.missions?.map(m => ({ id: m.id, name: m.name, completed: m.completed })),
+            projectId: taskToEdit.projectId,
+          }}
+          projects={projects}
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false)
+            setTaskToEdit(null)
+          }}
+          onTaskUpdated={refreshTasksAndStats}
+        />
+      )}
     </TooltipProvider>
   )
 }

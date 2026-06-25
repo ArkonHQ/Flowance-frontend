@@ -75,7 +75,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
   const [missions, setMissions] = useState<Mission[]>([])
   const [updatingId, setUpdatingId] = useState<number | null>(null)
   const [adding, setAdding] = useState<boolean>(false)
-  const [togglingMission, setTogglingMission] = useState<number | null> (null)
+  const [togglingMission, setTogglingMission] = useState<number | null>(null)
   const [newMissionName, setNewMissionName] = useState('')
 
 
@@ -84,17 +84,17 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
 
   useEffect(() => {
-    if(open && taskId) {
+    if (open && taskId) {
       const fetchMission = async () => {
         setMissionLoading(true)
 
-        try{
+        try {
           const fetched = await getMissions(taskId)
           setMissions(fetched)
-        }catch(error){
+        } catch (error) {
           console.error("Error fetching missions:", error)
           setMissions([])
-        }finally{
+        } finally {
           setMissionLoading(false)
         }
       }
@@ -109,63 +109,63 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
     if (!taskId) return;
 
     setMissions(prev => prev.map(m =>
-      m.id === missionId ? {...m, completed} : m
+      m.id === missionId ? { ...m, completed } : m
     ))
     setTogglingMission(missionId)
-    try{
+    try {
       const updated = await toggleMission(missionId, taskId)
       const newMissions = missions.map(m => m.id === missionId ? updated : m)
       setMissions(newMissions)
       onMissionsChanged?.(taskId, newMissions)
-      
-       // After successful toggle, compute the updated list
+
+      // After successful toggle, compute the updated list
       const updatedMissions = missions.map(m =>
-      m.id === missionId ? updated : m
-    )
-    
-    const allCompleted = updatedMissions.every(m => m.completed)
+        m.id === missionId ? updated : m
+      )
 
-    if (allCompleted) {
-      if (task?.status !== 'done') {
-        const updatedTask = await updateTaskStatus(taskId, 'done')
-        setTask(updatedTask)
-        onTaskUpdated?.(updatedTask)
-        toast.success('All missions done! Task completed.')
-      }
-    }else{
-      // If the task was previously 'done' but now has incomplete missions mark it as incomplete
-      if (task?.status === 'done') {
-        const updatedTask = await updateTaskStatus(taskId, 'in_progress')
-        setTask(updatedTask)
-        onTaskUpdated?.(updatedTask)
-        toast.info('Task re‑opened because a mission was unchecked.')
-      }
-    }
+      const allCompleted = updatedMissions.every(m => m.completed)
 
-    
-    }catch(error){
-      
-      setMissions(prev => prev.map(m => 
-        m.id === missionId ? {...m, completed: !completed } : m
-      
+      if (allCompleted) {
+        if (task?.status !== 'done') {
+          const updatedTask = await updateTaskStatus(taskId, 'done')
+          setTask(updatedTask)
+          onTaskUpdated?.(updatedTask)
+          toast.success('All missions done! Task completed.')
+        }
+      } else {
+        // If the task was previously 'done' but now has incomplete missions mark it as incomplete
+        if (task?.status === 'done') {
+          const updatedTask = await updateTaskStatus(taskId, 'in_progress')
+          setTask(updatedTask)
+          onTaskUpdated?.(updatedTask)
+          toast.info('Task re‑opened because a mission was unchecked.')
+        }
+      }
+
+
+    } catch (error) {
+
+      setMissions(prev => prev.map(m =>
+        m.id === missionId ? { ...m, completed: !completed } : m
+
       ))
       toast.error('Failed to update mission state')
-      
-    }finally{
+
+    } finally {
       setTogglingMission(null)
     }
 
-    
+
   }
 
   const handleAddMission = async () => {
     const text = newMissionName.trim()
-    if(!text || !taskId) return
+    if (!text || !taskId) return
 
     setAdding(true)
     setNewMissionName('')
 
-    try{
+    try {
       const created = await addMission(taskId, text)
       const newMissions = [...missions, created]
       setMissions(newMissions)
@@ -177,59 +177,59 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
         setTask(updatedTask)
         toast.info('Task re‑opened because a new mission was added.')
       }
-    }catch(error){
+    } catch (error) {
       setNewMissionName(text)
       toast.error('Failed to add mission')
-    }finally{
+    } finally {
       setAdding(false)
     }
   }
 
   const handleUpdateMission = async (missionId: number, newName: string) => {
-    if (!taskId ) return
+    if (!taskId) return
 
     // 1. Store previous state 
     const previousMission = missions.find(m => m.id === missionId)
     if (!previousMission) return
 
-   // 2. Optimistically update the UI
-   setMissions(prev => 
+    // 2. Optimistically update the UI
+    setMissions(prev =>
       prev.map(m =>
-        m.id === missionId ? {...m, name: newName} : m
-      )
-   ) 
-   // 3. Set loading state for this mission
-   setUpdatingId(missionId)
-
-   try {
-    // 4. Call API
-    const updated = await updateMission(taskId, missionId, {name: newName})
-    
-    // 5. Replace with server respone (ensures consistency)  
-    setMissions(prev => 
-      prev.map(m => 
-        m.id === missionId ? updated : m
+        m.id === missionId ? { ...m, name: newName } : m
       )
     )
+    // 3. Set loading state for this mission
+    setUpdatingId(missionId)
 
-    toast.success('Mission updated')
+    try {
+      // 4. Call API
+      const updated = await updateMission(taskId, missionId, { name: newName })
 
-   } catch (error) {
-    // 6. on failure revert state to previous
-    setMissions(prev => 
-      prev.map(m => 
-        m.id === missionId ? previousMission : m
+      // 5. Replace with server respone (ensures consistency)  
+      setMissions(prev =>
+        prev.map(m =>
+          m.id === missionId ? updated : m
+        )
       )
-    )
-    toast.error('Failed to update mission ')
-   }finally{
-    setUpdatingId(null) 
-   }
+
+      toast.success('Mission updated')
+
+    } catch (error) {
+      // 6. on failure revert state to previous
+      setMissions(prev =>
+        prev.map(m =>
+          m.id === missionId ? previousMission : m
+        )
+      )
+      toast.error('Failed to update mission ')
+    } finally {
+      setUpdatingId(null)
+    }
   }
 
 
-  const handleDeleteMission = async (missionId: number ) => {
-    if (!taskId) return 
+  const handleDeleteMission = async (missionId: number) => {
+    if (!taskId) return
 
     // 1. Store previous list (for rollback)
     const previousMission = missions
@@ -241,12 +241,12 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
     setUpdatingId(missionId)
 
     try {
-    // 4. Call API
+      // 4. Call API
       await deleteMission(taskId, missionId)
       const newMissions = previousMission.filter(m => m.id !== missionId)
       onMissionsChanged?.(taskId, newMissions)
       toast.success('Mission deleted successfully')
-      
+
       if (newMissions.length > 0 && newMissions.every(m => m.completed) && task?.status !== 'done') {
         const updatedTask = await updateTaskStatus(taskId, 'done')
         setTask(updatedTask)
@@ -254,12 +254,12 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
       } else if (newMissions.length === 0 && task?.status === 'done') {
         // Optional: If no missions left, maybe keep it done or revert? Usually leave it alone. //Todo if no mission left leave it  alone, but I can add something if I think about a good feature
       }
-      
+
     } catch (error) {
       // 6. On failure return to the previous list
-      setMissions(previousMission) 
+      setMissions(previousMission)
       toast.error('Failed to delete mission')
-    }finally{
+    } finally {
       setUpdatingId(null)
     }
   }
@@ -271,17 +271,17 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
       const fetchTask = async () => {
         setLoading(true)
         try {
-            const fetchedTask = await getTask(taskId)
-            setTask(fetchedTask)
+          const fetchedTask = await getTask(taskId)
+          setTask(fetchedTask)
         } catch (error) {
           console.error("Error fetching task:", error)
           setTask(null)
         } finally {
           setLoading(false)
         }
-    }
+      }
 
-    fetchTask()
+      fetchTask()
     } else {
       setTask(null)
     }
@@ -289,18 +289,18 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
 
   const isLargeScreen = useMediaQuery('(min-width: 1536px)')
 
- useEffect(() => {
-  if (open && isLargeScreen) {
-    document.body.classList.add('panel-open');
-  } else {
-    document.body.classList.remove('panel-open');
-  }
-  return () => document.body.classList.remove('panel-open');
-}, [open, isLargeScreen]);
+  useEffect(() => {
+    if (open && isLargeScreen) {
+      document.body.classList.add('panel-open');
+    } else {
+      document.body.classList.remove('panel-open');
+    }
+    return () => document.body.classList.remove('panel-open');
+  }, [open, isLargeScreen]);
 
   return (
     <Sheet open={open} onOpenChange={onClose} modal={!isLargeScreen}>
-      <SheetContent 
+      <SheetContent
         className={cn("w-full sm:w-[360px] lg:w-[400px] overflow-y-auto rounded-lg border-2 border-card shadow-lg p-0",)}
         side="right"
         style={{ top: 80, bottom: 0, height: 'calc(100vh - 80px)', position: 'fixed' }}
@@ -314,19 +314,19 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
             e.preventDefault();
           }
         }}
-        >
-        
+      >
+
         <SheetHeader className="px-6 pt-6">
           {task && (
             <div>
-          <span className={`rounded-lg border px-2 py-0.5 text-sm font-bold tracking-wider ${getStatusColor(task.status)}`}>
-            {displayStatus(task.status)}
-            </span>
-            </div> 
+              <span className={`rounded-lg border px-2 py-0.5 text-sm font-bold tracking-wider ${getStatusColor(task.status)}`}>
+                {displayStatus(task.status)}
+              </span>
+            </div>
           )}
           <SheetTitle className="text-lg font-semibold mt-4">{taskTitle}</SheetTitle>
           <SheetDescription>
-          <span className="font-medium wrap-break-word">{task?.summary}</span>
+            <span className="font-medium wrap-break-word">{task?.summary}</span>
           </SheetDescription>
         </SheetHeader>
 
@@ -337,13 +337,15 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
             <div className="rounded-lg space-y-4">
               <div className="space-y-3 text-sm text-muted-foreground">
                 <div className="flex items-center">
-                  <span className="flex items-center gap-2 w-24 text-muted-foreground"><FolderKanbanIcon className="h-4 w-4" />Project</span>
+                  <span className="flex items-center gap-2 w-24 text-muted-foreground">
+                    {task.project && <ProjectIcon project={task.project} className="w-5 h-5 shrink-0" />}
+                    Project
+                  </span>
                   <span className="flex-1 flex justify-center items-center gap-2 text-foreground font-medium">
-                    <Link 
+                    <Link
                       href={`/projects/${task.project?.id}`}
                       className="text-foreground font-medium hover:underline hover:text-primary flex items-center gap-2 justify-center"
                     >
-                      {task.project && <ProjectIcon project={task.project} className="w-5 h-5 shrink-0" />}
                       <span>{task.project?.title || projectTitle || 'No project'}</span>
                     </Link>
                   </span>
@@ -369,7 +371,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                 )}
                 <div className="flex flex-col gap-2 mt-4 mb-2">
                   <span className="flex items-center gap-2 text-muted-foreground uppercase text-xs font-semibold tracking-wider"><TagsIcon className="h-4 w-4" />Tags</span>
-                  <TagSelector 
+                  <TagSelector
                     selectedTagIds={task.tags?.map(t => t.id) || []}
                     compact={true}
                     noIcon={true}
@@ -380,7 +382,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                         setTask(updatedTask);
                         onTaskUpdated?.(updatedTask);
                         toast.success('Tags updated');
-                      } catch(e) {
+                      } catch (e) {
                         toast.error("Failed to update tags");
                       }
                     }}
@@ -388,7 +390,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                 </div>
               </div>
 
-              <TaskTimer 
+              <TaskTimer
                 taskStatus={task.status}
                 taskId={task.id}
                 taskName={task.title}
@@ -402,7 +404,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                   <h1 className="flex items-center gap2 w-24 mb-2">Descriptoin</h1>
                   <span className="flex-1 text-muted-foreground font-medium">{task.description}</span>
                 </div>
-                
+
               )}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -420,7 +422,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                   <MissionItem
                     key={mission.id}
                     {...mission}
-                    createdAt={new Date ()}
+                    createdAt={new Date()}
                     isLoading={updatingId === mission.id}
                     onToggle={handleToggleMission}
                     onEdit={handleUpdateMission}
@@ -449,22 +451,22 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                 </div>
               </div>
               <div className="flex gap-2 mt-4">
-              <Button className="flex-1" onClick={() => {
-                if (onEdit) onEdit()
-                onClose()
-              }}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit Task
-              </Button>
-              <DeleteButton
-                taskId={task.id}
-                taskName={task.title}
-                onDeleted={onDelete}
-              >
-                <Button variant="destructive" size="icon" className="shrink-0 w-14">
-                  <Trash2 className="h-4 w-4" />
+                <Button className="flex-1" onClick={() => {
+                  if (onEdit) onEdit()
+                  onClose()
+                }}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit Task
                 </Button>
-              </DeleteButton>
+                <DeleteButton
+                  taskId={task.id}
+                  taskName={task.title}
+                  onDeleted={onDelete}
+                >
+                  <Button variant="destructive" size="icon" className="shrink-0 w-14">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </DeleteButton>
               </div>
             </div>
           )}

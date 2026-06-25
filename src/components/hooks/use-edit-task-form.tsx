@@ -45,6 +45,7 @@ export const useEditTaskForm = (task: EditTaskData) => {
     const newMission: Subtask = {
       id: missionCounter.current--,
       name,
+      completed: false,
     }
     setMissions((prev) => [...prev, newMission])
   }, [])

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { addTodaySeconds } from '@/lib/utils/todayHours';
 
 export interface SingleTimer {
   taskId: number;
@@ -258,6 +259,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
       get()._saveToLocalStorage();
 
       try {
+        addTodaySeconds(taskId, loggedHours * 3600);
         window.dispatchEvent(
           new CustomEvent('taskTimeLogged', { detail: { taskId, hours: loggedHours } })
         );
@@ -383,6 +385,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
       }))
 
       get()._saveToLocalStorage()
+      addTodaySeconds(taskId, loggedSeconds)
       window.dispatchEvent(new CustomEvent('taskTimeLogged', {detail: {taskId, hours: loggedHours}}))
     }catch (err) {
       console.error('[Timer] stopTimer error:', err)

@@ -52,6 +52,7 @@ export const useTaskFormState = (options: UseTaskFormOptions = {}) => {
     const newMission: Subtask = {
       id,
       name,
+      completed: false,
     }
     setMissions((prev) => [...prev, newMission])
   }, [])

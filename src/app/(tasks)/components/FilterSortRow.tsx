@@ -12,6 +12,7 @@ import {
 import { Search, X } from "lucide-react"
 import { ProjectIcon } from "@/components/ui/project-icon"
 import { Project } from "@/lib/api/projects"
+import { PrioritySelector } from "@/components/forms/PrioritySelector"
 
 
 interface FilterSortRowProps {
