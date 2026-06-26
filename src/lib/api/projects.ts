@@ -32,6 +32,7 @@ export const getAllProjects = async (cookieHeader?: string): Promise<Project[]> 
     
 
     const res = await fetch(`${API_BASE}/projects`, {
+        method: "GET",
         headers,
         credentials: 'include'
     })
@@ -73,7 +74,7 @@ export const createProject = async (data: Partial<Project> & { tagIds?: number[]
 }
 
 // PUT update project
-export const updateProject = async (id: number, data: Partial<Project> & { tagIds?: number[] }, cookieHeaders?: string): Promise<Project> => {
+export const updateProject = async (id: number, data: Partial<Omit<Project, 'id' | 'ownerId'>> & { tagIds?: number[] }, cookieHeaders?: string): Promise<Project> => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeaders) headers['Cookie'] = cookieHeaders
     

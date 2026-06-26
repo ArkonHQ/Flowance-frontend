@@ -32,7 +32,7 @@ import { MissionProgress } from "./MissionProgress"
 interface TaskCardRowProps {
   task: Task
   projectTitle?: string | null
-  onDelete: (id:number) => void
+  onDelete: (id: number) => void
   onOpenPanel: (taskId: number, taskTitle: string, project: Project | null) => void
   isSelected: boolean
   onToggle: (id: number) => void
@@ -41,7 +41,7 @@ interface TaskCardRowProps {
   isFocused: boolean
 }
 
-  // 1.Define Colors if exist 
+// 1.Define Colors if exist 
 const getStatusColor = (status: string) => {
   const statusColors: Record<string, string> = {
     todo: "badge-status-todo",
@@ -78,7 +78,7 @@ const getPriorityColor = (priority: string) => {
 }
 
 
-  // 2.Define Format Date
+// 2.Define Format Date
 const formatDate = (date: Date | string | undefined | null) => {
   if (!date) return "N/A"
   const d = new Date(date)
@@ -92,7 +92,7 @@ const formatDate = (date: Date | string | undefined | null) => {
 
 
 
-export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPanel, isSelected, onToggle, onEdit }: TaskCardRowProps) => {
+export const TaskCardRow = ({ task, isFocused, onToggleFocus, onDelete, onOpenPanel, isSelected, onToggle, onEdit }: TaskCardRowProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const timer = useTimerStore((state) => state.timers[task.id])
 
@@ -113,10 +113,10 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
     const hrs = Math.floor(total / 3600)
     const mins = Math.floor((total % 3600) / 60)
     const secs = total % 60
-    
-    if (hrs > 0) return `${hrs}h ${mins}m`
-    if (mins > 0) return `${mins}m ${secs}s`
-    return `${secs}s`
+
+    return [hrs, mins, secs]
+      .map(unit => String(unit).padStart(2, '0'))
+      .join(':')
   }
 
   const getDueDateStatus = () => {
@@ -127,7 +127,7 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
     const timeRemaining = new Date(task.deadline).getTime() - Date.now();
     if (timeRemaining < 0) return 'overdue';
     if (timeRemaining <= 24 * 60 * 60 * 1000) return 'soon';
-    
+
     return 'normal';
   };
 
@@ -151,7 +151,7 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
           className="shrink-0 border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary"
         />
       </div>
-      
+
       {/* 2. Title */}
       <div className="min-w-0 flex-1 md:flex-none flex flex-col gap-1.5 justify-center">
         <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
                   className="font-semibold truncate hover:text-primary transition-colors block text-sm"
                   onClick={handleOpenPanel}
                 >
-                  {title} 
+                  {title}
                 </Link>
 
               </TooltipTrigger>
@@ -172,21 +172,20 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-                  <button
-                  onClick={(e) => {
-                     onToggleFocus(task.id) 
-                     e.stopPropagation()
-                    }}
-                  className="p-1 hover:text-amber-400 transition-colors"
-                  title= {isFocused ? 'Unfocus' : 'Focus'}
-                  >
-                    <Star className={`h-4 w-4  ${
-                      isFocused
-                        ? "fill-amber-400 text-amber-400"
-                        : 'text-muted-foreground'
-                    }`}
-                    />
-                  </button>
+          <button
+            onClick={(e) => {
+              onToggleFocus(task.id)
+              e.stopPropagation()
+            }}
+            className="p-1 hover:text-amber-400 transition-colors"
+            title={isFocused ? 'Unfocus' : 'Focus'}
+          >
+            <Star className={`h-4 w-4  ${isFocused
+                ? "fill-amber-400 text-amber-400"
+                : 'text-muted-foreground'
+              }`}
+            />
+          </button>
         </div>
         <span className="text-muted-foreground/90 text-xs w-full line-clamp-1">{task.summary}</span>
       </div>
@@ -194,9 +193,9 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
       {/* 3. Project / Tags */}
       <div className="md:w-auto text-sm text-muted-foreground truncate flex flex-wrap gap-1">
         {task.tags.map(tag => (
-          <Badge 
+          <Badge
             key={tag.id}
-            style={{ 
+            style={{
               backgroundColor: `${tag.color || '#6b7280'}40`,
               color: tag.color || '#6b7280'
             }}
@@ -219,23 +218,27 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
       <div className={cn(
         "text-sm hidden md:flex items-center gap-1.5 flex-wrap",
         dueDateStatus === 'overdue' ? "text-red-600 dark:text-red-400 font-medium" :
-        dueDateStatus === 'soon' ? "text-amber-600 dark:text-amber-500 font-medium" :
-        "text-muted-foreground"
+          dueDateStatus === 'soon' ? "text-amber-600 dark:text-amber-500 font-medium" :
+            "text-muted-foreground"
       )}>
         <time dateTime={task.deadline ? new Date(task.deadline).toISOString() : undefined}>
           {!task.deadline ? "-" : formatDate(task.deadline)}
         </time>
+        {/* show overdue status */}
+        {dueDateStatus === 'overdue' && <span className="text-red-600 dark:text-red-400 font-medium">Overdue</span>}
+        {dueDateStatus === 'soon' && <span className="text-amber-600 dark:text-amber-500 font-medium">Due Soon</span>}
       </div>
+
 
       {/* 6. Assignee (Placeholder for now) */}
       <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:block">
-        <MissionProgress completed={completedMissions} total={missionTotal} animate={false} size={40}/>
+        <MissionProgress completed={completedMissions} total={missionTotal} animate={false} size={40} />
       </div>
 
       {/* 7. Timer */}
       <div className="flex items-center justify-center text-sm font-medium text-muted-foreground flex-1 md:flex-none">
         {timer?.elapsedSeconds ? (
-          <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md border w-full md:w-auto justify-center", timer.status === 'running' ? "bg-green-100/50 dark:bg-green-300/20 text-green-700 border-green-200" : "bg-secondary/50 border-transparent")}>
+          <div className={cn("flex items-center gap-1.5 px-2 py-1 rounded-md w-full md:w-auto justify-center", timer.status === 'running' ? " text-primary" : "bg-secondary/50 border-transparent", timer.status === 'paused' ? 'text-amber-500' : 'bg-secondary/50 border-transparent')}>
             <Clock className="w-3.5 h-3.5" />
             <span className="tabular-nums">{formatTime(timer.elapsedSeconds)}</span>
           </div>
@@ -270,7 +273,7 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onSelect={() => onOpenPanel(task.id, task.title ?? "Untitled task", task.project ?? null) }>
+            <DropdownMenuItem onSelect={() => onOpenPanel(task.id, task.title ?? "Untitled task", task.project ?? null)}>
               <div className="flex items-center gap-2 cursor-pointer">
                 <ExternalLink className="h-4 w-4" />
                 View details

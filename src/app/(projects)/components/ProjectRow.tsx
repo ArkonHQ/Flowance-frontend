@@ -17,12 +17,16 @@ import { cn } from "@/lib/utils";
 import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import DeleteButton from "./DeleteProject"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ProjectsBulkActions } from "./projects-bulk-actions";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 interface ProjectRowProps {
   project: Project
   clientName?: string
   onDelete: (id: number) => void 
+  isSelecetd: boolean
+  onToggle: (id: number) => void
 }
 
 const getStatusColor = (status: string) => {
@@ -36,23 +40,42 @@ const getStatusColor = (status: string) => {
   return colors[status] || colors.planning;
 };
 
+const displayStatus = (status: string) => {
+  const statusDisplay: Record<string, string> = {
+    planning: 'Planning',
+    active: 'Active',
+    completed: 'Completed',
+    on_hold: 'On Hold',
+    cancelled: 'Cancelled',
+   };
+  return statusDisplay[status] || statusDisplay.planning;
+};
+
 const formatDate = (date: Date | string) => {
   if (!date) return 'N/A'
   return new Date(date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'})
 }
 
-export const ProjectRow = ({ project, clientName }: ProjectRowProps) => {
+export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: ProjectRowProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
-  const statusDisplay = project.status.replace('_', ' ')
+  
 
   return (
     <div className='grid grid-cols-12 gap-4 items-center px-5 py-4 bg-card/50 backdrop-blur-md rounded-xl border border-card/30 shadow-sm hover:shadow-lg transition-all'>
-      
+      <div className="flex items-center col-span-1 justify-center">
+          <Checkbox
+            checked={isSelecetd}
+            onCheckedChange={() => onToggle(project.id)}
+            aria-label={`Select project ${project.id}`}
+            className="shrink-0 border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary"
+            />
+        </div>
       {/* Title + status - col-span-4 */}
-      <div className='col-span-4 flex flex-col gap-1.5 min-w-0'>
+      <div className='col-span-3 flex flex-col gap-1.5 min-w-0'>
+        
         <div className='flex items-center gap-3'>
           <Badge variant="outline" className={cn("capitalize font-medium shrink-0", getStatusColor(project.status))}>
-            {statusDisplay}
+            {displayStatus(project.status)}
           </Badge>
           {project.tags && project.tags.length > 0 && (
             <TooltipProvider>
