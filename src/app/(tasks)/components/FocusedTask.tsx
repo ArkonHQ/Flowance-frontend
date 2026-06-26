@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import DeleteButton from "./DeleteTasks"
+import Link from "next/link"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5501/api"
 
@@ -152,6 +153,11 @@ export const FocusedTask = ({
   const handleStop = wrap(() =>
     stopTimer(task.id), () => { onTimeLogged?.(); fetchHours() })
 
+  const handleOpen = (e: React.MouseEvent) => {
+    e.preventDefault()
+    onOpenPanel?.(task.id, task.title, task.project ?? null)
+  }
+
   // Derived UI
   const runningDot = timerStatus === "running"
     ? "bg-emerald-500 animate-pulse"
@@ -208,7 +214,7 @@ export const FocusedTask = ({
   ─────────────────────────────────────────────────────────────── */
   return (
     <div className={cn(
-      "w-full mb-6 rounded-xl border bg-card/80 backdrop-blur-sm transition-all",
+      "w-full mb-6 rounded-xl border bg-card/50 dark:bg-card/80 backdrop-blur-sm transition-all",
       "border-border/50 shadow-sm",
     )}>
       {/* slim top accent */}
@@ -241,7 +247,12 @@ export const FocusedTask = ({
           {/* 1 ─ Task identity */}
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="text-lg font-bold leading-tight">{task.title}</h2>
+              <Link 
+              href={`/task/${task.id}`}
+              onClick={handleOpen}
+              >
+              <h2 className="text-lg font-bold leading-tight hover:text-primary transition-colors">{task.title}</h2>
+              </Link>
               <div className={cn(
                 "inline-flex items-center border px-2.5 py-0.5 text-xs font-semibold rounded-full shrink-0",
                 getStatusColor(task.status)

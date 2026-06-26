@@ -30,7 +30,7 @@ interface Props {
   projects: Project[]
 }
 
-export const TaskPageContent = ({ initialTask, stats, projects, totalHours, lastWeekHours }: Props) => {
+export const TaskPageContent = ({ initialTask, stats, projects, lastWeekHours, totalHours }: Props) => {
   const [tasks, setTasks] = useState<Task[]>(initialTask)
   const [taskStats, setTaskStats] = useState(stats)
   const [statusFilter, setStatusFilter] = useState('all')
@@ -96,6 +96,104 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
       localStorage.removeItem('fcc_focused_task_id')
     }
   }, [focusedTaskId])
+
+  
+  // Side panel shortcut ']'
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement).isContentEditable
+      ) {
+        return
+      }
+
+      if (e.key === ']') {
+        e.preventDefault()
+        setIsPanelOpen(prev => !prev)
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
+
+  // Keyboard navigation for focused task - Up/Down to move, Enter/Escape to toggle
+  useEffect(() => {
+    const handleTaskNavigation = (e: KeyboardEvent) => {
+      if (!focusedTaskId || !filtered.length) return
+
+      // Don't interfere with input fields
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement).isContentEditable
+      ) {
+        return
+      }
+
+      const currentIndex = filtered.findIndex(t => t.id === focusedTaskId)
+      if (currentIndex === -1) return
+
+      let nextIndex: number | null = null
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        nextIndex = currentIndex - 1
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        nextIndex = currentIndex + 1
+      }
+
+      if (nextIndex !== null && nextIndex >= 0 && nextIndex < filtered.length) {
+        setFocusedTaskId(filtered[nextIndex].id)
+      }
+    }
+
+    window.addEventListener("keydown", handleTaskNavigation)
+    return () => window.removeEventListener("keydown", handleTaskNavigation)
+  }, [focusedTaskId, tasks])
+
+
+  // Create new task with 'n' then 't' shortcuts.
+  // Implementing the timer logic in order to press n then t within 1 second .
+  useEffect(() => {
+    // This to understand what was the last pressed key.
+    let lastKey = ''
+    // This will reset the lastKey and lastTime if the user doesn't press 'n' then 't' within 1 second.
+    let lastTime = 0
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't interfere with input fields.
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement).isContentEditable
+      ) {
+        return
+      }
+
+      const now = Date.now()
+
+      if (e.key.toLowerCase() === 't' && lastKey === 'n' && now - lastTime < 1000) {
+        e.preventDefault()
+        setIsCreateModalOpen(true)
+        lastKey = ''
+      }else if (e.key === 'Escape') {
+        e.preventDefault()
+        setIsCreateModalOpen(false)
+      }else {
+        // This to update the lastKey and lastTime if the user press any key.
+        lastKey = e.key.toLowerCase()
+        lastTime = now
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
 
   // Focus handler
   const handleToggleFocus = (taskId: number) => {
@@ -390,7 +488,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
             value={(() => {
               const h = Math.floor(taskStats.totalHours)
               const m = Math.round((taskStats.totalHours - h) * 60)
-              if (h === 0 && m === 0 && taskStats.totalHours > 0) return "< 1m"
+              if (h === 0 && m === 0 && taskStats.totalHours > 0) return '0 m'
               if (h === 0) return `${m}m`
               return `${h}h ${m}m`
             })()}
@@ -401,7 +499,9 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
             trend={(() => {
               // Compute percentage difference
               const current = taskStats.totalHours
-              const previous = lastWeekHours
+              // lastWeekHours is the hours logged in the LAST 7 days (as of page load).
+              // So the total hours as of 7 days ago is the initial totalHours - lastWeekHours
+              const previous = totalHours - lastWeekHours
 
               let percentChange = 0
               if (previous > 0) {
@@ -411,7 +511,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
               }
               return {
                 value: percentChange,
-                isPositive: percentChange > 0,
+                isPositive: percentChange >= 0,
                 label: 'from last week',
                 suffix: '%'
               }
@@ -514,6 +614,9 @@ export const TaskPageContent = ({ initialTask, stats, projects, totalHours, last
               <Button variant="link" onClick={() => {
                 setSearchQuery('')
                 setStatusFilter('all')
+                setProjectFilter('all')
+                setTagFilter(null)
+                setPriorityFilter(null)
               }} className="mt-2 text-primary">
                 Clear search
               </Button>

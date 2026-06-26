@@ -113,7 +113,7 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
     const mins = Math.floor((total % 3600) / 60)
     const secs = total % 60
     
-    if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`
+    if (hrs > 0) return `${hrs}h ${mins}m`
     if (mins > 0) return `${mins}m ${secs}s`
     return `${secs}s`
   }
@@ -153,7 +153,7 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
       
       {/* 2. Title */}
       <div className="min-w-0 flex-1 md:flex-none flex flex-col gap-1.5 justify-center">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -162,16 +162,16 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
                   className="font-semibold truncate hover:text-primary transition-colors block text-sm"
                   onClick={handleOpenPanel}
                 >
-                  {title}
+                  {title} 
                 </Link>
-                
+
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs wrap-break-words">
                 <p>{title}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <button
+                  <button
                   onClick={(e) => {
                      onToggleFocus(task.id) 
                      e.stopPropagation()
@@ -179,7 +179,7 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
                   className="p-1 hover:text-amber-400 transition-colors"
                   title= {isFocused ? 'Unfocus' : 'Focus'}
                   >
-                    <Star className={`h-4 w-4 ${
+                    <Star className={`h-4 w-4  ${
                       isFocused
                         ? "fill-amber-400 text-amber-400"
                         : 'text-muted-foreground'

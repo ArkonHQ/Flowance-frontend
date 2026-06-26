@@ -331,6 +331,14 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
       }))
       get()._saveToLocalStorage()
       await get().deleteSession()
+
+      // Dispatch event so dashboard & task-page stats refresh
+      try {
+        window.dispatchEvent(
+          new CustomEvent('taskTimeLogged', { detail: { taskId, hours: 0 } })
+        );
+      } catch { /* SSR */ }
+
       return
     }
 
@@ -360,7 +368,10 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
       const res = await fetch(`${API_BASE}/tasks/${taskId}/timer/stop`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({startTime: now.toISOString()}),
+        body: JSON.stringify({
+          startTime: timer.startTime.toISOString(),
+          hours: hours,
+        }),
         credentials: 'include'
       })
       const data = await res.json()
@@ -522,5 +533,5 @@ if (typeof window !== 'undefined') {
       }
       return { timers: updated };
     });
-  }, 50);
+  }, 100);
 }
