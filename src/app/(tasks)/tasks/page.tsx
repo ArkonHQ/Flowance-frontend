@@ -32,7 +32,12 @@ const TaskPage = async () => {
   const done = tasks.filter(t => t.status === 'done').length
   const cancelled = tasks.filter(t => t.status === 'cancelled').length
   const delayed = tasks.filter(t => t.status === 'delayed').length
-  const overdue = tasks.filter(t => t.status === 'overdue').length
+  const overdue = tasks.filter(t => {
+    if (t.status === 'overdue') return true
+    if (['done', 'cancelled'].includes(t.status)) return false
+    if (!t.deadline) return false
+    return new Date(t.deadline).getTime() < Date.now()
+  }).length
   
 
   const stats = { total, todo, in_progress, done, cancelled, delayed, totalHours, overdue }

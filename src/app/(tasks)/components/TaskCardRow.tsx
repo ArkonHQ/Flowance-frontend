@@ -55,6 +55,7 @@ const getStatusColor = (status: string) => {
   return statusColors[status] || statusColors.delayed
 }
 
+
 const statusDisplay = (status: string) => {
   const displayStatus: Record<string, string> = {
     todo: "To Do",
@@ -224,11 +225,6 @@ export const TaskCardRow = ({ task, isFocused,onToggleFocus, onDelete, onOpenPan
         <time dateTime={task.deadline ? new Date(task.deadline).toISOString() : undefined}>
           {!task.deadline ? "-" : formatDate(task.deadline)}
         </time>
-        {dueDateStatus === 'overdue' && (
-          <span className="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-sm bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
-            Overdue
-          </span>
-        )}
       </div>
 
       {/* 6. Assignee (Placeholder for now) */}

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { MissionItem } from "./MissionsItem"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { FolderKanbanIcon, Loader2, Plus, Calendar, AlignLeft, ArrowUp, ArrowDown, Minus, Clock, TagsIcon, Trash2, Pencil, Badge } from "lucide-react"
+import { FolderKanbanIcon, Loader2, Plus, Calendar, AlignLeft, ArrowUp, ArrowDown, Minus, Clock, TagsIcon, Trash2, Pencil, Badge, Clock3, ClockFading } from "lucide-react"
 import { ProjectIcon } from "@/components/ui/project-icon"
 import { toast } from "sonner"
 import { Progress } from "@/components/ui/progress"
@@ -35,20 +35,21 @@ interface SidePanelProps {
 
 const getStatusColor = (status: string) => {
   const statusColors: Record<string, string> = {
-    todo: "bg-blue-100/70 text-blue-700 border-blue-200",
-    in_progress: "bg-yellow-100/70 text-yellow-700 border-yellow-200",
-    done: "bg-emerald-100/70 text-emerald-700 border-emerald-200",
-    cancelled: "bg-red-100/70 text-red-700 border-red-200",
-    delayed: "bg-gray-100/70 text-gray-700 border-gray-200",
-    overdue: "bg-rose-100/70 text-rose-700 border-rose-200",
+    todo: "badge-status-todo",
+    in_progress: "badge-status-in_progress",
+    done: "badge-status-done",
+    cancelled: "badge-status-cancelled",
+    delayed: "badge-status-delayed",
+    overdue: "badge-status-overdue",
   }
+
   return statusColors[status] || statusColors.delayed
 }
 const getPriorityColor = (priority: string) => {
   const priorityColors: Record<string, string> = {
-    low: "bg-green-100/70 text-green-700 border-green-200",
-    medium: "bg-yellow-100/70 text-yellow-700 border-yellow-200",
-    high: "bg-red-100/70 text-red-700 border-red-200",
+    low: "badge-priority-low",
+    medium: "badge-priority-medium",
+    high: "badge-priority-high",
   }
   return priorityColors[priority] || priorityColors.medium
 }
@@ -60,7 +61,7 @@ const displayStatus = (status: string) => {
     done: 'Done',
     cancelled: 'Cancelled',
     overdue: 'Overdue',
-    dealyed: 'Delayed'
+    delayed: 'Delayed'
   }
   return statusDisplay[status] || statusDisplay.todo
 }
@@ -319,7 +320,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
         <SheetHeader className="px-6 pt-6">
           {task && (
             <div>
-              <span className={`rounded-lg border px-2 py-0.5 text-sm font-bold tracking-wider ${getStatusColor(task.status)}`}>
+              <span className={`rounded-full border px-2 py-0.5 text-sm font-bold tracking-wider ${getStatusColor(task.status)}`}>
                 {displayStatus(task.status)}
               </span>
             </div>
@@ -337,11 +338,11 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
             <div className="rounded-lg space-y-4">
               <div className="space-y-3 text-sm text-muted-foreground">
                 <div className="flex items-center">
-                  <span className="flex items-center gap-2 w-24 text-muted-foreground">
+                  <span className="flex items-center gap-2 w-24 text-muted-foreground dark:text-zinc-100 tracking-wide">
                     {task.project && <ProjectIcon project={task.project} className="w-5 h-5 shrink-0" />}
                     Project
                   </span>
-                  <span className="flex-1 flex justify-center items-center gap-2 text-foreground font-medium">
+                  <span className="flex-1 flex justify-center items-center gap-2 text-foreground font-bold tracking-wider">
                     <Link
                       href={`/projects/${task.project?.id}`}
                       className="text-foreground font-medium hover:underline hover:text-primary flex items-center gap-2 justify-center"
@@ -353,7 +354,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                 <div className="flex items-center">
                   <span className="flex items-center gap-2 w-24 text-muted-foreground"><ArrowUp className="h-4 w-4" />Priority</span>
                   <div className="flex-1 flex justify-center">
-                    <div className={cn("inline-flex items-center gap-1 border px-2.5 py-0.5 font-medium transition-colors shrink-0 text-xs justify-center rounded-sm", getPriorityColor(task.priority))}>
+                    <div className={cn("inline-flex items-center gap-1 border px-2.5 py-0.5 font-medium transition-colors shrink-0 text-xs justify-center rounded-full", getPriorityColor(task.priority))}>
                       {task.priority === "high" ? <ArrowUp className="w-3.5 h-3.5" /> : task.priority === "low" ? <ArrowDown className="w-3.5 h-3.5" /> : <Minus className="w-3.5 h-3.5" />}
                       {(task.priority ?? "medium").charAt(0).toUpperCase() + (task.priority ?? "medium").slice(1)}
                     </div>
@@ -367,6 +368,12 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
                   <div className="flex items-start mt-2">
                     <span className="flex items-center gap-2 w-24 text-muted-foreground"><Clock className="h-4 w-4" />Created At</span>
                     <span className="flex-1 text-center text-foreground font-medium">{formatCompletedAt(task.createdAt)}</span>
+                  </div>
+                )}
+                {task.updatedAt && (
+                  <div className="flex items-start mt-2">
+                    <span className="flex items-center gap-2 w-24 text-muted-foreground"><ClockFading className="h-4 w-4" />Updated At</span>
+                    <span className="flex-1 text-center text-muted-foreground font-medium">{formatCompletedAt(task.updatedAt)}</span>
                   </div>
                 )}
                 <div className="flex flex-col gap-2 mt-4 mb-2">

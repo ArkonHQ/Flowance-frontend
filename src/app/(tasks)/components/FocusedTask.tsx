@@ -289,7 +289,7 @@ export const FocusedTask = ({
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-0.5">
                 Missions Progress
               </p>
-              <p className="text-sm font-bold leading-none">
+              <p className="text-md font-bold leading-none">
                 {completedMissions}
                 <span className="text-muted-foreground font-normal">/{missionTotal}</span>
               </p>

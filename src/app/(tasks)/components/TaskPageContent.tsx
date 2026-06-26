@@ -225,7 +225,16 @@ export const TaskPageContent = ({ initialTask, stats, projects, lastWeekHours, t
     let result = [...tasks]
 
     if (statusFilter !== 'all') {
-      result = result.filter((task) => task.status === statusFilter)
+      if (statusFilter === 'overdue') {
+        result = result.filter((task) => {
+          if (task.status === 'overdue') return true;
+          if (['done', 'cancelled'].includes(task.status)) return false;
+          if (!task.deadline) return false;
+          return new Date(task.deadline).getTime() < Date.now();
+        })
+      } else {
+        result = result.filter((task) => task.status === statusFilter)
+      }
     }
 
     if (searchQuery) {
@@ -288,7 +297,12 @@ export const TaskPageContent = ({ initialTask, stats, projects, lastWeekHours, t
       const done = refreshedTasks.filter(t => t.status === 'done').length
       const cancelled = refreshedTasks.filter(t => t.status === 'cancelled').length
       const delayed = refreshedTasks.filter(t => t.status === 'delayed').length
-      const overdue = refreshedTasks.filter(t => t.status === 'overdue').length
+      const overdue = refreshedTasks.filter(t => {
+        if (t.status === 'overdue') return true;
+        if (['done', 'cancelled'].includes(t.status)) return false;
+        if (!t.deadline) return false;
+        return new Date(t.deadline).getTime() < Date.now();
+      }).length
 
       setTaskStats({ total, todo, in_progress, done, cancelled, delayed, totalHours, overdue })
     } catch (error) {
