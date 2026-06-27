@@ -2,7 +2,7 @@
 
 import StatCard from "@/app/(dashboard)/dashboard/components/StatCard"
 import { motion } from "framer-motion"
-import { Briefcase, PlugIcon, PlusIcon, Search, Pause, XCircle, CheckIcon } from "lucide-react"
+import { Briefcase, PlugIcon, PlusIcon, Search, Pause, XCircle, CheckIcon, FilterX } from "lucide-react"
 import { useMemo, useState } from "react"
 import { ProjectRow } from "./ProjectRow"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
   const [projectStats, setProjectStats] = useState(stats)
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<number>>(new Set())
+  const [statusFilter, setStatusFilter] = useState('all')
   
 
   const pageSize = 10
@@ -74,7 +75,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
     })
   }
 
-  const handleSelecteAll = (checked: boolean) => {
+  const handleSelectAll = (checked: boolean) => {
     const next = new Set(selectedProjectIds)
     paginatedProjects.forEach(p => {
       if (checked) next.add(p.id)
@@ -89,10 +90,11 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
 
   const filtered = project.filter(p => {
     const clientName = p.client?.name ?? clientNames[p.clientId] ?? ''
-    return (
-      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      clientName.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          clientName.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || p.status === statusFilter
+
+    return matchesSearch && matchesStatus
   })
 
   const totalItems = filtered.length
@@ -132,7 +134,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
   
 
   return (
-
+    <>
     <motion.div
       initial="hidden"
       animate="visible"
@@ -196,33 +198,74 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
       </div>
 
       {/* Search and List Section */}
-      <div className="space-y-4">
-        <Checkbox 
-          checked={isAllSelected}
-          onCheckedChange={handleSelecteAll}
-          aria-label="Select all projects on current page"
-          className="border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-        />
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search projects..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          />
-        </div>
-
-        <div className="space-y-2">
-          {selectedProjectIds.size > 0 && (
-          <ProjectsBulkActions
-            selectedCount={selectedProjectIds.size}
-            onBulkStatusChange={handleBulkStatusChange}
-            onClearSelection={() => setSelectedProjectIds(new Set())}
-            onBulkDelete={handleBulkDelete}
-          />
+        <div className="space-y-4 border p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm">
+          {project.length > 0 && (
+            <div className="flex flex-col md:flex-row gap-6 items-start md:items-end justify-between mb-4 border-border/40 py-5 border-b rounded-md">
+              <nav className="flex flex-wrap gap-8 md:gap-12 text-base font-medium text-gray-500 mx-4">
+                <button onClick={() => setStatusFilter('all')} className={statusFilter === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>All Projects <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.total}</span></button>
+                <button onClick={() => setStatusFilter('active')} className={statusFilter === 'active' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Active <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.active}</span></button>
+                <button onClick={() => setStatusFilter('completed')} className={statusFilter === 'completed' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Completed <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.completed}</span></button>
+                <button onClick={() => setStatusFilter('on_hold')} className={statusFilter === 'on_hold' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>On Hold <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.onHold}</span></button>
+                <button onClick={() => setStatusFilter('planning')} className={statusFilter === 'planning' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Planning <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.planning ?? 0}</span></button>
+                <button onClick={() => setStatusFilter('cancelled')} className={statusFilter === 'cancelled' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Cancelled <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.cancelled}</span></button>
+              </nav>
+            </div>
           )}
+        </div>
+          
+        {project.length === 0 ? (
+            <div className="py-20 text-center border-2 border-dashed border-border/20 rounded-2xl bg-card/20 backdrop-blur-sm">
+              <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Briefcase className="h-6 w-6 text-muted-foreground/50" />
+              </div>
+              <h3 className="text-lg font-medium">No projects yet</h3>
+              <p className="text-muted-foreground mt-1">No projects have been created yet.</p>
+              <Link href='/projects/new' className="inline-block mt-4">
+                <Button variant='outline' className="dark:bg-gray-950 bg-white/20 backdrop-blur-md border hover:bg-indigo-400 transition-all">
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  Create Project
+                </Button>
+              </Link>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-20 text-center border-2 border-dashed border-border/20 rounded-2xl bg-card/20 backdrop-blur-sm">
+              <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <FilterX className="h-6 w-6 text-muted-foreground/50" />
+              </div>
+              <h3 className="text-lg font-medium">No projects match your search</h3>
+              <p className="text-muted-foreground mt-1">Try adjusting your search for "{searchTerm}" </p>
+              <Button variant="link" onClick={() => {
+                setSearchTerm('')
+                setStatusFilter('all')
+              }} className="mt-2 text-primary">
+                Clear search
+              </Button>
+            </div>
+          ) : (
+        <div className="space-y-4 border p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm">
+            <div className="grid gap-3">
+              {filtered.length > 0 && (
+                <div className="hidden md:grid grid-cols-[40px_minmax(200px,350px)_140px_110px_160px_60px_110px_110px_110px_40px] gap-4 py-3 px-5 text-xs font-semibold text-slate-700 dark:text-slate-300 border-slate-200/60 dark:border-border/25 z-10">
+                  <div className="flex items-center justify-center">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                      aria-label="Select all projects on current page"
+                      className="border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                  </div>
+                  <div>Project</div>
+                  <div>Client</div>
+                  <div className="text-left">Status</div>
+                  <div>Progress</div>
+                  <div className="text-center">Tasks</div>
+                  <div className="text-center">Time Tracked</div>
+                  <div className="text-left">Due Date</div>
+                  <div className="text-left">Members</div>
+                  <div />
+                </div>
+              )}
+              
           {paginatedProjects.map((project) => (
             <ProjectRow
              key={project.id}
@@ -233,22 +276,30 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
              onToggle={handleToggle}
              />
           ))}
-        </div>
+            </div>
         {filtered.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-background/80 dark:bg-card/80 backdrop-blur-md border-t border-border px-6 py-4 z-30 lg:left-64">
-            <div className="max-w-7xl mx-auto w-full">
-          <PaginationFooter 
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            pageSize={pageSize}
-            onChangePage={handlePageChange}
-            label='projects'
-          />
-          </div>
-          </div>
+            <div className="mt-4 rounded-2xl border-t border-border/40 bg-background px-5 py-4 backdrop-blur-md">
+              <PaginationFooter 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                pageSize={pageSize}
+                onChangePage={handlePageChange}
+                label='projects'
+              />
+            </div>
           )}
-      </div>
+        </div>
+        )}
     </motion.div>
+      {selectedProjectIds.size > 0 && (
+        <ProjectsBulkActions
+          selectedCount={selectedProjectIds.size}
+          onBulkStatusChange={handleBulkStatusChange}
+          onClearSelection={() => setSelectedProjectIds(new Set())}
+          onBulkDelete={handleBulkDelete}
+        />
+      )}
+    </>
   )
 }

@@ -1,5 +1,6 @@
 import { Client } from "./clients";
 import { Tag } from "./tags"
+import { Task } from "./tasks";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
@@ -19,7 +20,8 @@ export type Project = {
     createdAt: Date;
     updatedAt: Date;
     deletedAt: Date | null;
-    progress: number
+    progress: number;
+    tasks: Task[];
 }   
 
 // keep API helpers minimal and consistent

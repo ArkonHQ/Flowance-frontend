@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import DeleteButton from "./DeleteProject"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ProjectsBulkActions } from "./projects-bulk-actions";
 import { Checkbox } from "@/components/ui/checkbox";
 
 
@@ -61,31 +60,36 @@ export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: Projec
   
 
   return (
-    <div className='grid grid-cols-12 gap-4 items-center px-5 py-4 bg-card/50 backdrop-blur-md rounded-xl border border-card/30 shadow-sm hover:shadow-lg transition-all'>
-      <div className="flex items-center col-span-1 justify-center">
-          <Checkbox
-            checked={isSelecetd}
-            onCheckedChange={() => onToggle(project.id)}
-            aria-label={`Select project ${project.id}`}
-            className="shrink-0 border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary"
-            />
-        </div>
-      {/* Title + status - col-span-4 */}
-      <div className='col-span-3 flex flex-col gap-1.5 min-w-0'>
-        
-        <div className='flex items-center gap-3'>
-          <Badge variant="outline" className={cn("capitalize font-medium shrink-0", getStatusColor(project.status))}>
-            {displayStatus(project.status)}
-          </Badge>
+    <div
+      role="group"
+      aria-label={`Project row: ${project.title}`}
+      className={cn(
+        "flex flex-wrap md:grid md:grid-cols-[40px_minmax(200px,350px)_140px_110px_160px_60px_110px_110px_110px_40px] gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 hover:shadow-xs transition-all group",
+        isSelecetd ? "bg-primary/5 dark:bg-primary/10 border-primary/50" : "border-border/30 hover:border-border/60"
+      )}
+    >
+      {/* 1. Checkbox */}
+      <div className="flex items-center justify-center">
+        <Checkbox
+          checked={isSelecetd}
+          onCheckedChange={() => onToggle(project.id)}
+          aria-label={`Select project ${project.id}`}
+          className="shrink-0 border-slate-300 dark:border-muted-foreground/45 data-[state=checked]:bg-primary"
+        />
+      </div>
+
+      {/* 2. Title + Tags */}
+      <div className="min-w-0 flex-1 md:flex-none flex flex-col gap-1.5 justify-center">
+        <div className="flex items-center gap-2">
           {project.tags && project.tags.length > 0 && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div 
-                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-sm cursor-help transition-transform hover:scale-110"
-                    style={{ color: project.tags[0].color || '#6b7280', backgroundColor: `${project.tags[0].color || '#6b7280'}18` }}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm cursor-help transition-transform hover:scale-110"
+                    style={{ color: project.tags[0].color || '#6b7280', backgroundColor: `${project.tags[0].color || '#6b7280'}40` }}
                   >
-                    <IconRenderer icon={project.tags[0].icon || 'TagIcon'} className="h-4 w-4" />
+                    <IconRenderer icon={project.tags[0].icon || 'TagIcon'} className="h-6 w-6" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs font-medium">
@@ -94,15 +98,15 @@ export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: Projec
               </Tooltip>
             </TooltipProvider>
           )}
-          <Link href={`/projects/${project.id}`} className='font-semibold truncate hover:text-primary'>
+          <Link href={`/projects/${project.id}`} className='font-semibold truncate hover:text-primary transition-colors block text-sm'>
            {project.title} 
-           </Link>
+          </Link>
         </div>
+        <div className="text-xs text-muted-foreground/80 line-clamp-1">{project.description}</div>
       </div>
 
-      {/* Description - col-span-3 */}
-      <div className="col-span-3 text-sm text-muted-foreground truncate">
-        <span className="text-xs font-medium text-gray-400 mr-1">Client:</span>
+      {/* 3. Client */}
+      <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:block">
         {project.clientId ? (
           <Link href={`/clients/${project.clientId}`} className="hover:underline hover:text-primary transition-colors cursor-pointer text-foreground font-medium">
             {project.client?.name ?? clientName ?? `Client ${project.clientId}`}
@@ -112,23 +116,45 @@ export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: Projec
         )}
       </div>
 
-      {/* Progress - col-span-2 */}
-      <div className="col-span-2 flex flex-col gap-1">
-        <div className="flex justify-between text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-          <span>Progress</span>
-          <span>{project.progress ?? 0}%</span>
+      {/* 4. Status */}
+      <div className="flex items-center">
+        <div className={cn("inline-flex items-center border px-2 py-0.5 font-medium transition-colors shrink-0 text-xs w-full md:w-auto justify-center rounded-full", getStatusColor(project.status))}>
+          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80 mr-1.5" aria-hidden="true" />
+          {displayStatus(project.status)}
         </div>
-        <Progress value={project.progress ?? 0} className="h-1.5" />
       </div>
 
-      {/* Last updated - col-span-2 */}
-      <div className="col-span-2 text-sm text-muted-foreground">
-        {formatDate(project.updatedAt)}
+      {/* 5. Progress */}
+      <div className="flex items-center gap-3 justify-center w-full md:w-auto">
+
+        <Progress value={project.progress ?? 0} className="h-1.5 w-full" /> <span className="text-sm text-muted-foreground font-semibold">{project.progress ?? 0}%</span>
       </div>
 
-      <div className="col-span-1 flex justify-end">
-        <DropdownMenu
-         open={isOpen} onOpenChange={setIsOpen}>
+      {/* 6. Tasks */}
+      <div className="text-sm hidden md:flex items-center justify-center text-muted-foreground">
+        <span className="text-muted-foreground font-medium">-</span>
+      </div>
+
+      {/* 7. Time Tracked */}
+      <div className="flex items-center justify-center text-sm font-medium text-muted-foreground flex-1 md:flex-none">
+        <span className="hidden md:inline text-muted-foreground/50">-</span>
+      </div>
+
+      {/* 8. Due Date */}
+      <div className={cn("text-sm hidden md:flex items-center gap-1.5 flex-wrap text-muted-foreground")}>
+        <time dateTime={project.deadline ? new Date(project.deadline).toISOString() : undefined}>
+          {!project.deadline ? "N/A" : formatDate(project.deadline)}
+        </time>
+      </div>
+
+      {/* 9. Members */}
+      <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:flex items-center">
+        <span className="hidden md:inline text-muted-foreground/50">-</span>
+      </div>
+
+      {/* 10. Actions Dropdown */}
+      <div className="flex justify-end">
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
             <Button 
              className={cn("h-8 w-8 rounded-full",
