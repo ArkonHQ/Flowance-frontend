@@ -21,8 +21,10 @@ const ProjectsPage = async () => {
   const completed = project.filter(c => c.status === 'completed').length
   const onHold = project.filter(a => a.status === 'on_hold').length
   const cancelled = project.filter(a => a.status === 'cancelled').length
+  const planning = project.filter(a => a.status === 'planning').length
+  const archived = project.filter(a => a.isArchived).length
 
-  const stats = { total, active, completed, onHold, cancelled }
+  const stats = { total, active, completed, onHold, cancelled, planning, archived }
 
   return <ProjectPageContent initialProjects={project} clientNames={clientNames} stats={stats} />
 

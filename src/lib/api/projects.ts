@@ -15,6 +15,7 @@ export type Project = {
     budget: number;
     status: 'planning' | 'active' | 'completed' | 'on_hold' | 'cancelled'
     clientId: number;
+    isArchived: boolean;
     ownerId: string;
     tags?: Tag[];
     createdAt: Date;

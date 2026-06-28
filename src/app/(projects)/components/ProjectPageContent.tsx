@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 interface Props {
   initialProjects: Project[]
   clientNames: Record<number, string>
-  stats: { total: number; active: number; completed: number ; onHold: number; cancelled: number; planning: number; }
+  stats: { total: number; active: number; completed: number ; onHold: number; cancelled: number; planning: number; archived: number }
 }
 
 export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Props) => {
@@ -30,6 +30,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<number>>(new Set())
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('')
+  const [isArchived, setIsArchived] = useState(false)
   
 
   const pageSize = 10
@@ -45,11 +46,12 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
       const onHold = refreshedProjects.filter(p => p.status === 'on_hold').length
       const cancelled = refreshedProjects.filter(p => p.status === 'cancelled').length
       const planning = refreshedProjects.filter(p => p.status === 'planning').length
+      const archived = refreshedProjects.filter(p => p.isArchived).length
       const total = refreshedProjects.length
       
-      setProjectStats({ total, planning, cancelled, onHold, completed, active })
+      setProjectStats({ total, planning, cancelled, onHold, completed, active, archived })
     } catch (err) {
-      console.error("Failed to refresh projects and stats aftter time logging: ", err)
+      console.error("Failed to refresh projects and stats after time logging: ", err)
     }
   }
 
@@ -78,6 +80,14 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
       else next.add(id)
       return next
     })
+  }
+
+  const handleArchive = (id: number, archived: boolean) => {
+    setProject(prev => prev.map(p => p.id === id ? { ...p, isArchived: archived } : p))
+    setProjectStats(prev => ({
+      ...prev,
+      archived: (prev.archived ?? 0) + (archived ? 1 : -1)
+    }))
   }
 
   const handleSelectAll = (checked: boolean) => {
@@ -117,8 +127,9 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
     const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           clientName.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || p.status === statusFilter
+    const matchesArchived = isArchived ? p.isArchived : !p.isArchived
 
-    return matchesSearch && matchesStatus
+    return matchesSearch && matchesStatus && matchesArchived
   })
 
   const totalItems = filtered.length
@@ -254,6 +265,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
                 <button onClick={() => setStatusFilter('on_hold')} className={statusFilter === 'on_hold' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-3 -mb-px transition-all' : 'hover:text-indigo-600 border-b-2 border-transparent pb-3 -mb-px transition-all'}>On Hold <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.onHold}</span></button>
                 <button onClick={() => setStatusFilter('planning')} className={statusFilter === 'planning' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-3 -mb-px transition-all' : 'hover:text-indigo-600 border-b-2 border-transparent pb-3 -mb-px transition-all'}>Planning <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.planning ?? 0}</span></button>
                 <button onClick={() => setStatusFilter('cancelled')} className={statusFilter === 'cancelled' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-3 -mb-px transition-all' : 'hover:text-indigo-600 border-b-2 border-transparent pb-3 -mb-px transition-all'}>Cancelled <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.cancelled}</span></button>
+                <button onClick={() => setIsArchived(!isArchived)} className={isArchived ? 'text-indigo-600 border-b-2 border-indigo-600 pb-3 -mb-px transition-all' : 'hover:text-indigo-600 border-b-2 border-transparent pb-3 -mb-px transition-all'}>Archived <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.archived ?? 0}</span></button>
               </nav>
 
               <div className="flex items-center gap-2 px-4">
@@ -341,6 +353,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
              project={project} 
              clientName={clientNames[project.clientId]} 
              onDelete={() => {}} 
+             onArchive={handleArchive}
              isSelecetd={selectedProjectIds.has(project.id)}
              onToggle={handleToggle}
              />

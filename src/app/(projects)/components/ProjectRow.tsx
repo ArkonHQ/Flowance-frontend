@@ -1,20 +1,21 @@
 'use client'
-import { Badge } from "@/components/ui/badge"; 
+import { Badge } from "@/components/ui/badge";
 import { IconRenderer } from "@/components/ui/icon-picker";
 import Link from "next/link";
-import { Project } from "@/lib/api/projects";
+import { Project, updateProject } from "@/lib/api/projects";
 import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
-import { 
-  DropdownMenu, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger, 
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuSeparator 
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Archive, ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import DeleteButton from "./DeleteProject"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,19 +25,20 @@ import { ProjectIcon } from "@/components/ui/project-icon";
 interface ProjectRowProps {
   project: Project
   clientName?: string
-  onDelete: (id: number) => void 
+  onDelete: (id: number) => void
+  onArchive?: (id: number, isArchived: boolean) => void
   isSelecetd: boolean
   onToggle: (id: number) => void
 }
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
-    planning: 'bg-gray-100 text-gray-700 border-gray-200',
-    active: 'bg-green-100 text-green-700 border-green-200',
-    completed: 'bg-blue-100 text-blue-700 border-blue-200',
-    on_hold: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    cancelled: 'bg-red-100 text-red-700 border-red-200',
-   };
+    planning: 'badge-status-planning',
+    active: 'badge-status-active',
+    completed: 'badge-status-completed',
+    on_hold: 'badge-status-on_hold',
+    cancelled: 'badge-status-cancelled',
+  };
   return colors[status] || colors.planning;
 };
 
@@ -47,7 +49,7 @@ const displayStatus = (status: string) => {
     completed: 'Completed',
     on_hold: 'On Hold',
     cancelled: 'Cancelled',
-   };
+  };
   return statusDisplay[status] || statusDisplay.planning;
 };
 
@@ -75,27 +77,42 @@ const clientDisplayStatus = (status: string) => {
 
 const deadlineBadgeColor = (date: Date | string) => {
   const today = new Date()
-  today.setHours(0,0,0,0)
+  today.setHours(0, 0, 0, 0)
 
   if (!date) return 'text-gray-700'
   const deadlineDate = new Date(date)
-  deadlineDate.setHours(0,0,0,0)
+  deadlineDate.setHours(0, 0, 0, 0)
 
-  if(deadlineDate < today) return 'text-red-500'
-  if(deadlineDate.getTime() === today.getTime()) return 'text-yellow-500'
+  if (deadlineDate < today) return 'text-red-500'
+  if (deadlineDate.getTime() === today.getTime()) return 'text-yellow-500'
   return 'text-green-500'
-} 
+}
 
 const formatDate = (date: Date | string) => {
   if (!date) return 'N/A'
-  return new Date(date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'})
+  return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: ProjectRowProps) => {
-  
+export const ProjectRow = ({ project, clientName, isSelecetd, onToggle, onArchive }: ProjectRowProps) => {
+
   const [isOpen, setIsOpen] = useState<boolean>(false)
-  
-  
+  const [archiving, setArchiving] = useState<boolean>(false)
+
+  const handleArchiveToggle = async () => {
+    const newArchivedState = !project.isArchived
+    setArchiving(true)
+    setIsOpen(false)
+    try {
+      await updateProject(project.id, { isArchived: newArchivedState })
+      onArchive?.(project.id, newArchivedState)
+      toast.success(newArchivedState ? `"${project.title}" archived` : `"${project.title}" unarchived`)
+    } catch (err: any) {
+      toast.error(`Failed to archive project: ${err.message || 'Error'}`)
+    } finally {
+      setArchiving(false)
+    }
+  }
+
   const totalHours = project.totalTimeTracked ? `${parseFloat((project.totalTimeTracked / 60).toFixed(0))}h` : '0h'
   const taskCount = project.taskCount ?? project.tasks?.length ?? 0
 
@@ -122,9 +139,16 @@ export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: Projec
       <div className="min-w-0 flex-1 md:flex-none flex items-center gap-3">
         <ProjectIcon project={project} className="w-9 h-9 rounded-lg shadow-sm shrink-0" iconClassName="h-5 w-5" />
         <div className="flex flex-col gap-0.5 justify-center min-w-0">
-          <Link href={`/projects/${project.id}`} className='font-semibold truncate hover:text-primary transition-colors block text-sm'>
-           {project.title} 
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href={`/projects/${project.id}`} className='font-semibold truncate hover:text-primary transition-colors block text-sm'>
+                {project.title}
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs wrap-break-words">
+              <p>{project.title}</p>
+            </TooltipContent>
+          </Tooltip>
           <div className="text-xs text-muted-foreground/80 line-clamp-1">{project.description}</div>
         </div>
       </div>
@@ -139,16 +163,23 @@ export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: Projec
                   const name = project.client?.name ?? clientName ?? 'N/A';
                   if (name === 'N/A') return 'N/A';
                   const words = name.trim().split(/\s+/);
-                  return words.length >= 2 
-                    ? (words[0][0] + words[1][0]).toUpperCase() 
+                  return words.length >= 2
+                    ? (words[0][0] + words[1][0]).toUpperCase()
                     : name.substring(0, 2).toUpperCase();
                 })()}
               </span>
             </div>
             <div className="flex flex-col">
-              <Link href={`/clients/${project.clientId}`} className="hover:underline hover:text-primary transition-colors cursor-pointer text-foreground font-medium">
-                {project.client?.name ?? clientName ?? `Client ${project.clientId}`}
-              </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={`/clients/${project.clientId}`} className="hover:underline hover:text-primary transition-colors cursor-pointer text-foreground font-medium">
+                    {project.client?.name ?? clientName ?? `Client ${project.clientId}`}
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs wrap-break-words">
+                  <p>{project.client?.name ?? clientName ?? `Client ${project.clientId}`}</p>
+                </TooltipContent>
+              </Tooltip>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <div className={cn("h-2 w-2 rounded-full", clientStatusColor(project.client?.status || 'inactive'))} />
                 <span className={cn('text-[10px] uppercase font-semibold text-muted-foreground/80 line-clamp-1', project?.client?.status === 'internal' ? 'text-blue-500' : 'text-muted-foreground/80')}>{clientDisplayStatus(project.client?.status || 'inactive')}</span>
@@ -162,7 +193,7 @@ export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: Projec
 
       {/* 4. Status */}
       <div className="flex items-center">
-        <div className={cn("inline-flex items-center border px-2 py-0.5 font-medium transition-colors shrink-0 text-xs w-full md:w-auto justify-center rounded-full", getStatusColor(project.status))}>
+        <div className={cn("inline-flex items-center border px-2 py-0.5 font-medium transition-colors shrink-0 text-xs w-full md:w-auto justify-center rounded-full", getStatusColor(project.status), project.isArchived ? 'border-dashed border-slate-400/50 text-muted-foreground' : '')}>
           <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80 mr-1.5" aria-hidden="true" />
           {displayStatus(project.status)}
         </div>
@@ -200,35 +231,39 @@ export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: Projec
       <div className="flex justify-end">
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
-            <Button 
-             className={cn("h-8 w-8 rounded-full",
-             isOpen ? 'bg-gray-200 text-indigo-600' : 'text-gray-400'
-            )}
-            variant={'ghost'}
-            size={'icon'}
+            <Button
+              className={cn("h-8 w-8 rounded-full",
+                isOpen ? 'bg-gray-200 text-indigo-600' : 'text-gray-400'
+              )}
+              variant={'ghost'}
+              size={'icon'}
             >
               <MoreHorizontal
-              className={cn(
-                "h-4 w-4 transition-transform duration-200",
-                isOpen ? "rotate-0 text-indigo-600" : "rotate-90 text-gray-400"
-              )}
+                className={cn(
+                  "h-4 w-4 transition-transform duration-200",
+                  isOpen ? "rotate-0 text-indigo-600" : "rotate-90 text-gray-400"
+                )}
               />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
               <Link href={`/projects/${project.id}`} className="flex items-center gap-2 cursor-pointer">
-              <ExternalLink className="h-4 w-4" />
-              View details
+                <ExternalLink className="h-4 w-4" />
+                View details
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href={`/projects/${project.id}/edit`} className="flex items-center gap-2 cursor-pointer">
-              <Pencil className="h-4 w-4" />
-              Edit project
+                <Pencil className="h-4 w-4" />
+                Edit project
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={handleArchiveToggle} disabled={archiving} className="flex items-center gap-2 cursor-pointer">
+              <Archive className="h-4 w-4" />
+              {project.isArchived ? 'Unarchive project' : 'Archive project'}
+            </DropdownMenuItem>
             <DropdownMenuItem asChild onSelect={(e) => e.preventDefault()}>
               <DeleteButton
                 projectId={project.id}
