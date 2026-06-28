@@ -2,9 +2,10 @@
 
 import { StatCard } from "@/components/ui/StatCard"
 import { motion } from "framer-motion"
-import { Briefcase, PlugIcon, PlusIcon, Search, Pause, XCircle, CheckIcon, FilterX, DollarSign, FolderKanban } from "lucide-react"
-import { useMemo, useState } from "react"
+import { Briefcase, PlugIcon, PlusIcon, Search, Pause, XCircle, CheckIcon, FilterX, DollarSign, FolderKanban, LayoutGrid, List } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 import { ProjectRow } from "./ProjectRow"
+import { ProjectGridCard } from "./ProjectGridCard"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { deleteProject, getAllProjects, updateProject, type Project } from '@/lib/api/projects'
@@ -31,6 +32,20 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('')
   const [isArchived, setIsArchived] = useState(false)
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('fcc_project_view_mode')
+      return saved === 'grid' ? 'grid' : 'list'
+    }
+    return 'list'
+  })
+
+  useEffect(() => {
+
+    if (viewMode) {
+      localStorage.setItem('fcc_project_view_mode', viewMode)
+    }
+  }, [viewMode])
   
 
   const pageSize = 10
@@ -289,6 +304,27 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
                     <SelectItem value="title">Title</SelectItem>
                   </SelectContent>
                 </Select>
+                {/* View mode toggle */}
+                <div className="flex items-center border border-border/50 rounded-lg overflow-hidden">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-9 w-9 rounded-md ${viewMode === 'list' ? 'bg-muted text-primary' : 'text-muted-foreground'}`}
+                    onClick={() => setViewMode('list')}
+                    aria-label="List view"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-9 w-9 rounded-md ${viewMode === 'grid' ? 'bg-muted text-primary' : 'text-muted-foreground'}`}
+                    onClick={() => setViewMode('grid')}
+                    aria-label="Grid view"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -325,7 +361,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
           ) : (
         <div className="space-y-4 border p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm">
             <div className="grid gap-3">
-              {filtered.length > 0 && (
+              {viewMode === 'list' && filtered.length > 0 && (
                 <div className="hidden md:grid grid-cols-[40px_minmax(200px,350px)_minmax(180px,1fr)_110px_160px_60px_110px_110px_110px_40px] gap-4 py-3 px-5 text-xs font-semibold text-slate-700 dark:text-slate-300 border-slate-200/60 dark:border-border/25 z-10">
                   <div className="flex items-center justify-center">
                     <Checkbox
@@ -346,18 +382,31 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
                   <div />
                 </div>
               )}
-              
-          {paginatedProjects.map((project) => (
-            <ProjectRow
-             key={project.id}
-             project={project} 
-             clientName={clientNames[project.clientId]} 
-             onDelete={() => {}} 
-             onArchive={handleArchive}
-             isSelecetd={selectedProjectIds.has(project.id)}
-             onToggle={handleToggle}
-             />
-          ))}
+
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {paginatedProjects.map((project) => (
+                    <ProjectGridCard
+                      clientName={clientNames[project.clientId]}
+                      key={project.id}
+                      project={project}
+                      onArchive={handleArchive}
+                    />
+                  ))}
+                </div>
+              ) : (
+                paginatedProjects.map((project) => (
+                  <ProjectRow
+                    key={project.id}
+                    project={project}
+                    clientName={clientNames[project.clientId]}
+                    onDelete={() => {}}
+                    onArchive={handleArchive}
+                    isSelecetd={selectedProjectIds.has(project.id)}
+                    onToggle={handleToggle}
+                  />
+                ))
+              )}
             </div>
         {filtered.length > 0 && (
             <div className="mt-4 rounded-2xl border-t border-border/40 bg-background px-5 py-4 backdrop-blur-md">
