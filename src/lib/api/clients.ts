@@ -6,7 +6,7 @@ export type Client = {
     name: string;
     email: string | null;
     company: string | null;
-    status: 'active' | 'at-risk' | 'inactive' | 'vip';
+    status: 'active' | 'at-risk' | 'inactive' | 'vip' | 'internal';
     ownerId: number;
     createdAt: Date;
     updatedAt: Date;

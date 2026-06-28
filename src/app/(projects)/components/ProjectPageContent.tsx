@@ -1,8 +1,8 @@
 'use client'
 
-import StatCard from "@/app/(dashboard)/dashboard/components/StatCard"
+import { StatCard } from "@/components/ui/StatCard"
 import { motion } from "framer-motion"
-import { Briefcase, PlugIcon, PlusIcon, Search, Pause, XCircle, CheckIcon, FilterX } from "lucide-react"
+import { Briefcase, PlugIcon, PlusIcon, Search, Pause, XCircle, CheckIcon, FilterX, DollarSign, FolderKanban } from "lucide-react"
 import { useMemo, useState } from "react"
 import { ProjectRow } from "./ProjectRow"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,8 @@ import { PaginationFooter } from "@/app/components/pagination-footer"
 import { ProjectsBulkActions } from "./projects-bulk-actions"
 import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
+import FilterSortRow from "@/app/(tasks)/components/FilterSortRow"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 
 interface Props {
@@ -27,10 +29,13 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<number>>(new Set())
   const [statusFilter, setStatusFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('')
   
 
   const pageSize = 10
 
+
+  
   const refreshProjectsAndStats = async () => {
     try {
       const refreshedProjects = await getAllProjects()
@@ -86,9 +91,28 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
 
 
   
+  const sorted = useMemo(() => {
+    const result = [...project]
 
+    switch (sortBy) {
+      case 'dueDate':
+        result.sort((a, b) => {
+          if (!a.deadline && !b.deadline) return 0
+          if (!a.deadline) return 1
+          if (!b.deadline) return -1
+          return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+        })
+        break;
+      
+      case 'title': 
+        result.sort((a, b) => a.title.localeCompare(b.title))
+        break;
+        default: 
+   }
+    return result
+  }, [project, sortBy])
 
-  const filtered = project.filter(p => {
+  const filtered = sorted.filter(p => {
     const clientName = p.client?.name ?? clientNames[p.clientId] ?? ''
     const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           clientName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -154,65 +178,110 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
       </div>
 
       {/* Stats Bar  */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <StatCard
-          title="Total Projects"
-          value={projectStats.total.toString()} 
-          icon={Briefcase}
-          color="text-indigo-500"
-          bg="bg-indigo-100/70 dark:bg-indigo-600/40"
-          gradient="from-indigo-500 to-blue-500"
-         />
-         <StatCard 
-          title="Active"
-          value={projectStats.active.toString()} 
-          icon={PlugIcon}
-          color="text-blue-500"
-          bg="bg-blue-100/70 dark:bg-blue-600/40"
-          gradient="from-blue-500 to-cyan-500"
-         />
-        <StatCard 
-          title="Completed"
-          value={projectStats.completed.toString()} 
-          icon={CheckIcon}
-          color="text-emerald-500"
-          bg="bg-emerald-100/70 dark:bg-emerald-600/40"
-          gradient="from-emerald-500 to-teal-500"
-         />
-        <StatCard 
-          title="On Hold"
-          value={projectStats.onHold.toString()} 
-          icon={Pause}
-          color="text-yellow-500"
-          bg="bg-yellow-100/70 dark:bg-yellow-600/40"
-          gradient="from-yellow-500 to-orange-500"
-         />
-        <StatCard 
-          title="Cancelled"
-          value={projectStats.cancelled.toString()} 
-          icon={XCircle}
-          color="text-red-500"
-          bg="bg-red-100/70 dark:bg-red-600/40"
-          gradient="from-red-500 to-pink-500"
-         />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {(() => {
+          const now = new Date()
+          const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+          const projectsThisMonth = project.filter(p => p.createdAt && new Date(p.createdAt) >= thisMonthStart).length
+          const total = projectStats.total || 1
+          const activePercentage = Math.round((projectStats.active / total) * 100)
+          const completedPercentage = Math.round((projectStats.completed / total) * 100)
+          const onHoldPercentage = Math.round((projectStats.onHold / total) * 100)
+          
+          const totalRevenue = project.reduce((sum, p) => sum + (Number(p.budget) || 0), 0)
+          const revenueThisMonth = project.filter(p => p.createdAt && new Date(p.createdAt) >= thisMonthStart).reduce((sum, p) => sum + (Number(p.budget) || 0), 0)
+
+          return (
+            <>
+              <StatCard
+                title="Total Projects"
+                value={projectStats.total.toString()} 
+                icon={FolderKanban}
+                color="text-indigo-500"
+                bg="bg-indigo-100/70 dark:bg-indigo-600/40"
+                gradient="from-indigo-500 to-blue-500"
+                trend={{ value: projectsThisMonth, isPositive: true, label: "this month", suffix: "" }}
+              />
+              <StatCard 
+                title="Active Projects"
+                value={projectStats.active.toString()} 
+                icon={PlugIcon}
+                color="text-blue-500"
+                bg="bg-blue-100/70 dark:bg-blue-600/40"
+                gradient="from-blue-500 to-cyan-500"
+                trend={{ value: activePercentage, isPositive: true, label: "of total", suffix: "%" }}
+              />
+              <StatCard 
+                title="Completed"
+                value={projectStats.completed.toString()} 
+                icon={CheckIcon}
+                color="text-emerald-500"
+                bg="bg-emerald-100/70 dark:bg-emerald-600/40"
+                gradient="from-emerald-500 to-teal-500"
+                trend={{ value: completedPercentage, isPositive: true, label: "of total", suffix: "%" }}
+              />
+              <StatCard 
+                title="On Hold"
+                value={projectStats.onHold.toString()} 
+                icon={Pause}
+                color="text-yellow-500"
+                bg="bg-yellow-100/70 dark:bg-yellow-600/40"
+                gradient="from-yellow-500 to-orange-500"
+                trend={{ value: onHoldPercentage, isPositive: false, label: "of total", suffix: "%" }}
+              />
+              <StatCard 
+                title="Total Revenue"
+                value={`$${totalRevenue.toLocaleString()}`} 
+                icon={DollarSign}
+                color="text-emerald-500"
+                bg="bg-emerald-100/70 dark:bg-emerald-600/40"
+                gradient="from-emerald-500 to-green-500"
+                trend={{ value: revenueThisMonth, isPositive: true, label: "this month", suffix: "", prefix: "+$" }}
+              />
+            </>
+          )
+        })()}
       </div>
 
       {/* Search and List Section */}
-        <div className="space-y-4 border p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm">
+        <div className="space-y-4 p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm -mb-3">
           {project.length > 0 && (
-            <div className="flex flex-col md:flex-row gap-6 items-start md:items-end justify-between mb-4 border-border/40 py-5 border-b rounded-md">
-              <nav className="flex flex-wrap gap-8 md:gap-12 text-base font-medium text-gray-500 mx-4">
-                <button onClick={() => setStatusFilter('all')} className={statusFilter === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>All Projects <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.total}</span></button>
-                <button onClick={() => setStatusFilter('active')} className={statusFilter === 'active' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Active <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.active}</span></button>
-                <button onClick={() => setStatusFilter('completed')} className={statusFilter === 'completed' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Completed <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.completed}</span></button>
-                <button onClick={() => setStatusFilter('on_hold')} className={statusFilter === 'on_hold' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>On Hold <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.onHold}</span></button>
-                <button onClick={() => setStatusFilter('planning')} className={statusFilter === 'planning' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Planning <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.planning ?? 0}</span></button>
-                <button onClick={() => setStatusFilter('cancelled')} className={statusFilter === 'cancelled' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1 transition-all' : 'hover:text-indigo-600 transition-all'}>Cancelled <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.cancelled}</span></button>
+            <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between pt-5 pb-2">
+              <nav className="flex flex-wrap gap-8 md:gap-12 text-sm font-medium text-gray-500 mx-4">
+                <button onClick={() => setStatusFilter('all')} className={statusFilter === 'all' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-3 -mb-px transition-all' : 'hover:text-indigo-600 border-b-2 border-transparent pb-3 -mb-px transition-all'}>All Projects <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.total}</span></button>
+                <button onClick={() => setStatusFilter('active')} className={statusFilter === 'active' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-3 -mb-px transition-all' : 'hover:text-indigo-600 border-b-2 border-transparent pb-3 -mb-px transition-all'}>Active <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.active}</span></button>
+                <button onClick={() => setStatusFilter('completed')} className={statusFilter === 'completed' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-3 -mb-px transition-all' : 'hover:text-indigo-600 border-b-2 border-transparent pb-3 -mb-px transition-all'}>Completed <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.completed}</span></button>
+                <button onClick={() => setStatusFilter('on_hold')} className={statusFilter === 'on_hold' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-3 -mb-px transition-all' : 'hover:text-indigo-600 border-b-2 border-transparent pb-3 -mb-px transition-all'}>On Hold <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.onHold}</span></button>
+                <button onClick={() => setStatusFilter('planning')} className={statusFilter === 'planning' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-3 -mb-px transition-all' : 'hover:text-indigo-600 border-b-2 border-transparent pb-3 -mb-px transition-all'}>Planning <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.planning ?? 0}</span></button>
+                <button onClick={() => setStatusFilter('cancelled')} className={statusFilter === 'cancelled' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-3 -mb-px transition-all' : 'hover:text-indigo-600 border-b-2 border-transparent pb-3 -mb-px transition-all'}>Cancelled <span className="rounded-xl border-border/70 bg-card/50 px-2 py-0.5 text-xs">{projectStats.cancelled}</span></button>
               </nav>
+
+              <div className="flex items-center gap-2 px-4">
+                {sortBy && (
+                  <Button
+                    onClick={() => setSortBy('')}
+                    variant="destructive"
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Clear sort
+                  </Button>
+                )}
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[160px] py-5 font-bold text-sm">
+                    <SelectValue placeholder={`Sort by`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dueDate">Due Date</SelectItem>
+                    <SelectItem value="title">Title</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
         </div>
-          
+        
         {project.length === 0 ? (
             <div className="py-20 text-center border-2 border-dashed border-border/20 rounded-2xl bg-card/20 backdrop-blur-sm">
               <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
@@ -245,7 +314,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
         <div className="space-y-4 border p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm">
             <div className="grid gap-3">
               {filtered.length > 0 && (
-                <div className="hidden md:grid grid-cols-[40px_minmax(200px,350px)_140px_110px_160px_60px_110px_110px_110px_40px] gap-4 py-3 px-5 text-xs font-semibold text-slate-700 dark:text-slate-300 border-slate-200/60 dark:border-border/25 z-10">
+                <div className="hidden md:grid grid-cols-[40px_minmax(200px,350px)_minmax(180px,1fr)_110px_160px_60px_110px_110px_110px_40px] gap-4 py-3 px-5 text-xs font-semibold text-slate-700 dark:text-slate-300 border-slate-200/60 dark:border-border/25 z-10">
                   <div className="flex items-center justify-center">
                     <Checkbox
                       checked={isAllSelected}

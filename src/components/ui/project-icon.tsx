@@ -10,17 +10,31 @@ interface ProjectIconProps {
 }
 
 export const ProjectIcon = ({ project, className = "w-5 h-5", iconClassName = "h-3 w-3", showTooltip = true }: ProjectIconProps) => {
-  if (!project || !project.tags || project.tags.length === 0) return null;
+  if (!project) return null;
 
-  const tag = project.tags[0];
-  
+  const hasTag = project.tags && project.tags.length > 0;
+  const tag = hasTag ? project.tags![0] : null;
 
-  const IconElement = (
+  const IconElement = hasTag ? (
     <span
       className={`rounded-md flex items-center justify-center shrink-0 shadow-sm ${showTooltip ? 'cursor-help transition-transform hover:scale-110' : ''} ${className}`}
-      style={{ color: tag.color || '#6b7280', backgroundColor: `${tag.color || '#6b7280'}18` }}
+      style={{ color: '#ffffff', backgroundColor: tag!.color || '#6b7280' }}
     >
-      <IconRenderer icon={tag.icon || 'TagIcon'} className={iconClassName} />
+      <IconRenderer icon={tag!.icon || 'TagIcon'} className={iconClassName} />
+    </span>
+  ) : (
+    <span
+      className={`rounded-md flex items-center justify-center shrink-0 shadow-sm bg-primary text-primary-foreground ${showTooltip ? 'cursor-help transition-transform hover:scale-110' : ''} ${className}`}
+    >
+      <span className="font-semibold text-[0.65em] uppercase leading-none">
+        {(() => {
+          const title = project.title || 'P';
+          const words = title.trim().split(/\s+/);
+          return words.length >= 2 
+            ? (words[0][0] + words[1][0])
+            : title.substring(0, 2);
+        })()}
+      </span>
     </span>
   );
 
@@ -32,7 +46,7 @@ export const ProjectIcon = ({ project, className = "w-5 h-5", iconClassName = "h
             {IconElement}
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs font-medium">
-            {tag.name}
+            {hasTag ? tag!.name : project.title}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

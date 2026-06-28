@@ -18,6 +18,7 @@ import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import DeleteButton from "./DeleteProject"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ProjectIcon } from "@/components/ui/project-icon";
 
 
 interface ProjectRowProps {
@@ -50,21 +51,60 @@ const displayStatus = (status: string) => {
   return statusDisplay[status] || statusDisplay.planning;
 };
 
+const clientStatusColor = (status: string) => {
+  const colors: Record<string, string> = {
+    active: "bg-green-500 text-green-100",
+    inactive: "bg-gray-500 text-gray-100",
+    atRisk: "bg-rose-500 text-rose-100",
+    vip: "bg-indigo-500 text-indigo-100",
+    internal: "bg-blue-500 text-blue-100",
+  }
+  return colors[status] || colors.inactive;
+};
+
+const clientDisplayStatus = (status: string) => {
+  const statusDisplay: Record<string, string> = {
+    active: 'Active',
+    inactive: 'Inactive',
+    atRisk: 'At Risk',
+    vip: 'VIP',
+    internal: 'Internal',
+  }
+  return statusDisplay[status] || statusDisplay.inactive;
+};
+
+const deadlineBadgeColor = (date: Date | string) => {
+  const today = new Date()
+  today.setHours(0,0,0,0)
+
+  if (!date) return 'text-gray-700'
+  const deadlineDate = new Date(date)
+  deadlineDate.setHours(0,0,0,0)
+
+  if(deadlineDate < today) return 'text-red-500'
+  if(deadlineDate.getTime() === today.getTime()) return 'text-yellow-500'
+  return 'text-green-500'
+} 
+
 const formatDate = (date: Date | string) => {
   if (!date) return 'N/A'
   return new Date(date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'})
 }
 
 export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: ProjectRowProps) => {
+  
   const [isOpen, setIsOpen] = useState<boolean>(false)
   
+  
+  const totalHours = project.totalTimeTracked ? `${parseFloat((project.totalTimeTracked / 60).toFixed(0))}h` : '0h'
+  const taskCount = project.taskCount ?? project.tasks?.length ?? 0
 
   return (
     <div
       role="group"
       aria-label={`Project row: ${project.title}`}
       className={cn(
-        "flex flex-wrap md:grid md:grid-cols-[40px_minmax(200px,350px)_140px_110px_160px_60px_110px_110px_110px_40px] gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 hover:shadow-xs transition-all group",
+        "flex flex-wrap md:grid md:grid-cols-[40px_minmax(200px,350px)_minmax(180px,1fr)_110px_160px_60px_110px_110px_110px_40px] gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 hover:shadow-xs transition-all group",
         isSelecetd ? "bg-primary/5 dark:bg-primary/10 border-primary/50" : "border-border/30 hover:border-border/60"
       )}
     >
@@ -78,39 +118,43 @@ export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: Projec
         />
       </div>
 
-      {/* 2. Title + Tags */}
-      <div className="min-w-0 flex-1 md:flex-none flex flex-col gap-1.5 justify-center">
-        <div className="flex items-center gap-2">
-          {project.tags && project.tags.length > 0 && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div 
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm cursor-help transition-transform hover:scale-110"
-                    style={{ color: project.tags[0].color || '#6b7280', backgroundColor: `${project.tags[0].color || '#6b7280'}40` }}
-                  >
-                    <IconRenderer icon={project.tags[0].icon || 'TagIcon'} className="h-6 w-6" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs font-medium">
-                  {project.tags[0].name}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+      {/* 2. Title + Desc */}
+      <div className="min-w-0 flex-1 md:flex-none flex items-center gap-3">
+        <ProjectIcon project={project} className="w-9 h-9 rounded-lg shadow-sm shrink-0" iconClassName="h-5 w-5" />
+        <div className="flex flex-col gap-0.5 justify-center min-w-0">
           <Link href={`/projects/${project.id}`} className='font-semibold truncate hover:text-primary transition-colors block text-sm'>
            {project.title} 
           </Link>
+          <div className="text-xs text-muted-foreground/80 line-clamp-1">{project.description}</div>
         </div>
-        <div className="text-xs text-muted-foreground/80 line-clamp-1">{project.description}</div>
       </div>
 
       {/* 3. Client */}
       <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:block">
         {project.clientId ? (
-          <Link href={`/clients/${project.clientId}`} className="hover:underline hover:text-primary transition-colors cursor-pointer text-foreground font-medium">
-            {project.client?.name ?? clientName ?? `Client ${project.clientId}`}
-          </Link>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 cursor-help transition-transform hover:scale-110" style={{ backgroundColor: `${project.tags?.[0]?.color || '#6b7280'}4D`, color: project.tags?.[0]?.color || '#6b7280' }}>
+              <span className="font-semibold text-xs">
+                {(() => {
+                  const name = project.client?.name ?? clientName ?? 'N/A';
+                  if (name === 'N/A') return 'N/A';
+                  const words = name.trim().split(/\s+/);
+                  return words.length >= 2 
+                    ? (words[0][0] + words[1][0]).toUpperCase() 
+                    : name.substring(0, 2).toUpperCase();
+                })()}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <Link href={`/clients/${project.clientId}`} className="hover:underline hover:text-primary transition-colors cursor-pointer text-foreground font-medium">
+                {project.client?.name ?? clientName ?? `Client ${project.clientId}`}
+              </Link>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <div className={cn("h-2 w-2 rounded-full", clientStatusColor(project.client?.status || 'inactive'))} />
+                <span className={cn('text-[10px] uppercase font-semibold text-muted-foreground/80 line-clamp-1', project?.client?.status === 'internal' ? 'text-blue-500' : 'text-muted-foreground/80')}>{clientDisplayStatus(project.client?.status || 'inactive')}</span>
+              </div>
+            </div>
+          </div>
         ) : (
           project.client?.name ?? clientName ?? 'No client'
         )}
@@ -127,23 +171,23 @@ export const ProjectRow = ({ project, clientName, isSelecetd, onToggle }: Projec
       {/* 5. Progress */}
       <div className="flex items-center gap-3 justify-center w-full md:w-auto">
 
-        <Progress value={project.progress ?? 0} className="h-1.5 w-full" /> <span className="text-sm text-muted-foreground font-semibold">{project.progress ?? 0}%</span>
+        <Progress value={project.progress ?? 0} className="h-1.5 w-full" indicatorColor={project.tags?.[0]?.color} /> <span className="text-sm text-muted-foreground font-semibold">{project.progress ?? 0}%</span>
       </div>
 
       {/* 6. Tasks */}
       <div className="text-sm hidden md:flex items-center justify-center text-muted-foreground">
-        <span className="text-muted-foreground font-medium">-</span>
+        <span className="text-muted-foreground font-medium">{taskCount}</span>
       </div>
 
       {/* 7. Time Tracked */}
       <div className="flex items-center justify-center text-sm font-medium text-muted-foreground flex-1 md:flex-none">
-        <span className="hidden md:inline text-muted-foreground/50">-</span>
+        <span className="hidden md:inline font-bold">{totalHours}</span>
       </div>
 
       {/* 8. Due Date */}
       <div className={cn("text-sm hidden md:flex items-center gap-1.5 flex-wrap text-muted-foreground")}>
         <time dateTime={project.deadline ? new Date(project.deadline).toISOString() : undefined}>
-          {!project.deadline ? "N/A" : formatDate(project.deadline)}
+          {!project.deadline ? "N/A" : <div className={cn('text-xs px-2 py-0.5 ', deadlineBadgeColor(project.deadline))}>{formatDate(project.deadline)}</div>}
         </time>
       </div>
 

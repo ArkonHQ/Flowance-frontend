@@ -137,6 +137,7 @@ const ClientPage = ({ initialClients, insightMap, statusFilter }: ClientPageProp
             <Link href="/clients?status=at-risk" className={statusFilter === 'at-risk' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'hover:text-indigo-600'}>At Risk</Link>
             <Link href="/clients?status=inactive" className={statusFilter === 'inactive' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'hover:text-indigo-600'}>Inactive</Link>
             <Link href="/clients?status=vip" className={statusFilter === 'vip' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'hover:text-indigo-600'}>VIP</Link>
+            <Link href="/clients?status=internal" className={statusFilter === 'internal' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'hover:text-indigo-600'}>Internal</Link>
           </nav>
         </div>
         <div className='flex items-center gap-3'>

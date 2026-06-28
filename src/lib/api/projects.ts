@@ -22,6 +22,8 @@ export type Project = {
     deletedAt: Date | null;
     progress: number;
     tasks: Task[];
+    taskCount?: number
+    totalTimeTracked?: number
 }   
 
 // keep API helpers minimal and consistent
