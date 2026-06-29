@@ -59,7 +59,7 @@ const formatDuration = (seconds: number) => {
 interface FocusedTaskProps {
   task: Task
   onClose: () => void
-  onEdit?: () => void
+  onEdit?: (task: Task) => void
   onDelete?: (id: number) => void
   onOpenPanel?: (taskId: number, taskTitle: string, project: any) => void
   onTimeLogged?: () => void

@@ -238,7 +238,7 @@
 /* When the right panel is open, push the main content left on PC (desktop >= 1536px) */
 @media (min-width: 1536px) {
   body.panel-open main:not([data-slot="sidebar-inset"]) {
-    padding-right: 420px; /* 400px panel width + 20px space */
+    padding-right: 600px; /* 520px panel width */
     transition: padding-right 0.3s ease;
   }
   body.panel-open main:not([data-slot="sidebar-inset"]) .container {

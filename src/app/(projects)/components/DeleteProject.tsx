@@ -17,8 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Trash2, AlertTriangle } from 'lucide-react';
 
 interface Props {
-  projectId: number
-  projectName: string;
+  projectId?: number
+  projectName?: string;
   redirectAfterDelete?: boolean;
   children?: React.ReactNode;
 }
@@ -36,6 +36,7 @@ export default function DeleteButton({
   const handleDelete = async () => {
     setLoading(true);
     try {
+      if (!projectId) return
       await deleteProject(projectId);
       toast.success(`${projectName} deleted`, {
         description: 'The project and all associated data have been removed.',

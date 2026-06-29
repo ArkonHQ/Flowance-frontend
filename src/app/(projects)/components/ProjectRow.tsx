@@ -29,6 +29,7 @@ interface ProjectRowProps {
   onArchive?: (id: number, isArchived: boolean) => void
   isSelecetd: boolean
   onToggle: (id: number) => void
+  onSidePanelOpen?: (id: number, project: Project) => void
 }
 
 const getStatusColor = (status: string) => {
@@ -93,7 +94,7 @@ const formatDate = (date: Date | string) => {
   return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-export const ProjectRow = ({ project, clientName, isSelecetd, onToggle, onArchive }: ProjectRowProps) => {
+export const ProjectRow = ({ project, clientName, isSelecetd, onToggle, onArchive, onSidePanelOpen }: ProjectRowProps) => {
 
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const [archiving, setArchiving] = useState<boolean>(false)
@@ -141,7 +142,17 @@ export const ProjectRow = ({ project, clientName, isSelecetd, onToggle, onArchiv
         <div className="flex flex-col gap-0.5 justify-center min-w-0">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link href={`/projects/${project.id}`} className='font-semibold truncate hover:text-primary transition-colors block text-sm'>
+              <Link 
+                href={`/projects/${project.id}`} 
+                onClick={(e) => {
+                  if (onSidePanelOpen) {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    onSidePanelOpen(project.id, project)
+                  }
+                }}
+                className='font-semibold truncate hover:text-primary transition-colors block text-sm'
+              >
                 {project.title}
               </Link>
             </TooltipTrigger>

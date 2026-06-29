@@ -10,7 +10,7 @@ export type Project = {
     id: number;
     client: Client;
     title: string;
-    description: string;
+    description: string | null;
     deadline: Date | string;
     budget: number;
     status: 'planning' | 'active' | 'completed' | 'on_hold' | 'cancelled'
@@ -25,6 +25,7 @@ export type Project = {
     tasks: Task[];
     taskCount?: number
     totalTimeTracked?: number
+    health?: string
 }   
 
 // keep API helpers minimal and consistent

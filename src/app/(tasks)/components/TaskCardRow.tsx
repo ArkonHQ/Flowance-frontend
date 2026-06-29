@@ -101,6 +101,7 @@ export const TaskCardRow = ({ task, isFocused, onToggleFocus, onDelete, onOpenPa
 
   const handleOpenPanel = (e: React.MouseEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     onOpenPanel(task.id, task.title ?? "Untitled task", task.project ?? null)
   }
 

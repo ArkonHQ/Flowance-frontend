@@ -61,9 +61,7 @@ export const getMonthlyHealthMetric = async (cookieHeader?: string): Promise<Mon
         'Content-Type': 'application/json',
     };
 
-    if (cookieHeader) {
-        headers['Cookie'] = cookieHeader;
-    }
+    if (cookieHeader) headers['Cookie'] = cookieHeader;
 
     const res = await fetch(`${API_BASE}/dashboard/monthly-health`, {
         credentials: "include",

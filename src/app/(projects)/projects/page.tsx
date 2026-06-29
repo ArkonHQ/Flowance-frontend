@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers'
 import { getAllProjects, Project } from "@/lib/api/projects"
 import { getAllClients } from "@/lib/api/clients"
+import { getAllInvoices, Invoice } from "@/lib/api/invoices" 
 import { ProjectPageContent } from "../components/ProjectPageContent"
 
 export const metadata = {
@@ -12,6 +13,7 @@ const ProjectsPage = async () => {
   const cookieHeader = cookieStore.toString()
   const project: Project[] = await getAllProjects(cookieHeader)
   const clients = await getAllClients(cookieHeader)
+  const invoices: Invoice[] = await getAllInvoices(cookieHeader)
 
   const clientNames = Object.fromEntries(clients.map((client) => [client.id, client.name])) as Record<number, string>
 
@@ -26,7 +28,7 @@ const ProjectsPage = async () => {
 
   const stats = { total, active, completed, onHold, cancelled, planning, archived }
 
-  return <ProjectPageContent initialProjects={project} clientNames={clientNames} stats={stats} />
+  return <ProjectPageContent initialProjects={project} clientNames={clientNames} stats={stats} invoices={invoices} />
 
 }
 

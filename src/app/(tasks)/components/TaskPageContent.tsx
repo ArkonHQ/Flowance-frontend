@@ -317,9 +317,17 @@ export const TaskPageContent = ({ initialTask, stats, projects, lastWeekHours, t
     setIsPanelOpen(true)
   }
 
-  const handleEditTask = (task: Task) => {
+  const handleEditTask = async (task: Task) => {
     setTaskToEdit(task)
     setIsEditModalOpen(true)
+
+    try {
+      const updatedTask = await updateTask(task.id, task)
+      setTasks(prev => prev.map(t => t.id === task.id ? updatedTask : t))
+      toast.success("Task updated successfully")
+    } catch (err) {
+      toast.error("Failed to update task")
+    }
   }
 
 
@@ -332,8 +340,14 @@ export const TaskPageContent = ({ initialTask, stats, projects, lastWeekHours, t
     setSelectedIds(new Set())
   }
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     setTasks(prev => prev.filter(t => t.id !== id))
+    try {
+      await deleteTask(id)
+      toast.success("Task deleted successfully")
+    } catch (err) {
+      toast.error("Failed to delete task")
+    }
   }
 
   const handleToggle = (id: number) => {
@@ -597,7 +611,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, lastWeekHours, t
             <FocusedTask
               task={focusedTask}
               onClose={() => setFocusedTaskId(null)}
-              onEdit={() => handleEditTask(focusedTask)}
+              onEdit={(task) => handleEditTask(task)}
               onDelete={(id) => { handleDelete(id); setFocusedTaskId(null) }}
               onOpenPanel={handleOpenPanel}
               onTimeLogged={refreshTasksAndStats}

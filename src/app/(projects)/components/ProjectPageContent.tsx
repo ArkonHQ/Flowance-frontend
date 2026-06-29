@@ -9,21 +9,25 @@ import { ProjectGridCard } from "./ProjectGridCard"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { deleteProject, getAllProjects, updateProject, type Project } from '@/lib/api/projects'
+import { type Invoice } from '@/lib/api/invoices'  
 import { PaginationFooter } from "@/app/components/pagination-footer"
 import { ProjectsBulkActions } from "./projects-bulk-actions"
 import { toast } from "sonner"
 import { Checkbox } from "@/components/ui/checkbox"
-import FilterSortRow from "@/app/(tasks)/components/FilterSortRow"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SidePanel } from "./SidePanel"
+import { cn } from "@/lib/utils"
 
 
 interface Props {
   initialProjects: Project[]
   clientNames: Record<number, string>
   stats: { total: number; active: number; completed: number ; onHold: number; cancelled: number; planning: number; archived: number }
+  invoices: Invoice[]
 }
 
-export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Props) => {
+
+export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoices }: Props) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [project, setProject] = useState<Project[]>(initialProjects)
   const [projectStats, setProjectStats] = useState(stats)
@@ -32,6 +36,12 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('')
   const [isArchived, setIsArchived] = useState(false)
+  const [sidePanelOpen, setSidePanelOpen] = useState<boolean>(false)
+  const [selectedProjectForPanel, setSelectedProjectForPanel] = useState<Project | null>(null)
+  const [onEditProject, setOnEditProject] = useState<Project | null>(null)
+  
+
+  // Save view mode in local storage
   const [viewMode, setViewMode] = useState<'list' | 'grid'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('fcc_project_view_mode')
@@ -114,6 +124,28 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
     setSelectedProjectIds(next)
   } 
 
+  const handleEditProject = async (project: Project) => {
+    setOnEditProject(project)
+    setSidePanelOpen(true)
+
+    try {
+      await updateProject(project.id, project)
+      setProject(prev => prev.map(p => p.id === project.id ? project : p))
+      toast.success("Project updated successfully")
+    } catch (err) {
+      toast.error("Failed to update project")
+    }
+  }
+
+  const handleDeleteProject = async (projectId: number) => {
+    setProject(prev => prev.filter(p => p.id !== projectId))
+    try {
+      await deleteProject(projectId)
+      toast.success("Project deleted successfully")
+    } catch (err) {
+      toast.error("Failed to delete project")
+    }
+  }
 
   
   const sorted = useMemo(() => {
@@ -383,14 +415,40 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
                 </div>
               )}
 
+
+              {sidePanelOpen && (
+                <SidePanel
+                  open={sidePanelOpen}
+                  onClose={() => {
+                    setSidePanelOpen(false)
+                    setSelectedProjectForPanel(null)
+                  }}
+                  project={selectedProjectForPanel}
+                  onArchive={handleArchive}
+                  onEdit={handleEditProject}
+                  onDelete={handleDeleteProject}
+                  clientName={clientNames[selectedProjectForPanel?.clientId || 0]}
+                  timeTrackedThisWeek={120}
+                  totalPaid={
+                    invoices
+                      .filter(inv => inv.projectId === selectedProjectForPanel?.id && inv.status === 'paid')
+                      .reduce((sum, inv) => sum + Number(inv.amount), 0)
+                  }
+                />
+              )}
+
               {viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className={cn('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4', sidePanelOpen ? 'xl:grid-cols-3' : 'xl:grid-cols-4')}>
                   {paginatedProjects.map((project) => (
                     <ProjectGridCard
                       clientName={clientNames[project.clientId]}
                       key={project.id}
                       project={project}
                       onArchive={handleArchive}
+                      onSidePanelOpen={(id, proj) => {
+                        setSelectedProjectForPanel(proj)
+                        setSidePanelOpen(true)
+                      }}
                     />
                   ))}
                 </div>
@@ -400,10 +458,14 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats }: Prop
                     key={project.id}
                     project={project}
                     clientName={clientNames[project.clientId]}
-                    onDelete={() => {}}
+                    onDelete={handleDeleteProject}
                     onArchive={handleArchive}
                     isSelecetd={selectedProjectIds.has(project.id)}
                     onToggle={handleToggle}
+                    onSidePanelOpen={(id, proj) => {
+                      setSelectedProjectForPanel(proj)
+                      setSidePanelOpen(true)
+                    }}
                   />
                 ))
               )}

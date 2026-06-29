@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button"
 import { Archive, CheckCircle2, Clock, ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import DeleteButton from "./DeleteProject"
 import { ProjectIcon } from "@/components/ui/project-icon"
+import { Task } from "@/lib/api/tasks"
+import { Client } from "@/lib/api/clients"
 
 interface ProjectGridCardProps {
   project: Project
@@ -26,6 +28,7 @@ interface ProjectGridCardProps {
   totalTimeTracked?: number
   onDelete?: (id: number) => void
   onArchive?: (id: number, isArchived: boolean) => void
+  onSidePanelOpen: (id: number, project: Project) => void
 }
 
 const getStatusColor = (status: string) => {
@@ -55,6 +58,7 @@ export const ProjectGridCard = ({
   clientName,
   onDelete,
   onArchive,
+  onSidePanelOpen
 }: ProjectGridCardProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [archiving, setArchiving] = useState(false)
@@ -79,6 +83,12 @@ export const ProjectGridCard = ({
   if (deadlineDate.getTime() === today.getTime()) return 'text-yellow-500'
   return 'text-green-500'
 }
+
+  const handleSidePanelOpen = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    onSidePanelOpen(project.id, project ?? null)
+  }
 
   const handleArchiveToggle = async () => {
     const newState = !project.isArchived
@@ -109,6 +119,7 @@ export const ProjectGridCard = ({
           <div className="min-w-0">
             <Link
               href={`/projects/${project.id}`}
+              onClick={handleSidePanelOpen}
               className="font-semibold text-sm truncate hover:text-primary transition-colors block"
             >
               {project.title}
