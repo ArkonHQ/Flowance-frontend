@@ -9,6 +9,7 @@ import { ProjectGridCard } from "./ProjectGridCard"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { deleteProject, getAllProjects, updateProject, type Project } from '@/lib/api/projects'
+import { getTaskByProject } from '@/lib/api/tasks'
 import { type Invoice } from '@/lib/api/invoices'  
 import { PaginationFooter } from "@/app/components/pagination-footer"
 import { ProjectsBulkActions } from "./projects-bulk-actions"
@@ -427,6 +428,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
                   onArchive={handleArchive}
                   onEdit={handleEditProject}
                   onDelete={handleDeleteProject}
+                  fetchTasks={getTaskByProject}
                   clientName={clientNames[selectedProjectForPanel?.clientId || 0]}
                   timeTrackedThisWeek={120}
                   totalPaid={

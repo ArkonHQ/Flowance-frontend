@@ -20,7 +20,8 @@ export type Task = {
     createdAt: string,
     updatedAt: string | null,
     deletedAt: Date | null,
-    missions: Mission[]
+    missions: Mission[],
+    totalHours?: number
 }
 
 export type Mission = {
@@ -35,7 +36,7 @@ export type Mission = {
 }
 
 
-interface TaskResponse {
+export interface TaskResponse {
     tasks: Task[]
     totalHours: number
 }

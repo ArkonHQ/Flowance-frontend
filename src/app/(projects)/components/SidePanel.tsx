@@ -2,7 +2,7 @@
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Project, updateProject } from "@/lib/api/projects";
-import { ExternalLink, X, Lightbulb, Rocket, TrendingUp, Target, CheckCircle, PauseCircle, Sparkles, XCircle, Flame, Circle, CircleDashed, Calendar, Clock, User, UserPlus, UserPlus2Icon, Trash2, Archive, Loader2 } from "lucide-react";
+import { ExternalLink, X, Lightbulb, Rocket, TrendingUp, Target, CheckCircle, PauseCircle, Sparkles, XCircle, Flame, CircleDashed, Calendar, Clock, UserPlus2Icon, Trash2, Archive, Loader2, Edit2, Type, AlignLeft, Wallet, Tag as TagIcon, Activity, User, PlusIcon, MoreHorizontal } from "lucide-react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 import { ProjectIcon } from "@/components/ui/project-icon";
@@ -13,6 +13,10 @@ import { Progress } from "@/components/ui/progress";
 import { PROJECT_PROGRESS_MESSAGES } from "@/lib/constants/project-messages";
 import DeleteButton from "./DeleteProject";
 import { toast } from "sonner";
+import { Task, deleteTask } from "@/lib/api/tasks";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { EditTaskForm } from "@/app/(tasks)/components/EditTaskForm";
+import { createPortal } from "react-dom";
 
 
 
@@ -22,13 +26,14 @@ import { toast } from "sonner";
 interface SidePanelProps {
     open: boolean;
     onClose: () => void;
-    project?: Project;
+    project: Project;
     onDelete?: (id: number) => void
     onEdit?: (project: Project) => void
     clientName?: string
     timeTrackedThisWeek?: number
     totalPaid?: number
     onArchive?: (id: number, isArchived: boolean) => void
+    fetchTasks?: (projectId: number) => Promise<Task[]>
 }
 
 
@@ -165,7 +170,31 @@ const getProjectStatusMessage = (project: Project) => {
 }
 
 
-export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, onDelete, onEdit, clientName, timeTrackedThisWeek, totalPaid, onArchive }) => {
+const getStatusTaskColor = (status: string) => {
+  const statusColors: Record<string, string> = {
+    todo: "badge-status-todo",
+    in_progress: "badge-status-in_progress",
+    done: "badge-status-done",
+    cancelled: "badge-status-cancelled",
+    delayed: "badge-status-delayed",
+    overdue: "badge-status-overdue",
+  }
+
+  return statusColors[status] || statusColors.delayed
+}
+const displayTaskStatus = (status: string) => {
+  const statusDisplay: Record<string, string> = {
+    todo: 'To Do',
+    in_progress: 'In Progress',
+    done: 'Done',
+    cancelled: 'Cancelled',
+    overdue: 'Overdue',
+    delayed: 'Delayed'
+  }
+  return statusDisplay[status] || statusDisplay.todo
+}
+
+export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, onDelete, onEdit, clientName, timeTrackedThisWeek, totalPaid, onArchive, fetchTasks }) => {
 
 
     const isLargeScreen = useMediaQuery('(min-width: 1024px)')
@@ -173,6 +202,14 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
     const [isExtended, setIsExtended] = useState<boolean>(false)
     const [archive, setArchive] = useState<boolean>(false)
     const [isArchiving, setIsArchiving] = useState<boolean>(false)
+    const [taskToEdit, setTaskToEdit] = useState<Task | null>(null)
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+
+    // Task fetching state
+    const [fetchedTasks, setFetchedTasks] = useState<Task[]>([])
+    const [isLoadingTasks, setIsLoadingTasks] = useState<boolean>(false)
+
 
 
 
@@ -206,6 +243,25 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
         }
     }, [open, isLargeScreen])
 
+    useEffect(() => {
+        if (open) {
+            setActiveTab('overview')
+        }
+    }, [open, project?.id])
+
+    // Fetch tasks when switching to the 'tasks' tab if the parent passed fetchTasks
+    useEffect(() => {
+        if (activeTab === 'tasks' && fetchTasks && project?.id) {
+            // Only fetch if project.tasks isn't already populated by the parent
+            if (!project.tasks || project.tasks.length === 0) {
+                setIsLoadingTasks(true)
+                fetchTasks(project.id)
+                    .then(data => setFetchedTasks(data))
+                    .catch(err => console.error("Failed to load tasks", err))
+                    .finally(() => setIsLoadingTasks(false))
+            }
+        }
+    }, [activeTab, fetchTasks, project?.id, project?.tasks])
 
     // Using the progress and taskCount to accurately calculate the numbers
     const totalTasks = project?.taskCount || 0;
@@ -272,6 +328,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
             : '#ef4444'
 
     return (
+        <>
         <Sheet open={open} onOpenChange={onClose} modal={!isLargeScreen}>
             <SheetContent
                 className={cn('w-full !max-w-none !w-[100vw] sm:!w-fit sm:min-w-[450px] sm:!max-w-[600px] overflow-y-auto rounded-lg border-2 border-card shadow-lg p-0')}
@@ -354,11 +411,12 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                         </div>
                     )}
                 </SheetHeader>
-                <div className="flex w-full overflow-x-auto border-b border-border px-4 mt-6">
-                    <div className="flex gap-6 text-sm font-medium text-muted-foreground whitespace-nowrap">
+                <div className="w-full border-b border-border px-4 mt-6">
+                    <div className="flex flex-wrap gap-4 sm:gap-6 text-sm font-medium text-muted-foreground">
                         {['overview', 'details', 'tasks', 'members', 'files', 'activity'].map(tab => (
                             <button
                                 key={tab}
+                                type="button"
                                 onClick={() => setActiveTab(tab)}
                                 className={cn(
                                     "pb-2 capitalize transition-colors outline-none",
@@ -371,6 +429,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                     </div>
                 </div>
 
+                        {/* Overview Tab */}
                 <div className="p-6">
                     {activeTab === 'overview' && (
                         <>
@@ -508,55 +567,214 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                                 </Button>
                             </div>
                         </div>
-                        <div className="flex flex-row justify-between item-center mt-4 p-4">
-                            <Button 
-                                variant={'outline'}
-                                size='sm'
-                                className= 'flex item-center gap-2 p-6 rounded-lg'
-                                onClick={handleArchive}
-                                disabled={isArchiving}
-                            >
-                                {isArchiving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4" />}
-                                {isArchiving ? 'Archiving...' : project?.isArchived ? 'Unarchive Project' : 'Archive Project'}
-                            </Button>
-                            <DeleteButton
-                                projectId={project?.id}
-                                projectName={project?.title}
-                                redirectAfterDelete={false}
-                                >
-                                    <Button
-                                        variant={'destructive'}
-                                        size="sm"
-                                        className="flex items-center gap-2 p-6 rounded-lg"
-                                        onChange={() => setArchive(true)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                        Delete Project
-                                    </Button>
-                            </DeleteButton>
-                            </div>
                     </>
                     )}
+
+                    {/* Details tab */}
                     {activeTab === 'details' && (
-                        <div className="space-y-4 animate-in fade-in-50">
-                            <h3 className="text-lg font-semibold">Details</h3>
-                            <div className="grid grid-cols-2 gap-4 text-sm bg-card/30 p-4 rounded-lg border border-border/40">
-                                <div><span className="text-muted-foreground block mb-1">Budget</span> <span className="font-medium">{project?.budget ? `$${project.budget.toLocaleString()}` : 'N/A'}</span></div>
-                                <div><span className="text-muted-foreground block mb-1">Deadline</span> <span className="font-medium">{project?.deadline ? new Date(project.deadline).toLocaleDateString() : 'N/A'}</span></div>
-                                <div><span className="text-muted-foreground block mb-1">Time Tracked</span> <span className="font-medium">{project?.totalTimeTracked ? `${(project.totalTimeTracked / 60).toFixed(1)} hrs` : '0 hrs'}</span></div>
-                                <div><span className="text-muted-foreground block mb-1">Created At</span> <span className="font-medium">{project?.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'N/A'}</span></div>
+                        <div className="space-y-6 animate-in fade-in-50">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex flex-col">
+                                    <h3 className="text-lg font-bold tracking-tight text-foreground">Project Details</h3>
+                                    <p className="text-xs text-muted-foreground">Comprehensive view of all project parameters</p>
+                                </div>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="flex items-center gap-2 font-medium border-primary/20 hover:border-primary hover:bg-primary/10 transition-all duration-300"
+                                    onClick={() => onEdit?.(project)}
+                                >
+                                    <Edit2 className="h-4 w-4 text-primary" /> 
+                                    <span className="text-primary">Edit Project</span>
+                                </Button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* General Info Card */}
+                                <div className="col-span-1 md:col-span-2 space-y-4 p-5 bg-linear-to-br from-card to-card/50  rounded-xl border border-border/50">
+                                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">General Information</h4>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div className="group flex flex-col gap-1 p-3 rounded-lg hover:bg-muted/20 transition-colors">
+                                            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                                <Type className="w-4 h-4" />
+                                                <span className="text-xs font-semibold">Title</span>
+                                            </div>
+                                            <span className="text-sm font-medium text-foreground">{project?.title || 'N/A'}</span>
+                                        </div>
+                                        <div className="group flex flex-col gap-1 p-3 rounded-lg hover:bg-muted/20 transition-colors">
+                                            <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                                <AlignLeft className="w-4 h-4" />
+                                                <span className="text-xs font-semibold">Description</span>
+                                            </div>
+                                            <span className="text-sm font-medium text-foreground leading-relaxed">{project?.description || 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Meta Card */}
+                                <div className="space-y-4 bg-linear-to-br from-card to-card/50 p-5 rounded-xl border border-border/50 shadow-sm">
+                                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Classification</h4>
+                                    
+                                    <div className="group flex flex-col gap-1 p-3 rounded-lg hover:bg-muted/20 transition-colors">
+                                        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                            <User className="w-4 h-4" />
+                                            <span className="text-xs font-semibold">Client</span>
+                                        </div>
+                                        <span className="text-sm font-medium text-foreground">{project?.client?.name ?? clientName ?? 'N/A'}</span>
+                                    </div>
+
+                                    <div className="group flex flex-col gap-1 p-3 rounded-lg hover:bg-muted/20 transition-colors">
+                                        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                            <Activity className="w-4 h-4" />
+                                            <span className="text-xs font-semibold">Status</span>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <div className={cn(getStatusColor(project?.status || 'active'), 'rounded-full border px-2 py-0.5 text-xs font-bold tracking-wider')}>
+                                                {displayStatus(project?.status || 'active')}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="group flex flex-col gap-1 p-3 rounded-lg hover:bg-muted/20 transition-colors">
+                                        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                            <TagIcon className="w-4 h-4" />
+                                            <span className="text-xs font-semibold">Tags</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {project?.tags?.length ? project.tags.map(t => (
+                                                <span key={t.id} className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: `${t.color}20`, color: t.color }}>
+                                                    {t.name}
+                                                </span>
+                                            )) : <span className="text-sm text-muted-foreground">None</span>}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Financials & Time Card */}
+                                <div className="space-y-4 bg-linear-to-br from-card to-card/50 p-5 rounded-xl border border-border/50 shadow-sm">
+                                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Timeline & Budget</h4>
+                                    
+                                    <div className="group flex flex-col gap-1 p-3 rounded-lg hover:bg-muted/20 transition-colors">
+                                        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                            <Wallet className="w-4 h-4" />
+                                            <span className="text-xs font-semibold">Budget</span>
+                                        </div>
+                                        <span className="text-sm font-medium text-foreground">{project?.budget ? `$${project.budget.toLocaleString()}` : 'N/A'}</span>
+                                    </div>
+
+                                    <div className="group flex flex-col gap-1 p-3 rounded-lg hover:bg-muted/20 transition-colors">
+                                        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                            <Calendar className="w-4 h-4" />
+                                            <span className="text-xs font-semibold">Deadline</span>
+                                        </div>
+                                        <span className="text-sm font-medium text-foreground">{project?.deadline ? new Date(project.deadline).toLocaleDateString() : 'N/A'}</span>
+                                    </div>
+
+                                    <div className="group flex flex-col gap-1 p-3 rounded-lg hover:bg-muted/20 transition-colors">
+                                        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                                            <Clock className="w-4 h-4" />
+                                            <span className="text-xs font-semibold">Time Tracked</span>
+                                        </div>
+                                        <span className="text-sm font-medium text-foreground">{project?.totalTimeTracked ? `${(project.totalTimeTracked / 60).toFixed(1)} hrs` : '0 hrs'}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
+
+
+                    
+                    {/* Task tab ----------------------------------------------------------------------------*/}
                     {activeTab === 'tasks' && (
                         <div className="space-y-4 animate-in fade-in-50">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold">Tasks</h3>
-                                <Button size="sm">Add Task</Button>
+                                <Button size="sm">
+                                    <PlusIcon className="h-4 w-4" />
+                                    Add Task
+                                </Button>
                             </div>
-                            <div className="text-sm text-muted-foreground italic bg-muted/30 p-8 rounded-lg text-center border border-dashed border-border/50">
-                                No tasks populated yet.
-                            </div>
+                            
+                            {isLoadingTasks ? (
+                                <div className="flex justify-center items-center p-8 bg-muted/30 rounded-lg border border-dashed border-border/50">
+                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : (
+                                <div className="text-sm text-muted-foreground italic bg-muted/30 p-8 rounded-lg text-center border border-dashed border-border/50">
+                                    {(() => {
+                                        const displayTasks = project?.tasks?.length ? project.tasks : fetchedTasks;
+                                        return displayTasks.length > 0 ? (
+                                            <div className="space-y-4 not-italic">
+                                                {displayTasks.map(task => (
+                                                    <div className="flex justify-between items-center bg-card/30 p-3 rounded-md border border-border/50 text-left">
+                                                    <div className="flex flex-col">
+                                                    <Link
+                                                        href={`/tasks`}
+                                                        key={task.id}
+                                                        onClick={() => {
+                                                            localStorage.setItem('fcc_selected_task', JSON.stringify({
+                                                                id: task.id,
+                                                                title: task.title,
+                                                                projectTitle: project?.title || null,
+                                                                project: project
+                                                            }))
+                                                            localStorage.setItem('fcc_side_panel_open', JSON.stringify(true))
+                                                        }}>
+                                                        <span className="text-sm font-medium text-foreground">{task.title}</span>
+                                                        </Link>
+                                                        <span className="text-xs text-muted-foreground/80"><Clock className="h-3 w-3 inline mr-1" /> {formatDuration(task.totalHours ? task.totalHours * 60 : 0)}</span>
+                                                    </div>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button 
+                                                                size="icon" 
+                                                                variant="ghost" 
+                                                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                            >
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuItem
+                                                                className="cursor-pointer flex items-center"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setTaskToEdit(task);
+                                                                    setIsEditModalOpen(true);
+                                                                }}
+                                                            >
+                                                                <Edit2 className="mr-2 h-4 w-4" />
+                                                                Edit
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem 
+                                                                className="text-destructive focus:text-destructive cursor-pointer"
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    try {
+                                                                        await deleteTask(task.id);
+                                                                        toast.success("Task deleted");
+                                                                        if (fetchTasks && project?.id) {
+                                                                            fetchTasks(project.id).then(setFetchedTasks);
+                                                                        }
+                                                                    } catch (err) {
+                                                                        toast.error("Failed to delete task");
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                                Delete
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <span>No tasks populated yet.</span>
+                                        );
+                                    })()}
+                                </div>
+                            )}
                         </div>
                     )}
                     {activeTab === 'members' && (
@@ -589,8 +807,66 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                             </div>
                         </div>
                     )}
+
+                    {/* Actions */}
+                    <div className="flex flex-row justify-between items-center mt-6 pt-6 border-t border-border/40">
+                        <Button 
+                            variant={'outline'}
+                            size='sm'
+                            className='flex items-center gap-2 p-6 rounded-lg'
+                            onClick={handleArchive}
+                            disabled={isArchiving}
+                        >
+                            {isArchiving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4" />}
+                            {isArchiving ? 'Archiving...' : project?.isArchived ? 'Unarchive Project' : 'Archive Project'}
+                        </Button>
+                        <DeleteButton
+                            projectId={project?.id}
+                            projectName={project?.title}
+                            redirectAfterDelete={false}
+                        >
+                            <Button
+                                variant={'destructive'}
+                                size="sm"
+                                className="flex items-center gap-2 p-6 rounded-lg"
+                                onClick={() => setArchive(true)}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                Delete Project
+                            </Button>
+                        </DeleteButton>
+                    </div>
                 </div>
             </SheetContent>
         </Sheet>
+            {taskToEdit && createPortal(
+                <EditTaskForm
+                    task={{
+                        id: taskToEdit.id,
+                        title: taskToEdit.title,
+                        summary: taskToEdit.summary || undefined,
+                        description: taskToEdit.description || undefined,
+                        status: taskToEdit.status as 'todo' | 'in_progress' | 'done' | 'cancelled' | 'delayed',
+                        priority: taskToEdit.priority as 'low' | 'medium' | 'high',
+                        deadline: taskToEdit.deadline,
+                        tagIds: taskToEdit.tags?.map(t => t.id) || [],
+                        missions: taskToEdit.missions?.map(m => ({ id: m.id, name: m.name, completed: m.completed })) || [],
+                        projectId: taskToEdit.projectId,
+                    }}
+                    projects={project ? [project] : []}
+                    isOpen={isEditModalOpen}
+                    onClose={() => {
+                        setIsEditModalOpen(false)
+                        setTaskToEdit(null)
+                    }}
+                    onTaskUpdated={() => {
+                        if (fetchTasks && project?.id) {
+                            fetchTasks(project.id).then(setFetchedTasks);
+                        }
+                    }}
+                />,
+                document.body
+            )}
+        </>
     )
 }
