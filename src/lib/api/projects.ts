@@ -26,6 +26,8 @@ export type Project = {
     taskCount?: number
     totalTimeTracked?: number
     health?: string
+    attachmentPath?: string | null
+    attachmentUrl?: string | null
 }   
 
 // keep API helpers minimal and consistent

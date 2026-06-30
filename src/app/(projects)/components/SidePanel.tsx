@@ -2,7 +2,7 @@
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Project, updateProject } from "@/lib/api/projects";
-import { ExternalLink, X, Lightbulb, Rocket, TrendingUp, Target, CheckCircle, PauseCircle, Sparkles, XCircle, Flame, CircleDashed, Calendar, Clock, UserPlus2Icon, Trash2, Archive, Loader2, Edit2, Type, AlignLeft, Wallet, Tag as TagIcon, Activity, User, PlusIcon, MoreHorizontal } from "lucide-react";
+import { ExternalLink, X, Lightbulb, Rocket, TrendingUp, Target, CheckCircle, PauseCircle, Sparkles, XCircle, Flame, CircleDashed, Calendar, Clock, UserPlus2Icon, Trash2, Archive, Loader2, Edit2, Type, AlignLeft, Wallet, Tag as TagIcon, Activity, User, PlusIcon, MoreHorizontal, Star, ChevronDown, ChevronRight, Zap, Download, FileText } from "lucide-react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
 import { ProjectIcon } from "@/components/ui/project-icon";
@@ -17,6 +17,8 @@ import { Task, deleteTask } from "@/lib/api/tasks";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { EditTaskForm } from "@/app/(tasks)/components/EditTaskForm";
 import { createPortal } from "react-dom";
+import { MissionProgress } from "@/app/(tasks)/components/MissionProgress";
+import { FileUpload } from "@/app/components/FileUpload";
 
 
 
@@ -204,13 +206,39 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
     const [isArchiving, setIsArchiving] = useState<boolean>(false)
     const [taskToEdit, setTaskToEdit] = useState<Task | null>(null)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
 
+
+    const [focusedTaskId, setFocusedTaskId] = useState<number | null>(() => {
+        if (typeof window === 'undefined') return null
+        try {
+            const saved = localStorage.getItem('fcc_focused_task_id')
+            return saved ? parseInt(saved, 10) : null
+        } catch {
+            return null
+        }
+    })
 
     // Task fetching state
     const [fetchedTasks, setFetchedTasks] = useState<Task[]>([])
     const [isLoadingTasks, setIsLoadingTasks] = useState<boolean>(false)
 
 
+
+    // Save the focused task id
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                if (focusedTaskId) {
+                    localStorage.setItem('fcc_focused_task_id', focusedTaskId.toString())
+                } else {
+                    localStorage.removeItem('fcc_focused_task_id')
+                }
+            } catch {
+                // ignore
+            }
+        }
+    }, [focusedTaskId])
 
 
     // Handle Archive
@@ -228,6 +256,35 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
             toast.error('Failed to archive project')
         }finally{
             setIsArchiving(false)
+        }
+    }
+
+    const [isDeletingFile, setIsDeletingFile] = useState(false);
+
+    const isImage = (path?: string | null) => {
+        if (!path) return false;
+        const lower = path.toLowerCase();
+        return lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif') || lower.endsWith('.webp');
+    }
+
+    const handleDeleteAttachment = async () => {
+        if (!project) return;
+        setIsDeletingFile(true);
+        try {
+            const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api';
+            const res = await fetch(`${API_BASE}/projects/attachments/${project.id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            if (!res.ok) throw new Error('Failed to delete');
+            toast.success('Attachment deleted successfully! Please refresh to see changes.');
+            // Optimistically clear it in the UI (if you're mutating local state or have a refresh function, call it here)
+            project.attachmentUrl = null;
+            project.attachmentPath = null;
+        } catch (error) {
+            toast.error('Failed to delete attachment');
+        } finally {
+            setIsDeletingFile(false);
         }
     }
 
@@ -700,80 +757,323 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                                 </div>
                             ) : (
-                                <div className="text-sm text-muted-foreground italic bg-muted/30 p-8 rounded-lg text-center border border-dashed border-border/50">
-                                    {(() => {
-                                        const displayTasks = project?.tasks?.length ? project.tasks : fetchedTasks;
-                                        return displayTasks.length > 0 ? (
-                                            <div className="space-y-4 not-italic">
-                                                {displayTasks.map(task => (
-                                                    <div className="flex justify-between items-center bg-card/30 p-3 rounded-md border border-border/50 text-left">
-                                                    <div className="flex flex-col">
-                                                    <Link
-                                                        href={`/tasks`}
-                                                        key={task.id}
-                                                        onClick={() => {
-                                                            localStorage.setItem('fcc_selected_task', JSON.stringify({
-                                                                id: task.id,
-                                                                title: task.title,
-                                                                projectTitle: project?.title || null,
-                                                                project: project
-                                                            }))
-                                                            localStorage.setItem('fcc_side_panel_open', JSON.stringify(true))
-                                                        }}>
-                                                        <span className="text-sm font-medium text-foreground">{task.title}</span>
-                                                        </Link>
-                                                        <span className="text-xs text-muted-foreground/80"><Clock className="h-3 w-3 inline mr-1" /> {formatDuration(task.totalHours ? task.totalHours * 60 : 0)}</span>
-                                                    </div>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button 
-                                                                size="icon" 
-                                                                variant="ghost" 
-                                                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                                            >
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem
-                                                                className="cursor-pointer flex items-center"
+                                (() => {
+                                    const displayTasks = project?.tasks?.length ? project.tasks : fetchedTasks;
+                                    if (displayTasks.length === 0) {
+                                        return (
+                                            <div className="text-sm text-muted-foreground italic bg-muted/30 p-8 rounded-lg text-center border border-dashed border-border/50">
+                                                No tasks populated yet.
+                                            </div>
+                                        )
+                                    }
+
+                                    const focusedTask = focusedTaskId ? displayTasks.find(t => t.id === focusedTaskId) : null;
+                                    const todoTasks = displayTasks.filter(t => t.status === 'todo');
+                                    const inProgressTasks = displayTasks.filter(t => t.status === 'in_progress');
+                                    const doneTasks = displayTasks.filter(t => t.status === 'done');
+                                    const otherTasks = displayTasks.filter(t => !['todo', 'in_progress', 'done'].includes(t.status));
+
+                                    const toggleGroup = (key: string) => {
+                                        setCollapsedGroups(prev => ({ ...prev, [key]: !prev[key] }))
+                                    }
+
+                                    const missionPct = (task: Task) => {
+                                        const total = task.missions?.length || 0;
+                                        if (total === 0) return 0;
+                                        const completed = task.missions.filter(m => m.completed).length;
+                                        return Math.round((completed / total) * 100);
+                                    }
+
+                                    const renderTaskCard = (task: Task) => {
+                                        const missions = task.missions || [];
+                                        const missionTotal = missions.length;
+                                        const completedMissions = missions.filter(m => m.completed).length;
+                                        const pct = missionTotal > 0 ? Math.round((completedMissions / missionTotal) * 100) : 0;
+                                        const isFocused = focusedTaskId === task.id;
+
+                                        return (
+                                            <div
+                                                key={task.id}
+                                                className={cn(
+                                                    "group relative flex flex-col gap-2.5 p-3.5 rounded-xl border transition-all duration-200",
+                                                    isFocused
+                                                        ? "bg-primary/5 border-primary/30 shadow-sm"
+                                                        : "bg-card/40 border-border/40 hover:border-border/70 hover:shadow-xs"
+                                                )}
+                                            >
+                                                {/* Top row: title + actions */}
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    setTaskToEdit(task);
-                                                                    setIsEditModalOpen(true);
+                                                                    setFocusedTaskId(prev => prev === task.id ? null : task.id);
                                                                 }}
+                                                                className="shrink-0 p-0.5 hover:scale-110 transition-transform"
+                                                                title={isFocused ? 'Unfocus' : 'Set as focus'}
                                                             >
-                                                                <Edit2 className="mr-2 h-4 w-4" />
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem 
-                                                                className="text-destructive focus:text-destructive cursor-pointer"
-                                                                onClick={async (e) => {
-                                                                    e.stopPropagation();
-                                                                    try {
-                                                                        await deleteTask(task.id);
-                                                                        toast.success("Task deleted");
-                                                                        if (fetchTasks && project?.id) {
-                                                                            fetchTasks(project.id).then(setFetchedTasks);
-                                                                        }
-                                                                    } catch (err) {
-                                                                        toast.error("Failed to delete task");
-                                                                    }
+                                                                <Star className={cn(
+                                                                    "h-3.5 w-3.5 transition-colors",
+                                                                    isFocused
+                                                                        ? "fill-amber-400 text-amber-400"
+                                                                        : "text-muted-foreground/40 group-hover:text-muted-foreground/70"
+                                                                )} />
+                                                            </button>
+                                                            <Link
+                                                                href={`/tasks`}
+                                                                onClick={() => {
+                                                                    localStorage.setItem('fcc_selected_task', JSON.stringify({
+                                                                        id: task.id,
+                                                                        title: task.title,
+                                                                        projectTitle: project?.title || null,
+                                                                        project: project
+                                                                    }))
+                                                                    localStorage.setItem('fcc_side_panel_open', JSON.stringify(true))
                                                                 }}
+                                                                className="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate"
                                                             >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                Delete
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                                {task.title}
+                                                            </Link>
+                                                        </div>
+                                                        {task.summary && (
+                                                            <p className="text-xs text-muted-foreground/70 line-clamp-1 pl-6">{task.summary}</p>
+                                                        )}
                                                     </div>
-                                                ))}
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
+                                                            <Clock className="h-3 w-3" />
+                                                            {formatDuration(task.totalHours ? task.totalHours * 60 : 0)}
+                                                        </span>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="h-7 w-7 text-muted-foreground/50 hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                >
+                                                                    <MoreHorizontal className="h-3.5 w-3.5" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuItem
+                                                                    className="cursor-pointer flex items-center"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setTaskToEdit(task);
+                                                                        setIsEditModalOpen(true);
+                                                                    }}
+                                                                >
+                                                                    <Edit2 className="mr-2 h-4 w-4" />
+                                                                    Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    className="text-destructive focus:text-destructive cursor-pointer"
+                                                                    onClick={async (e) => {
+                                                                        e.stopPropagation();
+                                                                        try {
+                                                                            await deleteTask(task.id);
+                                                                            toast.success("Task deleted");
+                                                                            if (focusedTaskId === task.id) setFocusedTaskId(null);
+                                                                            if (fetchTasks && project?.id) {
+                                                                                fetchTasks(project.id).then(setFetchedTasks);
+                                                                            }
+                                                                        } catch (err) {
+                                                                            toast.error("Failed to delete task");
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    Delete
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                </div>
+
+                                                {/* Mission progress bar — only if there's a mission */}
+                                                {missionTotal > 0 && (
+                                                    <div className="pl-6 space-y-1.5">
+                                                        <div className="flex items-center justify-between text-[10px]">
+                                                            <span className="font-medium text-muted-foreground/70">
+                                                                {completedMissions}/{missionTotal} missions
+                                                            </span>
+                                                            <span className={cn(
+                                                                "font-bold",
+                                                                pct === 100 ? "text-emerald-500" : pct >= 50 ? "text-primary/80" : "text-muted-foreground/60"
+                                                            )}>
+                                                                {pct}%
+                                                            </span>
+                                                        </div>
+                                                        <Progress
+                                                            value={pct}
+                                                            className="h-1.5 bg-border/40"
+                                                            indicatorColor={
+                                                                project?.tags?.[0]?.color
+                                                            }
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
-                                        ) : (
-                                            <span>No tasks populated yet.</span>
-                                        );
-                                    })()}
-                                </div>
+                                        )
+                                    }
+
+                                    const renderGroup = (label: string, icon: React.ReactNode, tasks: Task[], groupKey: string, accentColor: string) => {
+                                        if (tasks.length === 0) return null;
+                                        const isCollapsed = collapsedGroups[groupKey] || false;
+                                        return (
+                                            <div key={groupKey}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleGroup(groupKey)}
+                                                    className="flex items-center gap-2 w-full text-left py-2 px-1 group/header hover:bg-muted/30 rounded-lg transition-colors"
+                                                >
+                                                    {isCollapsed
+                                                        ? <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+                                                        : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50" />
+                                                    }
+                                                    {icon}
+                                                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">
+                                                        {label}
+                                                    </span>
+                                                    <span className={cn(
+                                                        "ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                                                        accentColor
+                                                    )}>
+                                                        {tasks.length}
+                                                    </span>
+                                                </button>
+                                                {!isCollapsed && (
+                                                    <div className="space-y-2 mt-1 ml-1">
+                                                        {tasks.map(renderTaskCard)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )
+                                    }
+
+                                    return (
+                                        <div className="space-y-4">
+                                            {/* Focused Task Card */}
+                                            {focusedTask && (
+                                                <div className={cn(
+                                                    "rounded-xl border bg-card/50 backdrop-blur-sm transition-all",
+                                                    "border-border/50 shadow-sm overflow-hidden"
+                                                )}>
+                                                    {/* Top accent line */}
+                                                    <div className="h-[2px] w-full bg-linear-to-r from-transparent via-primary/30 to-transparent" />
+                                                    <div className="px-4 py-3.5 flex flex-col gap-3">
+                                                        {/* Label */}
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Zap className="h-3.5 w-3.5 fill-amber-400 text-amber-300" />
+                                                                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                                                                    Current Focus
+                                                                </span>
+                                                            </div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => setFocusedTaskId(null)}
+                                                                className="h-6 w-6 rounded-full text-muted-foreground hover:text-foreground"
+                                                            >
+                                                                <X className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+
+                                                        {/* Body */}
+                                                        <div className="flex items-center gap-4">
+                                                            {/* Task info */}
+                                                            <div className="flex-1 min-w-0 space-y-1.5">
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <Link
+                                                                        href={`/tasks`}
+                                                                        onClick={() => {
+                                                                            localStorage.setItem('fcc_selected_task', JSON.stringify({
+                                                                                id: focusedTask.id,
+                                                                                title: focusedTask.title,
+                                                                                projectTitle: project?.title || null,
+                                                                                project: project
+                                                                            }))
+                                                                            localStorage.setItem('fcc_side_panel_open', JSON.stringify(true))
+                                                                        }}
+                                                                    >
+                                                                        <h4 className="text-sm font-bold leading-tight hover:text-primary transition-colors">
+                                                                            {focusedTask.title}
+                                                                        </h4>
+                                                                    </Link>
+                                                                    <div className={cn(
+                                                                        "inline-flex items-center border px-2 py-0.5 text-[10px] font-semibold rounded-full shrink-0",
+                                                                        getStatusTaskColor(focusedTask.status)
+                                                                    )}>
+                                                                        <span className="w-1 h-1 rounded-full bg-current opacity-75 mr-1" />
+                                                                        {displayTaskStatus(focusedTask.status)}
+                                                                    </div>
+                                                                </div>
+                                                                {focusedTask.summary && (
+                                                                    <p className="text-xs text-muted-foreground/70 line-clamp-1">{focusedTask.summary}</p>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Circular mission progress */}
+                                                            {(focusedTask.missions?.length || 0) > 0 && (
+                                                                <div className="flex items-center gap-2 shrink-0">
+                                                                    <MissionProgress
+                                                                        size={42}
+                                                                        completed={focusedTask.missions.filter(m => m.completed).length}
+                                                                        total={focusedTask.missions.length}
+                                                                        animate={false}
+                                                                    />
+                                                                    <div>
+                                                                        <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+                                                                            Missions
+                                                                        </p>
+                                                                        <p className="text-xs font-bold">
+                                                                            {focusedTask.missions.filter(m => m.completed).length}
+                                                                            <span className="text-muted-foreground font-normal">/{focusedTask.missions.length}</span>
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Status Groups */}
+                                            <div className="space-y-3">
+                                                {renderGroup(
+                                                    'In Progress', 
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />,
+                                                    inProgressTasks, 
+                                                    'in_progress',
+                                                    'bg-blue-500/15 text-blue-500'
+                                                )}
+                                                {renderGroup(
+                                                    'To Do', 
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />,
+                                                    todoTasks, 
+                                                    'todo',
+                                                    'bg-slate-500/15 text-slate-500'
+                                                )}
+                                                {renderGroup(
+                                                    'Completed', 
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />,
+                                                    doneTasks, 
+                                                    'done',
+                                                    'bg-emerald-500/15 text-emerald-500'
+                                                )}
+                                                {renderGroup(
+                                                    'Other', 
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />,
+                                                    otherTasks, 
+                                                    'other',
+                                                    'bg-amber-500/15 text-amber-500'
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })()
                             )}
                         </div>
                     )}
@@ -789,14 +1089,61 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                         </div>
                     )}
                     {activeTab === 'files' && (
-                        <div className="space-y-4 animate-in fade-in-50">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold">Files</h3>
-                                <Button size="sm" variant="outline">Upload</Button>
-                            </div>
-                            <div className="text-sm text-muted-foreground italic bg-muted/30 p-8 rounded-lg text-center border border-dashed border-border/50">
-                                No files uploaded yet.
-                            </div>
+                        <div className="space-y-6 animate-in fade-in-50">
+                            <FileUpload projectId={project?.id}/>
+                            
+                            {project?.attachmentUrl && (
+                                <div className="mt-6 flex flex-col gap-2">
+                                    <h4 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">Attached File</h4>
+                                    {isImage(project.attachmentPath) ? (
+                                        <div className="border border-border/50 rounded-xl overflow-hidden shadow-sm relative group bg-muted/20 w-full h-64">
+                                            <img src={project.attachmentUrl} alt="Project Attachment" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 backdrop-blur-[2px]">
+                                                <Button variant="secondary" size="sm" className="font-semibold" asChild>
+                                                    <a href={project.attachmentUrl} target="_blank" rel="noopener noreferrer">
+                                                        <ExternalLink className="h-4 w-4 mr-2"/> Open Full Size
+                                                    </a>
+                                                </Button>
+                                                <Button variant="destructive" size="sm" onClick={handleDeleteAttachment} disabled={isDeletingFile}>
+                                                    {isDeletingFile ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2"/>}
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-between p-4 border border-border/50 rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="flex items-center gap-4 overflow-hidden">
+                                                <div className="p-3 bg-primary/10 rounded-lg text-primary shrink-0">
+                                                    <FileText className="h-6 w-6" />
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-sm font-semibold text-foreground truncate">
+                                                        {project.attachmentPath?.split('/').pop()?.split('-').slice(1).join('-') || 'Project Document'}
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground truncate">Securely stored in Supabase</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0 ml-4">
+                                                <Button variant="outline" size="sm" className="h-9 font-medium" asChild>
+                                                    <a href={project.attachmentUrl} target="_blank" rel="noopener noreferrer">
+                                                        <Download className="h-4 w-4 mr-2"/>
+                                                        Download
+                                                    </a>
+                                                </Button>
+                                                <Button 
+                                                    variant="destructive" 
+                                                    size="icon" 
+                                                    className="h-9 w-9" 
+                                                    onClick={handleDeleteAttachment}
+                                                    disabled={isDeletingFile}
+                                                >
+                                                    {isDeletingFile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4"/>}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
                     {activeTab === 'activity' && (
