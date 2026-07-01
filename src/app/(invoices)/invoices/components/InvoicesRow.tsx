@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import DeleteButton from "./DeleteButton"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { useInvoiceFormatter } from "@/hooks/useInvoiceFormatter"
 
 interface InvoicesRowProps {
   invoice: Invoice
@@ -61,6 +62,7 @@ const formatDate = (date: string | Date | undefined | null) => {
 
 export const InvoicesRow = ({ invoice, onDelete, onToggle, isSelected, clientName, projectName }: InvoicesRowProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
+  const { formatInvoiceId } = useInvoiceFormatter()
   
   const displayStatus = (invoice.status || 'draft')
     .split('_')
@@ -69,7 +71,7 @@ export const InvoicesRow = ({ invoice, onDelete, onToggle, isSelected, clientNam
 
   const statusConfig = getStatusConfig(invoice.status)
   
-  const formattedId = `INV-2026-${String(invoice.id).padStart(4, '0')}`
+  const formattedId = formatInvoiceId(invoice)
 
   const dropdownTrigger = (
     <Button

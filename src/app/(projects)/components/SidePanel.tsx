@@ -2,6 +2,7 @@
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Project, updateProject } from "@/lib/api/projects";
+import { Invoice } from "@/lib/api/invoices";
 import { ExternalLink, X, Lightbulb, Rocket, TrendingUp, Target, CheckCircle, PauseCircle, Sparkles, XCircle, Flame, CircleDashed, Calendar, Clock, UserPlus2Icon, Trash2, Archive, Loader2, Edit2, Type, AlignLeft, Wallet, Tag as TagIcon, Activity, User, PlusIcon, MoreHorizontal, Star, ChevronDown, ChevronRight, Zap, Download, FileText } from "lucide-react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ import { TaskForm } from "@/app/(tasks)/components/TaskForm";
 import { createPortal } from "react-dom";
 import { MissionProgress } from "@/app/(tasks)/components/MissionProgress";
 import { FileUpload } from "@/app/components/FileUpload";
+import { useInvoiceFormatter } from "@/hooks/useInvoiceFormatter";
 
 
 
@@ -37,6 +39,7 @@ interface SidePanelProps {
     totalPaid?: number
     onArchive?: (id: number, isArchived: boolean) => void
     fetchTasks?: (projectId: number) => Promise<Task[]>
+    projectInvoices?: Invoice[]
 }
 
 
@@ -197,8 +200,9 @@ const displayTaskStatus = (status: string) => {
     return statusDisplay[status] || statusDisplay.todo
 }
 
-export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, onDelete, onEdit, clientName, timeTrackedThisWeek, totalPaid, onArchive, fetchTasks }) => {
+export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, onDelete, onEdit, clientName, timeTrackedThisWeek, totalPaid, onArchive, fetchTasks, projectInvoices }) => {
 
+    const { formatInvoiceId } = useInvoiceFormatter();
 
     const isLargeScreen = useMediaQuery('(min-width: 1536px)')
     const [isExtended, setIsExtended] = useState<boolean>(false)
@@ -384,19 +388,30 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
         return 'text-green-500'
     }
 
-    const projectBudget = project?.budget || 0;
+    // Use invoices to calculate the true budget and paid amounts if they exist
+    const projectBudget = (projectInvoices && projectInvoices.length > 0)
+        ? projectInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0)
+        : (project?.budget || 0);
+        
+    const calculatedTotalPaid = (projectInvoices && projectInvoices.length > 0)
+        ? projectInvoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + Number(inv.amount), 0)
+        : (totalPaid || 0);
 
+    const remainingBudget = Number(projectBudget) - calculatedTotalPaid;
 
     const paymentPercentage = projectBudget > 0
-        ? Math.min(Math.round(((totalPaid || 0) / Number(projectBudget)) * 100), 100)
+        ? Math.min(Math.round((calculatedTotalPaid / Number(projectBudget)) * 100), 100)
         : 0;
-
 
     const paymentColor = paymentPercentage >= 100
         ? '#22c55e'
         : paymentPercentage >= 50
             ? '#eab308'
             : '#ef4444'
+
+    const remainingBudgetLabel = remainingBudget >= 0
+        ? `$${remainingBudget.toLocaleString()}`
+        : `-$${Math.abs(remainingBudget).toLocaleString()}`;
 
     return (
         <>
@@ -484,7 +499,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                     </SheetHeader>
                     <div className="w-full border-b border-border px-4 mt-6">
                         <div className="flex flex-wrap gap-4 sm:gap-6 text-sm font-medium text-muted-foreground">
-                            {['overview', 'details', 'tasks', 'members', 'files', 'activity'].map(tab => (
+                            {['overview', 'details', 'tasks', 'invoices', 'members', 'files', 'activity'].map(tab => (
                                 <button
                                     key={tab}
                                     type="button"
@@ -582,7 +597,10 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                                                         ? 'text-yellow-600 bg-yellow-500/10'
                                                         : 'text-red-600 bg-red-500/10'
                                             )}>
-                                                {paymentPercentage}% paid (${(totalPaid || 0).toLocaleString()})
+                                                {paymentPercentage}% paid (${calculatedTotalPaid.toLocaleString()})
+                                            </span>
+                                            <span className="text-[10px] uppercase font-bold mt-2 px-2 py-1 rounded w-fit text-slate-700 bg-slate-200/70 dark:text-slate-200 dark:bg-slate-800">
+                                                Remaining: {remainingBudgetLabel}
                                             </span>
                                         </div>
 
@@ -730,7 +748,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                                                 <Wallet className="w-4 h-4" />
                                                 <span className="text-xs font-semibold">Budget</span>
                                             </div>
-                                            <span className="text-sm font-medium text-foreground">{project?.budget ? `$${project.budget.toLocaleString()}` : 'N/A'}</span>
+                                            <span className="text-sm font-medium text-foreground">{projectBudget ? `$${projectBudget.toLocaleString()}` : 'N/A'}</span>
                                         </div>
 
                                         <div className="group flex flex-col gap-1 p-3 rounded-lg hover:bg-muted/20 transition-colors">
@@ -1091,6 +1109,51 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                                 )}
                             </div>
                         )}
+                        {/* Invoices tab ----------------------------------------------------------------------------*/}
+                        {activeTab === 'invoices' && (
+                            <div className="space-y-4 animate-in fade-in-50">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-lg font-semibold">Invoices</h3>
+                                </div>
+                                {(!projectInvoices || projectInvoices.length === 0) ? (
+                                    <div className="text-sm text-muted-foreground italic bg-muted/30 p-8 rounded-lg text-center border border-dashed border-border/50">
+                                        No invoices created for this project yet.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {projectInvoices.map(invoice => (
+                                            <div key={invoice.id} className="group flex flex-col gap-2 p-4 rounded-xl border bg-card/40 hover:bg-card hover:shadow-xs transition-all">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-semibold text-sm">{formatInvoiceId(invoice)}</span>
+                                                    <span className={cn(
+                                                        "text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full",
+                                                        invoice.status === 'paid' ? 'bg-green-500/15 text-green-600' :
+                                                        invoice.status === 'overdue' ? 'bg-red-500/15 text-red-600' :
+                                                        invoice.status === 'sent' ? 'bg-blue-500/15 text-blue-600' :
+                                                        invoice.status === 'partially_paid' ? 'bg-amber-500/15 text-amber-600' :
+                                                        'bg-slate-500/15 text-slate-600'
+                                                    )}>
+                                                        {invoice.status.replace('_', ' ')}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between mt-1">
+                                                    <span className="text-lg font-bold">${Number(invoice.amount).toLocaleString()}</span>
+                                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                        <Calendar className="w-3.5 h-3.5" />
+                                                        Due: {new Date(invoice.dueDate).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                                {invoice.paidAt && (
+                                                    <div className="text-[10px] text-muted-foreground mt-1">
+                                                        Paid on: {new Date(invoice.paidAt).toLocaleDateString()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         {activeTab === 'members' && (
                             <div className="space-y-4 animate-in fade-in-50">
                                 <div className="flex items-center justify-between">
@@ -1277,6 +1340,34 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                                     })
                                 }
                             })
+
+                            // 5. Invoice events
+                            if (projectInvoices) {
+                                projectInvoices.forEach(inv => {
+                                    if (inv.createdAt) {
+                                        events.push({
+                                            id: `invoice_created_${inv.id}`,
+                                            date: new Date(inv.createdAt),
+                                            label: 'Invoice Generated',
+                                            sublabel: `${formatInvoiceId(inv)} - $${Number(inv.amount).toLocaleString()} (${inv.status.replace('_', ' ')})`,
+                                            icon: <Wallet className="h-3.5 w-3.5" />,
+                                            dot: 'bg-blue-500/15 text-blue-500',
+                                            line: 'from-blue-500/40',
+                                        })
+                                    }
+                                    if (inv.status === 'paid' && inv.paidAt) {
+                                        events.push({
+                                            id: `invoice_paid_${inv.id}`,
+                                            date: new Date(inv.paidAt),
+                                            label: 'Invoice Paid',
+                                            sublabel: `${formatInvoiceId(inv)} - $${Number(inv.amount).toLocaleString()}`,
+                                            icon: <CheckCircle className="h-3.5 w-3.5" />,
+                                            dot: 'bg-green-500/15 text-green-500',
+                                            line: 'from-green-500/40',
+                                        })
+                                    }
+                                })
+                            }
 
                             // Sort newest first
                             events.sort((a, b) => b.date.getTime() - a.date.getTime())

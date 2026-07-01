@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils"
 import { ProjectForm } from "./ProjectForm"
 import { type Client } from '@/lib/api/clients'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { FocusedProject } from "./FocusedProject"
 
 
 interface Props {
@@ -419,6 +420,11 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
         })()}
       </div>
 
+        <FocusedProject 
+          project={selectedProjectForPanel || project[0]
+          
+          }
+        />
       {/* Search and List Section */}
         <div className="space-y-4 p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm -mb-3">
           {project.length > 0 && (
@@ -551,6 +557,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
                       .filter(inv => inv.projectId === selectedProjectForPanel?.id && inv.status === 'paid')
                       .reduce((sum, inv) => sum + Number(inv.amount), 0)
                   }
+                  projectInvoices={invoices.filter(inv => inv.projectId === selectedProjectForPanel?.id)}
                 />
               )}
 
