@@ -28,7 +28,7 @@ const ProjectsPage = async () => {
 
   const stats = { total, active, completed, onHold, cancelled, planning, archived }
 
-  return <ProjectPageContent initialProjects={project} clientNames={clientNames} stats={stats} invoices={invoices} />
+  return <ProjectPageContent initialProjects={project} clients={clients} clientNames={clientNames} stats={stats} invoices={invoices} />
 
 }
 

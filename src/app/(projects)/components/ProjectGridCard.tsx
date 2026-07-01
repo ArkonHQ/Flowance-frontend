@@ -29,6 +29,7 @@ interface ProjectGridCardProps {
   onDelete?: (id: number) => void
   onArchive?: (id: number, isArchived: boolean) => void
   onSidePanelOpen: (id: number, project: Project) => void
+  onEdit?: (project: Project) => void
 }
 
 const getStatusColor = (status: string) => {
@@ -58,7 +59,8 @@ export const ProjectGridCard = ({
   clientName,
   onDelete,
   onArchive,
-  onSidePanelOpen
+  onSidePanelOpen,
+  onEdit
 }: ProjectGridCardProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [archiving, setArchiving] = useState(false)
@@ -143,17 +145,16 @@ export const ProjectGridCard = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem asChild>
-              <Link href={`/projects/${project.id}`} className="flex items-center gap-2 cursor-pointer">
-                <ExternalLink className="h-4 w-4" />
-                View details
-              </Link>
+            <DropdownMenuItem onSelect={() => {
+              setIsOpen(false)
+              handleSidePanelOpen?.(project.id, project)
+            }} className="flex items-center gap-2 cursor-pointer">
+              <ExternalLink className="h-4 w-4" />
+              Open details
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`/projects/${project.id}/edit`} className="flex items-center gap-2 cursor-pointer">
-                <Pencil className="h-4 w-4" />
-                Edit project
-              </Link>
+            <DropdownMenuItem onSelect={() => onEdit?.(project)} className="flex items-center gap-2 cursor-pointer">
+              <Pencil className="h-4 w-4" />
+              Edit project
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleArchiveToggle} disabled={archiving} className="flex items-center gap-2 cursor-pointer">

@@ -3,14 +3,13 @@
 import { StatCard } from "@/components/ui/StatCard"
 import { motion } from "framer-motion"
 import { Briefcase, PlugIcon, PlusIcon, Search, Pause, XCircle, CheckIcon, FilterX, DollarSign, FolderKanban, LayoutGrid, List } from "lucide-react"
-import { use, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ProjectRow } from "./ProjectRow"
 import { ProjectGridCard } from "./ProjectGridCard"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
 import { deleteProject, getAllProjects, updateProject, type Project } from '@/lib/api/projects'
 import { getTaskByProject } from '@/lib/api/tasks'
-import { type Invoice } from '@/lib/api/invoices'  
+import { type Invoice } from '@/lib/api/invoices'
 import { PaginationFooter } from "@/app/components/pagination-footer"
 import { ProjectsBulkActions } from "./projects-bulk-actions"
 import { toast } from "sonner"
@@ -18,6 +17,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SidePanel } from "./SidePanel"
 import { cn } from "@/lib/utils"
+import { ProjectForm } from "./ProjectForm"
+import { type Client } from '@/lib/api/clients'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 
 interface Props {
@@ -25,10 +27,11 @@ interface Props {
   clientNames: Record<number, string>
   stats: { total: number; active: number; completed: number ; onHold: number; cancelled: number; planning: number; archived: number }
   invoices: Invoice[]
+  clients: Client[]
 }
 
 
-export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoices }: Props) => {
+export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoices, clients }: Props) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [project, setProject] = useState<Project[]>(initialProjects)
   const [projectStats, setProjectStats] = useState(stats)
@@ -38,6 +41,36 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
   const [sortBy, setSortBy] = useState('')
   const [isArchived, setIsArchived] = useState(false)
   const [onEditProject, setOnEditProject] = useState<Project | null>(null)
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Auto-open modal when navigated here with ?newProject=1 or ?editProject=id
+  useEffect(() => {
+    let shouldUpdateUrl = false
+    const url = new URL(window.location.href)
+
+    if (searchParams.get('newProject') === '1') {
+      setIsProjectModalOpen(true)
+      url.searchParams.delete('newProject')
+      shouldUpdateUrl = true
+    }
+
+    const editProjectId = searchParams.get('editProject')
+    if (editProjectId) {
+      const projToEdit = project.find(p => p.id === Number(editProjectId))
+      if (projToEdit) {
+        setOnEditProject(projToEdit)
+        setIsProjectModalOpen(true)
+      }
+      url.searchParams.delete('editProject')
+      shouldUpdateUrl = true
+    }
+
+    if (shouldUpdateUrl) {
+      router.replace(url.pathname, { scroll: false })
+    }
+  }, [searchParams, project, router])
   
 
   // Save view mode in local storage
@@ -135,12 +168,23 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
 
       const now = Date.now()
 
-      if (e.key.toLowerCase() === 'n' && lastKey === 'p' && now - lastTime < 1000) {
+      if (e.key.toLowerCase() === 'p' && lastKey === 'n' && now - lastTime < 1000) {
         e.preventDefault()
-        
+        setIsProjectModalOpen(true)
+        lastKey = ''
+      }else if (e.key === 'Escape') {
+          setIsProjectModalOpen(false)
+          lastKey = ''
+      }else {
+        lastKey = e.key.toLowerCase()
+        lastTime = now
       }
     }
-  } ,[])
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  
+  }, [])
   
   const refreshProjectsAndStats = async () => {
     try {
@@ -206,15 +250,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
 
   const handleEditProject = async (project: Project) => {
     setOnEditProject(project)
-    setSidePanelOpen(true)
-
-    try {
-      await updateProject(project.id, project)
-      setProject(prev => prev.map(p => p.id === project.id ? project : p))
-      toast.success("Project updated successfully")
-    } catch (err) {
-      toast.error("Failed to update project")
-    }
+    setIsProjectModalOpen(true)
   }
 
   const handleDeleteProject = async (projectId: number) => {
@@ -224,6 +260,10 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
       toast.success("Project deleted successfully")
     } catch (err) {
       toast.error("Failed to delete project")
+    }
+    if (sidePanelOpen && selectedProjectForPanel?.id === projectId) {
+      setSidePanelOpen(false)
+      setSelectedProjectForPanel(null)
     }
   }
 
@@ -307,12 +347,10 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
         <div>
           <h2 className="text-2xl font-bold">Projects</h2>
         </div>
-        <Link href={'projects/new'}>
-         <Button className="gap-2">
+        <Button className="gap-2" onClick={() => setIsProjectModalOpen(true)}>
           <PlusIcon className="h-4 w-4" />
           New Project
-         </Button>
-        </Link>
+        </Button>
       </div>
 
       {/* Stats Bar  */}
@@ -449,12 +487,10 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
               </div>
               <h3 className="text-lg font-medium">No projects yet</h3>
               <p className="text-muted-foreground mt-1">No projects have been created yet.</p>
-              <Link href='/projects/new' className="inline-block mt-4">
-                <Button variant='outline' className="dark:bg-gray-950 bg-white/20 backdrop-blur-md border hover:bg-indigo-400 transition-all">
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Create Project
-                </Button>
-              </Link>
+              <Button variant='outline' onClick={() => setIsProjectModalOpen(true)} className="dark:bg-gray-950 bg-white/20 backdrop-blur-md border hover:bg-indigo-400 transition-all mt-4">
+                <PlusIcon className="h-4 w-4 mr-2" />
+                Create Project
+              </Button>
             </div>
           ) : filtered.length === 0 ? (
             <div className="py-20 text-center border-2 border-dashed border-border/20 rounded-2xl bg-card/20 backdrop-blur-sm">
@@ -530,6 +566,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
                         setSelectedProjectForPanel(proj)
                         setSidePanelOpen(true)
                       }}
+                      onEdit={handleEditProject}
                     />
                   ))}
                 </div>
@@ -547,6 +584,7 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
                       setSelectedProjectForPanel(proj)
                       setSidePanelOpen(true)
                     }}
+                    onEdit={handleEditProject}
                   />
                 ))
               )}
@@ -574,6 +612,29 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
           onBulkDelete={handleBulkDelete}
         />
       )}
+      <ProjectForm
+        key={onEditProject?.id ?? 'new'}
+        clients={clients}
+        isOpen={isProjectModalOpen}
+        initialData={onEditProject}
+        onClose={() => {
+          setIsProjectModalOpen(false)
+          setTimeout(() => setOnEditProject(null), 300)
+        }}
+        onProjectCreated={(newProject) => {
+          setProject(prev => [newProject, ...prev])
+          setProjectStats(prev => ({ ...prev, total: prev.total + 1, planning: (prev.planning ?? 0) + 1 }))
+          setIsProjectModalOpen(false)
+        }}
+        onProjectUpdated={(updatedProject) => {
+          setProject(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p))
+          setIsProjectModalOpen(false)
+          setTimeout(() => setOnEditProject(null), 300)
+          if (selectedProjectForPanel?.id === updatedProject.id) {
+            setSelectedProjectForPanel(updatedProject)
+          }
+        }}
+      />
     </>
   )
 }

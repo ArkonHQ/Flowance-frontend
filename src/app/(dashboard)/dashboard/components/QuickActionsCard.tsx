@@ -4,8 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Briefcase, FileText, Clock, ListTodo } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export function QuickActionsCard() {
+  const router = useRouter()
+
   const actions = [
     {
       label: 'New Project',
@@ -14,7 +17,7 @@ export function QuickActionsCard() {
       bg: 'bg-indigo-500/10',
       hoverBg: 'hover:bg-indigo-500/5',
       hoverBorder: 'hover:border-indigo-500/40',
-      href: '/projects/new'
+      onClick: () => router.push('/projects?newProject=1')
     },
     {
       label: 'Create Invoice',
@@ -54,22 +57,32 @@ export function QuickActionsCard() {
       </CardHeader>
 
       <CardContent className="grid grid-cols-2 gap-2.5">
-        {actions.map((action) => (
-          <Link key={action.label} href={`${action.href ?? '#'}`} >
-          <Button
-            variant="outline"
-            className={`h-14 justify-start gap-3 text-xs font-bold border-border/40 rounded-xl group transition-all duration-200 ${action.hoverBg} ${action.hoverBorder} shadow-sm`}
-          >
-            <div
-              className={`h-9 w-9 rounded-xl ${action.bg} ${action.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-all duration-300 shadow-sm`}
+        {actions.map((action) => {
+          const btnContent = (
+            <Button
+              key={action.label}
+              variant="outline"
+              className={`h-14 w-full justify-start gap-3 text-xs font-bold border-border/40 rounded-xl group transition-all duration-200 ${action.hoverBg} ${action.hoverBorder} shadow-sm`}
+              onClick={action.onClick}
             >
-              <action.icon className="h-5 w-5" strokeWidth={2.5} />
-            </div>
-            {action.label}
-          </Button>
-          </Link>
-        ))}
+              <div
+                className={`h-9 w-9 rounded-xl ${action.bg} ${action.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-all duration-300 shadow-sm`}
+              >
+                <action.icon className="h-5 w-5" strokeWidth={2.5} />
+              </div>
+              {action.label}
+            </Button>
+          )
+
+          return 'href' in action && action.href ? (
+            <Link key={action.label} href={action.href}>
+              {btnContent}
+            </Link>
+          ) : (
+            <div key={action.label}>{btnContent}</div>
+          )
+        })}
       </CardContent>
     </Card>
   )
-}
+}

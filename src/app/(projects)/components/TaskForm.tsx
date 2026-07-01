@@ -42,11 +42,9 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
   const addMission = (name: string, id: number) => {
     setValues(prev => ({ ...prev, missions: [...prev.missions, { id, name, completed: false }] }))
   }
-
   const updateMission = (id: number, name: string) => {
     setValues(prev => ({ ...prev, missions: prev.missions.map(m => m.id === id ? { ...m, name } : m) }))
   }
-
   const removeMission = (id: number) => {
     setValues(prev => ({ ...prev, missions: prev.missions.filter(m => m.id !== id) }))
   }
@@ -54,25 +52,16 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submittingStep, setSubmittingStep] = useState('')
 
-
   const handleSubmit = async (e: React.FormEvent) => {
-
     e.preventDefault()
-    // 1. Validation
-
     if (!projects) return toast.error("Please select a project")
-
     if (!title.trim()) return toast.error("Type a name for your task")
-
     if (!projectId) return toast.error("Please select a project workspace!")
 
     try {
       setIsSubmitting(true)
       setSubmittingStep("Creating your task...")
 
-      // 5.CREATING MODE
-
-      // 5.1 Creating the task first (we need its id for the missions)
       const taskObj = await createTask({
         title: title.trim(),
         summary: summary.trim() || undefined,
@@ -84,33 +73,23 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
         projectId: Number(projectId)
       })
 
-      // 5.2 adding mission one by one using for loop
       if (missions.length > 0) {
-
         for (let m = 0; m < missions.length; m++) {
-
           setSubmittingStep(`Adding mission ${m + 1} of ${missions.length}...`)
-
           const missionName = missions[m].name.trim()
-          if (missionName) {
-            await apiAddMission(taskObj.id, missionName)
-          }
+          if (missionName) await apiAddMission(taskObj.id, missionName)
         }
       }
 
-      // 6. Success feedback and cleanup
-      setSubmittingStep("Task and mission created successfully!")
+      setSubmittingStep("Task created successfully!")
       resetForm()
       onClose()
       onTaskCreated?.(taskObj)
 
     } catch (err) {
-
-      // 7. Failure ---error handling---
       console.error(err)
       toast.error("Could not save. Please try again.")
     } finally {
-      // 8. Always stop loading no matter what :)
       setSubmittingStep('')
       setIsSubmitting(false)
     }
@@ -121,15 +100,12 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
       <h3 className="text-[10px] font-bold tracking-wider text-muted-foreground flex items-center gap-1.5 uppercase">
         <span>01</span> Core Info
       </h3>
-
       <div className="space-y-1.5">
         <Label htmlFor="title" className="text-xs font-semibold tracking-wide text-foreground/80">
           Task Name <span className="text-rose-500">*</span>
         </Label>
         <Input
-          id="title"
-          name="title"
-          type="text"
+          id="title" name="title" type="text"
           placeholder="What needs to be done?"
           value={title}
           onChange={(e) => setFieldValue('title', e.target.value)}
@@ -137,30 +113,21 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
           className="h-10 bg-muted/20 border-border/40 focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/60 rounded-xl transition-all placeholder:text-muted-foreground/50"
         />
       </div>
-
       <div className="space-y-1.5">
-        <Label htmlFor="summary" className="text-xs font-semibold tracking-wide text-foreground/80">
-          Brief Summary
-        </Label>
+        <Label htmlFor="summary" className="text-xs font-semibold tracking-wide text-foreground/80">Brief Summary</Label>
         <Input
-          type="text"
-          name="summary"
-          id="summary"
+          type="text" name="summary" id="summary"
           value={summary}
           onChange={(e) => setFieldValue('summary', e.target.value)}
           placeholder="A quick overview (optional)"
           className="h-10 bg-muted/20 border-border/40 focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/60 rounded-xl transition-all placeholder:text-muted-foreground/50"
         />
       </div>
-
-                {/* Description */}
+      {/* Description */}
       <div className="space-y-1.5">
-        <Label htmlFor="description" className="text-xs font-semibold tracking-wide text-foreground/80">
-          Description & Notes
-        </Label>
+        <Label htmlFor="description" className="text-xs font-semibold tracking-wide text-foreground/80">Description & Notes</Label>
         <Textarea
-          name="description"
-          id="description"
+          name="description" id="description"
           value={description}
           onChange={(e) => setFieldValue('description', e.target.value)}
           placeholder="Write clear instructions, links, or context..."
@@ -168,8 +135,7 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
           className="bg-muted/20 border-border/40 focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/60 rounded-xl transition-all placeholder:text-muted-foreground/50 resize-none"
         />
       </div>
-
-                {/* Project picker */}
+      {/* Project picker */}
       <div className="space-y-1.5">
         <Label htmlFor="project" className="text-xs font-semibold tracking-wide text-foreground/80">
           Project & Workspace <span className="text-rose-500">*</span>
@@ -190,7 +156,6 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
           </SelectContent>
         </Select>
       </div>
-
       <div className="space-y-4 pt-4 border-t border-border/20">
         <h3 className="text-[10px] font-bold tracking-wider text-muted-foreground flex items-center gap-1.5 uppercase">
           <span>02</span> Missions & Subtasks
@@ -200,11 +165,8 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
             Break it down into smaller steps
           </Label>
           <SubtaskEditor
-            items={missions}
-            onAdd={addMission}
-            onUpdate={updateMission}
-            onRemove={removeMission}
-            placeholder="Add a new mission..."
+            items={missions} onAdd={addMission} onUpdate={updateMission}
+            onRemove={removeMission} placeholder="Add a new mission..."
           />
         </div>
       </div>
@@ -217,33 +179,22 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
         <span>03</span> Parameters & Goals
       </h3>
       <div className="space-y-1.5">
-        <Label htmlFor="status" className="text-xs font-semibold tracking-wide text-foreground/80">
-          Status
-        </Label>
+        <Label className="text-xs font-semibold tracking-wide text-foreground/80">Status</Label>
         <StatusSelector value={status} onChange={(v) => setFieldValue('status', v)} />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="deadline" className="text-xs font-semibold tracking-wide text-foreground/80">
-          Due Date
-        </Label>
+        <Label className="text-xs font-semibold tracking-wide text-foreground/80">Due Date</Label>
         <CustomDatePicker date={date} onChange={(v) => setFieldValue('date', v)} placeholder="Select deadline" />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="priority" className="text-xs font-semibold tracking-wide text-foreground/80">
-          Task Priority
-        </Label>
+        <Label className="text-xs font-semibold tracking-wide text-foreground/80">Task Priority</Label>
         <PrioritySelector value={priority} onChange={(v) => setFieldValue('priority', v)} />
       </div>
       <div className="space-y-1.5">
-        <Label className="text-xs font-semibold tracking-wide text-foreground/80">
-          Tags Classification
-        </Label>
+        <Label className="text-xs font-semibold tracking-wide text-foreground/80">Tags Classification</Label>
         <div className="rounded-xl border border-border/20 bg-muted/10 p-2.5">
           <TagSelector
-            selectedTagIds={selectedTagIds}
-            compact={true}
-            noIcon={true}
-            existTitle="Select Tags"
+            selectedTagIds={selectedTagIds} compact={true} noIcon={true}
             onChange={(v) => setFieldValue('selectedTagIds', v)}
           />
         </div>

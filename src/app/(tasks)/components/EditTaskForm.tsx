@@ -344,6 +344,7 @@ export const EditTaskForm = ({
                   <TagSelector
                     selectedTagIds={selectedTagIds}
                     compact={true}
+                    existTitle="No Tags"
                     noIcon={true}
                     onChange={setSelectedTagIds}
                   />

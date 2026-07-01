@@ -30,6 +30,7 @@ interface ProjectRowProps {
   isSelecetd: boolean
   onToggle: (id: number) => void
   onSidePanelOpen?: (id: number, project: Project) => void
+  onEdit?: (project: Project) => void
 }
 
 const getStatusColor = (status: string) => {
@@ -94,7 +95,7 @@ const formatDate = (date: Date | string) => {
   return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-export const ProjectRow = ({ project, clientName, isSelecetd, onToggle, onArchive, onSidePanelOpen }: ProjectRowProps) => {
+export const ProjectRow = ({ project, clientName, onDelete, onArchive, isSelecetd, onToggle, onSidePanelOpen, onEdit }: ProjectRowProps) => {
 
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const [archiving, setArchiving] = useState<boolean>(false)
@@ -258,17 +259,16 @@ export const ProjectRow = ({ project, clientName, isSelecetd, onToggle, onArchiv
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem asChild>
-              <Link href={`/projects/${project.id}`} className="flex items-center gap-2 cursor-pointer">
-                <ExternalLink className="h-4 w-4" />
-                View details
-              </Link>
+              <DropdownMenuItem onSelect={() => {
+              setIsOpen(false)
+              onSidePanelOpen?.(project.id, project)
+            }} className="flex items-center gap-2 cursor-pointer">
+              <ExternalLink className="h-4 w-4" />
+              Open details
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`/projects/${project.id}/edit`} className="flex items-center gap-2 cursor-pointer">
-                <Pencil className="h-4 w-4" />
-                Edit project
-              </Link>
+            <DropdownMenuItem onSelect={() => onEdit?.(project)} className="flex items-center gap-2 cursor-pointer">
+              <Pencil className="h-4 w-4" />
+              Edit project
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleArchiveToggle} disabled={archiving} className="flex items-center gap-2 cursor-pointer">

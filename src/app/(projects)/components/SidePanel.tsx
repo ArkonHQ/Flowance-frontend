@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Task, deleteTask } from "@/lib/api/tasks";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { EditTaskForm } from "@/app/(tasks)/components/EditTaskForm";
+import { TaskForm } from "@/app/(tasks)/components/TaskForm";
 import { createPortal } from "react-dom";
 import { MissionProgress } from "@/app/(tasks)/components/MissionProgress";
 import { FileUpload } from "@/app/components/FileUpload";
@@ -200,12 +201,12 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
 
 
     const isLargeScreen = useMediaQuery('(min-width: 1536px)')
-    const [activeTab, setActiveTab] = useState('overview')
     const [isExtended, setIsExtended] = useState<boolean>(false)
     const [archive, setArchive] = useState<boolean>(false)
     const [isArchiving, setIsArchiving] = useState<boolean>(false)
     const [taskToEdit, setTaskToEdit] = useState<Task | null>(null)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [isAddTaskOpen, setIsAddTaskOpen] = useState(false)
     const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
 
 
@@ -224,6 +225,21 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
     const [isLoadingTasks, setIsLoadingTasks] = useState<boolean>(false)
 
 
+    // Save opening tab in side panel
+
+    const [activeTab, setActiveTab] = useState(() => {
+        if (typeof window === 'undefined') return 'overview'
+        const saved = localStorage.getItem('fcc_active_tab')
+        return saved || 'overview'
+    })
+
+    useEffect(() => {
+        if (activeTab) {
+            localStorage.setItem('fcc_active_tab', activeTab)
+        } else {
+            localStorage.removeItem('fcc_active_tab')
+        }
+    }, [activeTab])
 
     // Save the focused task id
     useEffect(() => {
@@ -303,11 +319,6 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
         }
     }, [open, isLargeScreen])
 
-    useEffect(() => {
-        if (open) {
-            setActiveTab('overview')
-        }
-    }, [open, project?.id])
 
     // Fetch tasks when switching to the 'tasks' or 'activity' tab
     useEffect(() => {
@@ -749,7 +760,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                             <div className="space-y-4 animate-in fade-in-50">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-semibold">Tasks</h3>
-                                    <Button size="sm">
+                                    <Button size="sm" onClick={() => setIsAddTaskOpen(true)}>
                                         <PlusIcon className="h-4 w-4" />
                                         Add Task
                                     </Button>
@@ -1379,6 +1390,19 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                         if (fetchTasks && project?.id) {
                             fetchTasks(project.id).then(setFetchedTasks);
                         }
+                    }}
+                />,
+                document.body
+            )}
+            {createPortal(
+                <TaskForm
+                    key={isAddTaskOpen ? project?.id : 'closed'}
+                    projects={project ? [project] : []}
+                    isOpen={isAddTaskOpen}
+                    onClose={() => setIsAddTaskOpen(false)}
+                    onTaskCreated={(newTask) => {
+                        setFetchedTasks(prev => [newTask, ...prev])
+                        setIsAddTaskOpen(false)
                     }}
                 />,
                 document.body

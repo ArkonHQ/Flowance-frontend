@@ -625,12 +625,13 @@ export const TaskPageContent = ({ initialTask, stats, projects, lastWeekHours, t
               </div>
               <h3 className="text-lg font-medium">No tasks yet</h3>
               <p className="text-muted-foreground mt-1">No tasks have been created yet.</p>
-              <Link href='/tasks/new' className="inline-block mt-4">
-                <Button variant='outline' className="dark:bg-gray-950 bg-white/20 backdrop-blur-md border hover:bg-indigo-400 transition-all">
+                <Button 
+                  variant='outline'
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="dark:bg-gray-950 mt-4 bg-white/20 backdrop-blur-md border hover:bg-indigo-400 transition-all">
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Create Task
                 </Button>
-              </Link>
             </div>
           ) : filtered.length === 0 ? (
             <div className="py-20 text-center border-2 border-dashed border-border/20 rounded-2xl bg-card/20 backdrop-blur-sm">

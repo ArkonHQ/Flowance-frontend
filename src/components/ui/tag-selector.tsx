@@ -29,11 +29,12 @@ interface TagSelectorProps {
   iconOnly?: boolean
   noIcon?: boolean
   maxTags?: number
+  existTitle: string
   onChange: (tagIds: number[]) => void
 }
 
 
-export const TagSelector = ({ selectedTagIds, disabled, compact, iconOnly, noIcon, maxTags, onChange }: TagSelectorProps) => {
+export const TagSelector = ({ selectedTagIds, disabled, compact, iconOnly, noIcon, maxTags, existTitle, onChange }: TagSelectorProps) => {
 
   const [availableTags, setAvailableTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(false)
@@ -172,7 +173,7 @@ export const TagSelector = ({ selectedTagIds, disabled, compact, iconOnly, noIco
               </TooltipProvider>
             ))}
             {selectedTags.length === 0 && (
-              <span className="text-sm text-muted-foreground">No tags</span>
+              <span className="text-sm text-muted-foreground">{existTitle}</span>
             )}
           </>
         ) : (
@@ -198,7 +199,7 @@ export const TagSelector = ({ selectedTagIds, disabled, compact, iconOnly, noIco
               </Badge>
             ))}
             {selectedTags.length === 0 && (
-              <span className="text-sm text-muted-foreground">No tags</span>
+              <span className="text-sm text-muted-foreground">{existTitle}</span>
             )}
           </>
         )}
@@ -223,7 +224,7 @@ export const TagSelector = ({ selectedTagIds, disabled, compact, iconOnly, noIco
             <PopoverContent className="w-[320px] p-0 shadow-lg rounded-xl border-muted/60" align="start">
               <div className="max-h-[300px] overflow-y-auto p-2 space-y-1">
                 {availableTags.filter(t => !selectedTagIds.includes(t.id)).length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">No tags available to select.</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">{ iconOnly ? "No icons available to select." : "No tags available to select."}</p>
                 )}
                 {availableTags
                   .filter(t => !selectedTagIds.includes(t.id))
