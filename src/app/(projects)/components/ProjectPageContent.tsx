@@ -421,9 +421,14 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
       </div>
 
         <FocusedProject 
-          project={selectedProjectForPanel || project[0]
-          
-          }
+          project={selectedProjectForPanel || project[0]}
+          invoices={invoices}
+          onToggleFocus={() => setSidePanelOpen(prev => !prev)}
+          onEditProject={handleEditProject}
+          onDeleteProject={handleDeleteProject}
+          timeTrackedThisWeek={120}
+          onToggleSidePanel={() => setSidePanelOpen(prev => !prev)}
+          onClose={() => setSidePanelOpen(false)}
         />
       {/* Search and List Section */}
         <div className="space-y-4 p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm -mb-3">

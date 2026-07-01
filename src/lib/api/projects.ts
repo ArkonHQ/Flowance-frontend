@@ -115,3 +115,13 @@ export const deleteProject = async (projectId: number, cookieHeader?: string): P
     if (!res.ok) throw new Error(`Failed to delete project: ${res.status}`);
     return { success: true };
 }
+
+// GET time chart data (daily minutes for last 7 days)
+export const getProjectTimeChart = async (projectId: number): Promise<{ day: string; minutes: number }[]> => {
+    const res = await fetch(`${API_BASE}/projects/${projectId}/time-chart`, {
+        credentials: 'include',
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.chart ?? [];
+};
