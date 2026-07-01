@@ -3,7 +3,7 @@
 import { StatCard } from "@/components/ui/StatCard"
 import { motion } from "framer-motion"
 import { Briefcase, PlugIcon, PlusIcon, Search, Pause, XCircle, CheckIcon, FilterX, DollarSign, FolderKanban, LayoutGrid, List } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { use, useEffect, useMemo, useState } from "react"
 import { ProjectRow } from "./ProjectRow"
 import { ProjectGridCard } from "./ProjectGridCard"
 import { Button } from "@/components/ui/button"
@@ -37,8 +37,6 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('')
   const [isArchived, setIsArchived] = useState(false)
-  const [sidePanelOpen, setSidePanelOpen] = useState<boolean>(false)
-  const [selectedProjectForPanel, setSelectedProjectForPanel] = useState<Project | null>(null)
   const [onEditProject, setOnEditProject] = useState<Project | null>(null)
   
 
@@ -51,6 +49,39 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
     return 'list'
   })
 
+  const [selectedProjectForPanel, setSelectedProjectForPanel] = useState<Project | null>(() => {
+    if (typeof window === 'undefined') return null
+
+    const saveId = localStorage.getItem('fcc_selected_project_for_panel')
+
+    return saveId ? project.find(p => p.id === Number(saveId)) ?? null : null
+  })
+
+  const [sidePanelOpen, setSidePanelOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('fcc_project_side_panel_open')
+      return saved === 'true'
+    }
+    return false
+  })
+
+  useEffect(() => {
+    if (sidePanelOpen) {
+      localStorage.setItem('fcc_project_side_panel_open', 'true')
+    }else {
+      localStorage.setItem('fcc_project_side_panel_open', 'false')
+    }
+  }, [sidePanelOpen])
+
+  useEffect(() => {
+
+    if (selectedProjectForPanel) {
+      localStorage.setItem('fcc_selected_project_for_panel', selectedProjectForPanel.id.toString())
+    }else {
+      localStorage.removeItem('fcc_selected_project_for_panel')
+    }
+  }, [selectedProjectForPanel])
+
   useEffect(() => {
 
     if (viewMode) {
@@ -61,7 +92,55 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
 
   const pageSize = 10
 
+  // Side panel shortcut "]"
+  useEffect(() => {
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement ||
+      (e.target as HTMLElement).isContentEditable) {
+        return
+      }
+    
+    if (e.key === ']'){
+      e.preventDefault()
+      setSidePanelOpen(prev => !prev)
+    }
+  }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+
+  }, [])
+
+
+  // Create new project with "n" then "p" shortcuts
+  // Implementing the timer logic in order to press n then p within 1 second .
+  useEffect(() => {
+    // This to understand if the user pressed "n" then "p" within 1 second
+    let lastKey = ''
+    // Timer to reset the lastKey after 1 second
+    let lastTime = 0
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't interfere with input fields .
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement).isContentEditable
+      ) {
+        return
+      }
+
+      const now = Date.now()
+
+      if (e.key.toLowerCase() === 'n' && lastKey === 'p' && now - lastTime < 1000) {
+        e.preventDefault()
+        
+      }
+    }
+  } ,[])
   
   const refreshProjectsAndStats = async () => {
     try {

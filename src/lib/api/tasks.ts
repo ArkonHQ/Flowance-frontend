@@ -14,7 +14,7 @@ export type Task = {
     status: 'todo' | 'in_progress' | 'done' | 'delayed' | 'cancelled' | 'overdue',
     priority: 'low' | 'medium' | 'high',
     deadline: Date | string,
-    completedAt: Date | null,
+    completedAt: Date | null | string,
     projectId: number,
     ownerId: string,
     createdAt: string,

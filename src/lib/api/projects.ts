@@ -28,6 +28,9 @@ export type Project = {
     health?: string
     attachmentPath?: string | null
     attachmentUrl?: string | null
+    attachmentUploadedAt: string
+    attachmentUploadedBy: string | null
+    attachmentDeletedAt: string |  null
 }   
 
 // keep API helpers minimal and consistent

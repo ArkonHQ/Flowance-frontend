@@ -13,6 +13,8 @@ import { useSession } from "@/lib/auth"
 
 
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
+
 
 export const FileUpload = ({projectId}: {projectId: number}) => {
 
@@ -30,7 +32,6 @@ export const FileUpload = ({projectId}: {projectId: number}) => {
     setProgress(0)
 
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
       
       const formData = new FormData()
       formData.append('file', file)
@@ -59,7 +60,7 @@ export const FileUpload = ({projectId}: {projectId: number}) => {
         xhr.onerror = () => reject(new Error('Network error'))
         xhr.send(formData)
       })
-
+      
       toast.success('File uploaded successfully!')
     } catch (error) {
       console.log('Upload error:', error)
@@ -73,7 +74,6 @@ export const FileUpload = ({projectId}: {projectId: number}) => {
 
 
   const saveFilesToProject = async (projectId: number, filePath: string, publicUrl: string) => {
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
     await fetch (`${API_BASE}/projects/attachments/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
