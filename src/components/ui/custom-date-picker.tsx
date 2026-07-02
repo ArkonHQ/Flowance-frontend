@@ -55,7 +55,7 @@ export function CustomDatePicker({
       </PopoverTrigger>
       <PopoverContent
         className={cn(
-          "w-auto p-0 rounded-xl border-border/40 shadow-xl backdrop-blur-sm",
+          "w-auto p-0 rounded-xl border-border/40 shadow-xl backdrop-blur-sm z-[200]",
           className
         )}
         align="start"

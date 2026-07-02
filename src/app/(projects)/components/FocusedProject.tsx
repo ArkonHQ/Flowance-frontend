@@ -17,7 +17,6 @@ import { useEffect, useState } from 'react'
 interface FocusedProjectProps {
   project: Project
   invoices?: Invoice[]
-  timeTrackedThisWeek?: number
   onToggleFocus: () => void
   onEditProject: () => void
   onDeleteProject: () => void
@@ -153,23 +152,24 @@ const formatTimeSpent = (timeSpent: number) => {
 }
 
 
-export const FocusedProject = ({ project, invoices, onToggleFocus, onEditProject, onDeleteProject, onToggleSidePanel, onClose, timeTrackedThisWeek }: FocusedProjectProps) => {
+export const FocusedProject = ({ project, invoices, onToggleFocus, onEditProject, onDeleteProject, onToggleSidePanel, onClose }: FocusedProjectProps) => {
 
   // Compute progress based on projects, tasks and invoices
   const allProgress = project.progress ?? 0
 
   const projectInvoices = (invoices || []).filter((invoice) => invoice.projectId === project.id)
 
-  const projectBudget = projectInvoices.length > 0
-    ? projectInvoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0)
-    : (project?.budget ? Number(project.budget) : 0)
-  const budgetAmount = Number(projectBudget) || 0
+  // Budget always comes from the project itself
+  const budgetAmount = Number(project?.budget) || 0
 
-  const totalPaid = projectInvoices.length > 0
-    ? projectInvoices
-        .filter((invoice) => invoice.status === 'paid')
-        .reduce((sum, invoice) => sum + Number(invoice.amount), 0)
-    : 0
+  // Paid = sum of paid invoices for this project
+  const totalPaid = projectInvoices
+    .filter((invoice) => invoice.status === 'paid')
+    .reduce((sum, invoice) => sum + Number(invoice.amount), 0)
+
+  // Total invoiced (all statuses) for reference
+  const totalInvoiced = projectInvoices
+    .reduce((sum, invoice) => sum + Number(invoice.amount), 0)
 
   const remainingBudget = budgetAmount - totalPaid
   const budgetProgress = budgetAmount > 0
@@ -187,6 +187,8 @@ export const FocusedProject = ({ project, invoices, onToggleFocus, onEditProject
   useEffect(() => {
     getProjectTimeChart(project.id).then(setChartData).catch(() => setChartData([]))
   }, [project.id])
+
+  const timeTrackedThisWeek = chartData.reduce((acc, curr) => acc + curr.minutes, 0)
 
 
   return (
@@ -217,55 +219,59 @@ export const FocusedProject = ({ project, invoices, onToggleFocus, onEditProject
         <div className='flex flex-col gap-4 md:flex-row md:items-center md:gap-4'>
 
           {/* Project details */}
-          
-          <ProjectIcon project={project} iconClassName='h-9 w-9' className='h-12 w-12' />
-          <div className='flex-1 min-w-0 space-y-1.5'> 
-            <div className='flex flex-wrap items-center gap-2.5'>
-              <Link
-                href={`/projects/${project.id}`}
-                onClick={onToggleSidePanel}
-              >
-                <h2 className='text-base font-bold leading-tight hover:text-primary transition-colors'>
-                  {project.title}
-                </h2>
-              </Link>
-              <div className={cn(
-                'inline-flex items-center border px-2.5 py-0.5 text-xs font-semibold rounded-full shrink-0',
-                getStatusColor(project.status)
-              )} >
-                <span className='h-1.5 w-1.5 rounded-full bg-current mr-1.5 opacity-75' />
-                   {displayStatus(project.status)}
+          <div className='flex-1 min-w-0'>
+            <div className='flex items-start gap-3'>
+              <ProjectIcon project={project} iconClassName='h-9 w-9' className='h-12 w-12 shrink-0' />
+
+              <div className='min-w-0 flex-1 space-y-1.5'>
+                <div className='flex flex-wrap items-center gap-2.5'>
+                  <Link
+                    href={`/projects/${project.id}`}
+                    onClick={onToggleSidePanel}
+                  >
+                    <h2 className='text-base font-bold leading-tight hover:text-primary transition-colors'>
+                      {project.title}
+                    </h2>
+                  </Link>
+                  <div className={cn(
+                    'inline-flex items-center border px-2.5 py-0.5 text-xs font-semibold rounded-full shrink-0',
+                    getStatusColor(project.status)
+                  )} >
+                    <span className='h-1.5 w-1.5 rounded-full bg-current mr-1.5 opacity-75' />
+                       {displayStatus(project.status)}
+                  </div>
+                </div>
+                {project.description && (
+                  <p className='text-xs text-muted-foreground line-clamp-1'>
+                    {project.description}
+                  </p>
+                )}
+                {project && (
+                  <div className='mt-2'>
+                  <p className='text-xs text-muted-foreground'>
+                    Members Count TODO here
+                  </p>
+                  </div>
+                )}
+
+                <div className='flex flex-row flex-wrap gap-4 items-center'>
+                {tasks > 0 && (
+                  <p className='text-xs text-muted-foreground flex'>
+                    <List className='h-4.5 w-4.5 mr-1.5' />
+                    {tasks} {tasks === 1 ? 'Task' : 'Tasks'}
+                  </p>
+                )}
+                {project.deadline && (
+                  <p className={`text-xs ${dueDateColor(dueDate)} flex`}>
+                    <Calendar className='h-4 w-4 mr-1.5' />
+                    {dueDateFotmatter(dueDate)}
+                  </p>
+
+                //TODO: Add members count here once we have the members feature implemented
+                )} 
+                </div>
               </div>
             </div>
-              {project.description && (
-                <p className='text-xs text-muted-foreground line-clamp-1'>
-                  {project.description}
-                </p>
-              )}
-              {project && (
-                <div className='mt-2'>
-                <p className='text-xs text-muted-foreground'>
-                  Members Count TODO here
-                </p>
-                </div>
-              )}
-
-              <div className='flex flex-row flex-wrap gap-4 items-center'>
-              {tasks > 0 && (
-                <p className='text-xs text-muted-foreground flex'>
-                  <List className='h-4.5 w-4.5 mr-1.5' />
-                  {tasks} {tasks === 1 ? 'Task' : 'Tasks'}
-                </p>
-              )}
-              {project.deadline && (
-                <p className={`text-xs ${dueDateColor(dueDate)} flex`}>
-                  <Calendar className='h-4 w-4 mr-1.5' />
-                  {dueDateFotmatter(dueDate)}
-                </p>
-
-              //TODO: Add members count here once we have the members feature implemented
-              )} 
-              </div>
           </div>
 
           {/* divider */}
@@ -278,7 +284,7 @@ export const FocusedProject = ({ project, invoices, onToggleFocus, onEditProject
               {Math.round(allProgress)}%
             </span>
             <Progress value={allProgress} className='h-2 w-64 rounded-full' indicatorColor={project.tags?.[0]?.color} />
-            <div className={cn('mt-0.5 flex items-start gap-2 rounded-md border p-2.5', colorClass)}>
+            <div className={cn('flex items-start gap-2 rounded-md border p-2.5 mt-6 mb-6', colorClass)}>
               <div className='mt-0.5'>
                 <Icon className='h-4 w-4' />
               </div>
@@ -300,9 +306,11 @@ export const FocusedProject = ({ project, invoices, onToggleFocus, onEditProject
                 <span className='font-bold text-base leading-none text-foreground flex-row antialiased'>
                   {formatTimeSpent(timeSpent)}
                 </span>
-                {timeTrackedThisWeek !== undefined && project?.totalTimeTracked ? (
+                {chartData.length > 0 && project?.totalTimeTracked ? (
                   (() => {
-                    const percentThisWeek = Math.round((timeTrackedThisWeek / project.totalTimeTracked) * 100)
+                    const percentThisWeek = project.totalTimeTracked > 0 
+                      ? Math.round((timeTrackedThisWeek / project.totalTimeTracked) * 100)
+                      : 0
                     return (
                       <span className={cn('text-xs font-light mt-2 px-2 py-1 tracking-wider', percentThisWeek < 0 ? 'text-rose-500' : 'text-emerald-500')}>
                         {percentThisWeek > 0 ? '+' : ''}{percentThisWeek}% this week

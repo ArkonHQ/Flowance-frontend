@@ -41,7 +41,7 @@ export const ProjectForm = ({ clients, isOpen, onClose, onProjectCreated, onProj
     description: initialData?.description || '',
     clientId: initialData?.clientId ? String(initialData.clientId) : '',
     status: (initialData?.status as 'planning' | 'active' | 'completed' | 'on_hold' | 'cancelled') || 'planning',
-    budget: initialData?.budget ? String(initialData.budget) : '',
+    budget: initialData?.budget !== undefined && initialData?.budget !== null ? String(initialData.budget) : '',
     date: initialData?.deadline ? new Date(initialData.deadline) : (new Date() as Date | undefined),
     selectedTagIds: initialData?.tags?.map(t => t.id) || ([] as number[])
   })
@@ -161,17 +161,53 @@ export const ProjectForm = ({ clients, isOpen, onClose, onProjectCreated, onProj
 
       <div className="space-y-1.5">
         <Label htmlFor="budget" className="text-xs font-semibold tracking-wide text-foreground/80">
-          Budget ($)
+          Budget
         </Label>
-        <Input
-          id="budget"
-          name="budget"
-          type="number"
-          placeholder="e.g. 5000"
-          value={budget}
-          onChange={(e) => setFieldValue('budget', e.target.value)}
-          className="h-10 bg-muted/20 border-border/40 focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/60 rounded-xl transition-all placeholder:text-muted-foreground/50"
-        />
+        <div className="relative group">
+          {/* Currency badge */}
+          <div className="absolute left-0 top-0 bottom-0 flex items-center">
+            <div className={`
+              flex items-center justify-center h-full px-3 rounded-l-xl
+              border border-r-0 border-border/40 bg-muted/40 
+              text-xs font-bold tracking-wider text-muted-foreground/70
+              group-focus-within:border-indigo-500/60 group-focus-within:bg-indigo-500/10 group-focus-within:text-indigo-400
+              transition-all duration-200
+            `}>
+              USD
+            </div>
+          </div>
+          {/* Dollar sign */}
+          <div className="absolute left-[52px] top-1/2 -translate-y-1/2 pointer-events-none z-10">
+            <span className="text-sm font-semibold text-muted-foreground/60 group-focus-within:text-indigo-400 transition-colors duration-200">$</span>
+          </div>
+          <input
+            id="budget"
+            name="budget"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            value={budget}
+            onChange={(e) => setFieldValue('budget', e.target.value)}
+            className={`
+              w-full h-10 rounded-xl border border-border/40 bg-muted/20
+              pl-[72px] pr-4 text-sm font-semibold text-foreground
+              placeholder:text-muted-foreground/40 placeholder:font-normal
+              focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30
+              focus:bg-indigo-500/5
+              [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+              transition-all duration-200
+            `}
+          />
+          {/* Formatted hint */}
+          {budget && Number(budget) > 0 && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <span className="text-[10px] font-medium text-muted-foreground/50 tabular-nums">
+                {Number(budget).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

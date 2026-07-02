@@ -32,6 +32,8 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { GlobalTimerDisplay } from "@/components/GlobalTimerDisplay";
+import { PinnedProjectsDisplay } from "@/components/PinnedProjectsDisplay";
+
 
 
 const mainItems = [
@@ -85,7 +87,9 @@ const AppSidebar = () => {
                     </SidebarGroupContent>
                 </SidebarGroup>
 
-                <div className="mt-auto px-1">
+                {/* Pinned projects global, it reads from Zustand store directly */}
+                <div className="mt-auto flex flex-col gap-0">
+                    <PinnedProjectsDisplay />
                     <GlobalTimerDisplay />
                 </div>
             </SidebarContent>

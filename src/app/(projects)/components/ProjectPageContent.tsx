@@ -46,6 +46,9 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
   const searchParams = useSearchParams()
   const router = useRouter()
 
+
+
+
   // Auto-open modal when navigated here with ?newProject=1 or ?editProject=id
   useEffect(() => {
     let shouldUpdateUrl = false
@@ -68,11 +71,26 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
       shouldUpdateUrl = true
     }
 
+    const openPanelId = searchParams.get('openPanel')
+    if (openPanelId) {
+      const projToOpen = project.find(p => p.id === Number(openPanelId))
+      if (projToOpen) {
+        setSelectedProjectForPanel(projToOpen)
+        setSidePanelOpen(true)
+      }
+      url.searchParams.delete('openPanel')
+      shouldUpdateUrl = true
+    }
+
     if (shouldUpdateUrl) {
       router.replace(url.pathname, { scroll: false })
     }
   }, [searchParams, project, router])
-  
+
+  const [focusedProjectId, setFocusedProjectId] = useState<number | null>(() => {
+    const toggle = localStorage.getItem('fcc_project_focused_view')
+    return toggle ? Number(toggle) : null
+  })
 
   // Save view mode in local storage
   const [viewMode, setViewMode] = useState<'list' | 'grid'>(() => {
@@ -98,6 +116,17 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
     }
     return false
   })
+
+
+
+  useEffect(() => {
+    if (focusedProjectId !== null) {
+      localStorage.setItem('fcc_project_focused_view', focusedProjectId.toString())
+    }else {
+      localStorage.removeItem('fcc_project_focused_view')
+    }
+  } , [focusedProjectId])
+
 
   useEffect(() => {
     if (sidePanelOpen) {
@@ -204,6 +233,12 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
       console.error("Failed to refresh projects and stats after time logging: ", err)
     }
   }
+
+  // Handle project focus view
+  const handleToggleFocus = (projectId: number) => {
+    setFocusedProjectId(prev => (prev === projectId ? null : projectId))
+  }
+
 
   const handleBulkDelete = async () => {
     const idsToDelete = Array.from(selectedProjectIds)
@@ -420,16 +455,21 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
         })()}
       </div>
 
-        <FocusedProject 
-          project={selectedProjectForPanel || project[0]}
-          invoices={invoices}
-          onToggleFocus={() => setSidePanelOpen(prev => !prev)}
-          onEditProject={handleEditProject}
-          onDeleteProject={handleDeleteProject}
-          timeTrackedThisWeek={120}
-          onToggleSidePanel={() => setSidePanelOpen(prev => !prev)}
-          onClose={() => setSidePanelOpen(false)}
-        />
+      {focusedProjectId && (() => {
+        const focusedProjectObj = project.find(p => p.id === focusedProjectId)
+        if (!focusedProjectObj) return null
+        return (
+          <FocusedProject 
+            project={focusedProjectObj}
+            invoices={invoices}
+            onToggleFocus={() => handleToggleFocus(focusedProjectObj.id)}
+            onEditProject={() => handleEditProject(focusedProjectObj)}
+            onDeleteProject={() => handleDeleteProject(focusedProjectObj.id)}
+            onToggleSidePanel={() => setSidePanelOpen(prev => !prev)}
+            onClose={() => setFocusedProjectId(null)}
+          />
+        )
+      })()}
       {/* Search and List Section */}
         <div className="space-y-4 p-2 border-border/40 rounded-xl bg-background backdrop-blur-sm -mb-3">
           {project.length > 0 && (
@@ -574,11 +614,14 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
                       key={project.id}
                       project={project}
                       onArchive={handleArchive}
+                      onDelete={handleDeleteProject}
                       onSidePanelOpen={(id, proj) => {
                         setSelectedProjectForPanel(proj)
                         setSidePanelOpen(true)
                       }}
                       onEdit={handleEditProject}
+                      isFocused={focusedProjectId === project.id}
+                      onToggleFocus={() => handleToggleFocus(project.id)}
                     />
                   ))}
                 </div>

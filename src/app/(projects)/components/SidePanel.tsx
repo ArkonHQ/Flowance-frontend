@@ -388,19 +388,17 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
         return 'text-green-500'
     }
 
-    // Use invoices to calculate the true budget and paid amounts if they exist
-    const projectBudget = (projectInvoices && projectInvoices.length > 0)
-        ? projectInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0)
-        : (project?.budget || 0);
+    // Budget always comes from the project, invoices track payments against it
+    const projectBudget = Number(project?.budget) || 0;
         
     const calculatedTotalPaid = (projectInvoices && projectInvoices.length > 0)
         ? projectInvoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + Number(inv.amount), 0)
         : (totalPaid || 0);
 
-    const remainingBudget = Number(projectBudget) - calculatedTotalPaid;
+    const remainingBudget = projectBudget - calculatedTotalPaid;
 
     const paymentPercentage = projectBudget > 0
-        ? Math.min(Math.round((calculatedTotalPaid / Number(projectBudget)) * 100), 100)
+        ? Math.min(Math.round((calculatedTotalPaid / projectBudget) * 100), 100)
         : 0;
 
     const paymentColor = paymentPercentage >= 100

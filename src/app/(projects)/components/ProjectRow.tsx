@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Archive, ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Archive, ExternalLink, MoreHorizontal, Pencil, Trash2, ZapIcon } from "lucide-react";
 import DeleteButton from "./DeleteProject"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,6 +31,8 @@ interface ProjectRowProps {
   onToggle: (id: number) => void
   onSidePanelOpen?: (id: number, project: Project) => void
   onEdit?: (project: Project) => void
+  isFocused?: boolean
+  onToggleFocus?: (id: number) => void
 }
 
 const getStatusColor = (status: string) => {
@@ -95,7 +97,7 @@ const formatDate = (date: Date | string) => {
   return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-export const ProjectRow = ({ project, clientName, onDelete, onArchive, isSelecetd, onToggle, onSidePanelOpen, onEdit }: ProjectRowProps) => {
+export const ProjectRow = ({ project, clientName, onDelete, onArchive, isSelecetd, onToggle, onSidePanelOpen, onEdit, isFocused, onToggleFocus }: ProjectRowProps) => {
 
   const [isOpen, setIsOpen] = useState<boolean>(false)
   const [archiving, setArchiving] = useState<boolean>(false)
@@ -123,8 +125,11 @@ export const ProjectRow = ({ project, clientName, onDelete, onArchive, isSelecet
       role="group"
       aria-label={`Project row: ${project.title}`}
       className={cn(
-        "flex flex-wrap md:grid md:grid-cols-[40px_minmax(200px,350px)_minmax(180px,1fr)_110px_160px_60px_110px_110px_110px_40px] gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 hover:shadow-xs transition-all group",
-        isSelecetd ? "bg-primary/5 dark:bg-primary/10 border-primary/50" : "border-border/30 hover:border-border/60"
+        "flex flex-wrap md:grid md:grid-cols-[40px_minmax(200px,350px)_minmax(180px,1fr)_110px_160px_60px_110px_110px_110px_40px] gap-4 items-center px-5 py-4 bg-background backdrop-blur-md rounded-xl border border-border/40 transition-all duration-300 group",
+        isFocused 
+          ? "ring-1 ring-primary shadow-[0_0_20px_-3px_rgba(99,102,241,0.15)] border-primary/40 -translate-y-0.5" 
+          : "hover:shadow-sm hover:border-border/60",
+        isSelecetd && !isFocused && "bg-primary/5 dark:bg-primary/10 border-primary/50"
       )}
     >
       {/* 1. Checkbox */}
@@ -240,7 +245,21 @@ export const ProjectRow = ({ project, clientName, onDelete, onArchive, isSelecet
       </div>
 
       {/* 10. Actions Dropdown */}
-      <div className="flex justify-end">
+      <div className="flex justify-end items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFocus?.(project.id) }}
+          className={cn(
+            "h-8 w-8 rounded-full shrink-0 transition-all", 
+            isFocused 
+              ? "text-amber-500 bg-amber-500/10 hover:bg-amber-500/20" 
+              : "text-muted-foreground opacity-0 md:opacity-0 group-hover:opacity-100 hover:text-amber-500 hover:bg-amber-500/10"
+          )}
+          title={isFocused ? "Unfocus Project" : "Focus Project"}
+        >
+          <ZapIcon className={cn("h-4 w-4", isFocused && "fill-amber-500")} />
+        </Button>
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
             <Button
