@@ -179,6 +179,7 @@ const TaskSidePanel = ({ taskId, taskTitle, projectTitle, open, onClose, onTimeL
         toast.info('Task re‑opened because a new mission was added.')
       }
     } catch (error) {
+      console.error('[SidePanel] Failed to add mission:', error)
       setNewMissionName(text)
       toast.error('Failed to add mission')
     } finally {

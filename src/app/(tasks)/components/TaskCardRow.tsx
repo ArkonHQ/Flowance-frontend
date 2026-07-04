@@ -13,6 +13,7 @@ import {
   DropdownMenu,
 } from "@/components/ui/dropdown-menu"
 import { Progress } from "@/components/ui/progress"
+import { isOverdue } from "@/lib/utils/date"
 import { Task } from "@/lib/api/tasks"
 import { cn } from "@/lib/utils"
 import { ExternalLink, MoreHorizontal, Pencil, Trash2, ArrowDown, ArrowUp, Minus } from "lucide-react"
@@ -121,12 +122,14 @@ export const TaskCardRow = ({ task, isFocused, onToggleFocus, onDelete, onOpenPa
   }
 
   const getDueDateStatus = () => {
+    if (isOverdue(task.deadline, task.status)) return 'overdue';
     if (['done', 'cancelled'].includes(task.status)) return 'normal';
-    if (task.status === 'overdue') return 'overdue';
     if (!task.deadline) return 'normal';
 
-    const timeRemaining = new Date(task.deadline).getTime() - Date.now();
-    if (timeRemaining < 0) return 'overdue';
+    const deadlineDate = new Date(task.deadline);
+    deadlineDate.setHours(23, 59, 59, 999);
+    const timeRemaining = deadlineDate.getTime() - Date.now();
+    
     if (timeRemaining <= 24 * 60 * 60 * 1000) return 'soon';
 
     return 'normal';

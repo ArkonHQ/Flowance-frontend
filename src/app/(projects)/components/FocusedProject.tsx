@@ -11,7 +11,6 @@ import { PROJECT_PROGRESS_MESSAGES } from '@/lib/constants/project-messages'
 import { cn } from '@/lib/utils'
 import { Calendar, CheckCircle, Flame, Lightbulb, List, PauseCircle, Rocket, Sparkles, Target, TrendingUp, X, XCircle, ZapIcon } from 'lucide-react'
 import { getProjectTimeChart } from '@/lib/api/projects'
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 interface FocusedProjectProps {
@@ -225,14 +224,15 @@ export const FocusedProject = ({ project, invoices, onToggleFocus, onEditProject
 
               <div className='min-w-0 flex-1 space-y-1.5'>
                 <div className='flex flex-wrap items-center gap-2.5'>
-                  <Link
-                    href={`/projects/${project.id}`}
+                  <button
+                    type='button'
                     onClick={onToggleSidePanel}
+                    className='text-left'
                   >
                     <h2 className='text-base font-bold leading-tight hover:text-primary transition-colors'>
                       {project.title}
                     </h2>
-                  </Link>
+                  </button>
                   <div className={cn(
                     'inline-flex items-center border px-2.5 py-0.5 text-xs font-semibold rounded-full shrink-0',
                     getStatusColor(project.status)

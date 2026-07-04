@@ -120,7 +120,7 @@ export const EditTaskForm = ({
 
     try {
 
-      // Update tha main task
+      // Update the main task
       await updateTask(task.id, {
         title: title.trim(),
         summary: summary.trim() || undefined,
@@ -137,33 +137,35 @@ export const EditTaskForm = ({
       const initialMissionIds = fetchedInitialMissions.map(m => m.id)
       const deletedMissionIds = initialMissionIds.filter(id => !currentMissionIds.includes(id))
 
-      // Loop throgh the deleted IDs and remove them 
+      // Delete removed missions
       for (const missionId of deletedMissionIds) {
         setSubmittingStep(`Deleting mission ${deletedMissionIds.indexOf(missionId) + 1} of ${deletedMissionIds.length}...`)
         await deleteMission(task.id, missionId)
       }
 
-      // if there's no id then create it else update it if there's a change on name by the user
+      // Build a list of final missions with real server IDs for the cache
+      const finalMissions: { id: number; name: string }[] = []
 
-      // Add new mission
       for (let m = 0; m < missions.length; m++) {
         setSubmittingStep(`Saving mission ${m + 1} of ${missions.length}...`)
 
         const mission = missions[m]
         if (!initialMissionIds.includes(mission.id)) {
-          await apiAddMission(task.id, mission.name)
-
+          // New mission (temp negative id) — create it and capture the real server id
+          const created = await apiAddMission(task.id, mission.name)
+          finalMissions.push({ id: created.id, name: created.name })
         } else {
-          // Existing mission update if the name changed
-          const original = fetchedInitialMissions.find(m => m.id === mission.id)
-
+          // Existing mission — update name if changed
+          const original = fetchedInitialMissions.find(orig => orig.id === mission.id)
           if (original && original.name !== mission.name) {
             await apiUpdateMission(task.id, mission.id, { name: mission.name })
           }
+          finalMissions.push({ id: mission.id, name: mission.name })
         }
       }
 
-      globalMissionsCache[task.id] = missions.map(m => ({ id: m.id, name: m.name }))
+      // Store only real server IDs so the next open doesn't call updateMission with negative IDs
+      globalMissionsCache[task.id] = finalMissions
       toast.success("Task updated successfully!")
       resetForm()
       onClose()

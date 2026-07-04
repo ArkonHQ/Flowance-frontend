@@ -29,7 +29,7 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
     title: '',
     summary: '',
     description: '',
-    projectId: '',
+    projectId: projects?.length === 1 ? projects[0].id : '',
     status: 'todo' as 'todo' | 'in_progress' | 'done' | 'delayed' | 'cancelled',
     priority: 'medium' as 'low' | 'medium' | 'high',
     selectedTagIds: [] as number[],
@@ -84,22 +84,33 @@ export const TaskForm = ({ projects, isOpen, onClose, onTaskCreated }: TaskFormP
         projectId: Number(projectId)
       })
 
-      // 5.2 adding mission one by one using for loop
+      // 5.2 adding mission one by one 
       if (missions.length > 0) {
+        if (!taskObj.missions) taskObj.missions = [];
 
+        let missionsFailed = 0
         for (let m = 0; m < missions.length; m++) {
-
           setSubmittingStep(`Adding mission ${m + 1} of ${missions.length}...`)
 
           const missionName = missions[m].name.trim()
           if (missionName) {
-            await apiAddMission(taskObj.id, missionName)
+            try {
+              const newMission = await apiAddMission(taskObj.id, missionName)
+              taskObj.missions.push(newMission)
+            } catch (missionErr) {
+              console.error(`Failed to add mission "${missionName}":`, missionErr)
+              missionsFailed++
+            }
           }
+        }
+
+        if (missionsFailed > 0) {
+          toast.warning(`Task created, but ${missionsFailed} mission(s) could not be saved.`)
         }
       }
 
       // 6. Success feedback and cleanup
-      setSubmittingStep("Task and mission created successfully!")
+      setSubmittingStep("Task created successfully!")
       resetForm()
       onClose()
       onTaskCreated?.(taskObj)

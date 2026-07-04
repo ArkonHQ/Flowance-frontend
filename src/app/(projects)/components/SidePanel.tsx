@@ -1164,11 +1164,11 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
                             </div>
                         )}
                         {activeTab === 'files' && (
-                            <div className="space-y-6 animate-in fade-in-50">
+                            <div className="space-y-6 animate-in fade-in-50 items-center flex flex-col">
                                 <FileUpload projectId={project?.id} />
 
                                 {project?.attachmentUrl && (
-                                    <div className="mt-6 flex flex-col gap-2">
+                                    <div className="mt-6 flex flex-col gap-2 w-full">
                                         <h4 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">Attached File</h4>
                                         {isImage(project.attachmentPath) ? (
                                             <div className="border border-border/50 rounded-xl overflow-hidden shadow-sm relative group bg-muted/20 w-full h-64">

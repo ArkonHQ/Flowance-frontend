@@ -247,12 +247,13 @@ export const FocusedTask = ({
           {/* 1 ─ Task identity */}
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
-              <Link 
-              href={`/task/${task.id}`}
+              <button
+              type="button"
               onClick={handleOpen}
+              className="text-left"
               >
               <h2 className="text-lg font-bold leading-tight hover:text-primary transition-colors">{task.title}</h2>
-              </Link>
+              </button>
               <div className={cn(
                 "inline-flex items-center border px-2.5 py-0.5 text-xs font-semibold rounded-full shrink-0",
                 getStatusColor(task.status)
@@ -351,7 +352,7 @@ export const FocusedTask = ({
                   </DropdownMenuItem>
                 )}
                 {onEdit && (
-                  <DropdownMenuItem onSelect={onEdit}>
+                  <DropdownMenuItem onSelect={() => onEdit(task)}>
                     <Pencil className="h-4 w-4 mr-2" /> Edit task
                   </DropdownMenuItem>
                 )}

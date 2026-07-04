@@ -45,3 +45,20 @@ export const formatCompletedAt = (completedAt: string | null): string => {
   // If completed more than 1 day ago show full date
   return format(date, 'MMM dd, yyyy')
 }
+
+/**
+ * Checks if a task is overdue.
+ * A task is overdue if its status is 'overdue' OR 
+ * if it's not done/cancelled, has a deadline and the end of the deadline day is in the past.
+ */
+export const isOverdue = (deadline: string | Date | null | undefined, status: string): boolean => {
+  if (status === 'overdue') return true;
+  if (['done', 'cancelled'].includes(status)) return false;
+  if (!deadline) return false;
+  
+  const deadlineDate = new Date(deadline);
+  // Set to the end of the selected day
+  deadlineDate.setHours(23, 59, 59, 999);
+  
+  return deadlineDate.getTime() < Date.now();
+}

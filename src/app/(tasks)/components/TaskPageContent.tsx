@@ -17,7 +17,7 @@ import { TaskForm } from "./TaskForm"
 import { EditTaskForm } from "./EditTaskForm"
 import { TasksBulkActions } from "./tasks-bulk-actions"
 import FilterSortRow from "./FilterSortRow"
-import { isTaskInThisWeek } from "@/lib/utils/date"
+import { isTaskInThisWeek, isOverdue } from "@/lib/utils/date"
 import { FocusedTask } from "./FocusedTask"
 
 //TODO Assignees not ready now i put it for project until i add team collaboration features
@@ -226,12 +226,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, lastWeekHours, t
 
     if (statusFilter !== 'all') {
       if (statusFilter === 'overdue') {
-        result = result.filter((task) => {
-          if (task.status === 'overdue') return true;
-          if (['done', 'cancelled'].includes(task.status)) return false;
-          if (!task.deadline) return false;
-          return new Date(task.deadline).getTime() < Date.now();
-        })
+        result = result.filter((task) => isOverdue(task.deadline, task.status))
       } else {
         result = result.filter((task) => task.status === statusFilter)
       }
@@ -297,12 +292,7 @@ export const TaskPageContent = ({ initialTask, stats, projects, lastWeekHours, t
       const done = refreshedTasks.filter(t => t.status === 'done').length
       const cancelled = refreshedTasks.filter(t => t.status === 'cancelled').length
       const delayed = refreshedTasks.filter(t => t.status === 'delayed').length
-      const overdue = refreshedTasks.filter(t => {
-        if (t.status === 'overdue') return true;
-        if (['done', 'cancelled'].includes(t.status)) return false;
-        if (!t.deadline) return false;
-        return new Date(t.deadline).getTime() < Date.now();
-      }).length
+      const overdue = refreshedTasks.filter(t => isOverdue(t.deadline, t.status)).length
 
       setTaskStats({ total, todo, in_progress, done, cancelled, delayed, totalHours, overdue })
     } catch (error) {
@@ -317,17 +307,9 @@ export const TaskPageContent = ({ initialTask, stats, projects, lastWeekHours, t
     setIsPanelOpen(true)
   }
 
-  const handleEditTask = async (task: Task) => {
+  const handleEditTask = (task: Task) => {
     setTaskToEdit(task)
     setIsEditModalOpen(true)
-
-    try {
-      const updatedTask = await updateTask(task.id, task)
-      setTasks(prev => prev.map(t => t.id === task.id ? updatedTask : t))
-      toast.success("Task updated successfully")
-    } catch (err) {
-      toast.error("Failed to update task")
-    }
   }
 
 
