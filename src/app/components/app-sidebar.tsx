@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { GlobalTimerDisplay } from "@/components/GlobalTimerDisplay";
 import { PinnedProjectsDisplay } from "@/components/PinnedProjectsDisplay";
+import { TeamSwitcher } from "./team-switcher";
 
 
 
@@ -52,16 +53,8 @@ const AppSidebar = () => {
 
     return (
         <Sidebar collapsible="icon">
-            {/* Header with logo */}
-            <SidebarHeader className="flex flex-row items-center gap-2.5 px-4 py-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card">
-                    <Command className="h-4 w-4 text-primary" strokeWidth={2} />
-                </div>
-                {open && (
-                    <span className="text-sm font-semibold tracking-tight text-foreground">
-                        Command Center
-                    </span>
-                )}
+            <SidebarHeader>
+                <TeamSwitcher />
             </SidebarHeader>
 
             <SidebarContent>

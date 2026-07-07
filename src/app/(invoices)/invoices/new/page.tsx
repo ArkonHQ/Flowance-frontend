@@ -3,11 +3,16 @@ import { getAllClients } from '@/lib/api/clients'
 import { getAllProjects } from '@/lib/api/projects'
 import { InvoiceForm } from '../components/InvoiceForm'
 
+import { getActiveTeamSlug } from '@/lib/utils/team'
+
 export default async function NewInvoicePage() {
   const cookieStore = await cookies()
   const cookieHeader = cookieStore.toString()
-  const clients = await getAllClients(cookieHeader)
-  const projects = await getAllProjects(cookieHeader)
+  
+  const teamSlug = await getActiveTeamSlug(cookieHeader)
+
+  const clients = await getAllClients(cookieHeader, teamSlug)
+  const projects = await getAllProjects(cookieHeader, teamSlug)
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6 max-w-3xl space-y-6">

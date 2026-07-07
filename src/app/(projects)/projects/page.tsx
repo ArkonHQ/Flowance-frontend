@@ -3,6 +3,7 @@ import { getAllProjects, Project } from "@/lib/api/projects"
 import { getAllClients } from "@/lib/api/clients"
 import { getAllInvoices, Invoice } from "@/lib/api/invoices" 
 import { ProjectPageContent } from "../components/ProjectPageContent"
+import { getActiveTeamSlug } from "@/lib/utils/team"
 
 export const metadata = {
   title: 'Projects | Command Center',
@@ -11,9 +12,14 @@ export const metadata = {
 const ProjectsPage = async () => {
   const cookieStore = await cookies()
   const cookieHeader = cookieStore.toString()
-  const project: Project[] = await getAllProjects(cookieHeader)
-  const clients = await getAllClients(cookieHeader)
-  const invoices: Invoice[] = await getAllInvoices(cookieHeader)
+
+  const teamSlug = await getActiveTeamSlug(cookieHeader)
+
+  const [project, clients, invoices] = await Promise.all([
+    getAllProjects(cookieHeader, teamSlug).catch((e) => { console.error('projects:', e.message); return [] as Project[] }),
+    getAllClients(cookieHeader, teamSlug).catch((e) => { console.error('clients:', e.message); return [] }),
+    getAllInvoices(cookieHeader, teamSlug).catch((e) => { console.error('invoices:', e.message); return [] as Invoice[] }),
+  ])
 
   const clientNames = Object.fromEntries(clients.map((client) => [client.id, client.name])) as Record<number, string>
 

@@ -1,4 +1,4 @@
-
+import { getClientTeamSlug } from "../utils/team-client"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
@@ -10,6 +10,7 @@ export type Invoice = {
     clientId: number
     projectId: number
     ownerId: string
+    teamId?: number
     paidAt: Date | null
     dueDate: Date
     createdAt: Date
@@ -17,93 +18,90 @@ export type Invoice = {
     deletedAt: Date | null
 }
 
-export const getAllInvoices = async (cookieHeader?: string) => {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' } 
-  if (cookieHeader) headers['Cookie'] = cookieHeader 
+const resolveSlug = (provided?: string) => provided || getClientTeamSlug()
 
-    const res = await fetch(`${API_BASE}/invoice`, {
-      headers,
-      credentials: 'include',
-      method: 'GET',
-      cache: 'no-store',
-    }) 
+export const getAllInvoices = async (cookieHeader?: string, teamSlug?: string) => {
+  const slug = resolveSlug(teamSlug)
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (cookieHeader) headers['Cookie'] = cookieHeader
+
+  const res = await fetch(`${API_BASE}/teams/${slug}/invoices`, {
+    headers,
+    credentials: 'include',
+    method: 'GET',
+    cache: 'no-store',
+  })
 
   if (!res.ok) {
-    if (res.status === 404) {
-      // If endpoint not found return empty array
-      return [] as Invoice[] 
-    }
-    throw new Error(`Failed to fetch invoices: ${res.status}`) 
+    console.error(`getAllInvoices failed: ${res.status}`, await res.text().catch(() => ''));
+    return [] as Invoice[]
   }
 
-  const data = await res.json() 
-  return data.data?.invoices ?? data.invoices ?? data.invoice ?? data 
-} 
+  const data = await res.json()
+  return data.data?.invoices ?? data.invoices ?? data.invoice ?? data
+}
 
-export const getInvoice = async (invoiceId: number, cookieHeader?: string) => {
-  
-  const headers: Record<string, string> = {'Content-Type': 'application/json'}
-  if(cookieHeader) headers['Cookie'] = cookieHeader
+export const getInvoice = async (invoiceId: number, cookieHeader?: string, teamSlug?: string) => {
+  const slug = resolveSlug(teamSlug)
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (cookieHeader) headers['Cookie'] = cookieHeader
 
-  const res = await fetch(`${API_BASE}/invoice/${invoiceId}`, {
+  const res = await fetch(`${API_BASE}/teams/${slug}/invoices/${invoiceId}`, {
     headers,
     credentials: 'include',
     method: 'GET'
   })
 
-  if (!res.ok) throw new Error (`Failed to fetch invoice: ${res.status}`)
-
+  if (!res.ok) throw new Error(`Failed to fetch invoice: ${res.status}`)
   const data = await res.json()
   return data.data?.invoice ?? data.invoice
 }
 
-export const createInvoice = async (invoiceData: {amount: number, status: Invoice['status'], clientId: number, projectId: number, paidAt: Date | null, dueDate: Date | null}, cookieHeader?:string) => {
+export const createInvoice = async (invoiceData: { amount: number, status: Invoice['status'], clientId: number, projectId: number, paidAt: Date | null, dueDate: Date | null }, cookieHeader?: string, teamSlug?: string) => {
+  const slug = resolveSlug(teamSlug)
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (cookieHeader) headers['Cookie'] = cookieHeader
 
-  const res = await fetch(`${API_BASE}/invoice`, {
-      credentials: 'include',
-      headers,
-      body: JSON.stringify(invoiceData),
-      method: 'POST'
-    })
+  const res = await fetch(`${API_BASE}/teams/${slug}/invoices`, {
+    credentials: 'include',
+    headers,
+    body: JSON.stringify(invoiceData),
+    method: 'POST'
+  })
 
-  if(!res.ok) throw new Error(`Failed to create invoice: ${res.status}`)
-
+  if (!res.ok) throw new Error(`Failed to create invoice: ${res.status}`)
   const data = await res.json()
   return data.data?.invoice ?? data.invoice
 }
 
-export const updateInvoice = async (invoiceId: number, updates: Partial<Omit<Invoice, 'id' | 'ownerId'>>, cookieHeader?: string) => {
-
+export const updateInvoice = async (invoiceId: number, updates: Partial<Omit<Invoice, 'id' | 'ownerId'>>, cookieHeader?: string, teamSlug?: string) => {
+  const slug = resolveSlug(teamSlug)
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if(cookieHeader) headers['Cookie'] = cookieHeader
+  if (cookieHeader) headers['Cookie'] = cookieHeader
 
-  const res = await fetch(`${API_BASE}/invoice/${invoiceId}`, {
+  const res = await fetch(`${API_BASE}/teams/${slug}/invoices/${invoiceId}`, {
     credentials: 'include',
     method: 'PUT',
     headers,
     body: JSON.stringify(updates)
   })
 
-  if (!res.ok) throw new Error (`Failed to edit invoice: ${res.status}`)
-
+  if (!res.ok) throw new Error(`Failed to edit invoice: ${res.status}`)
   const data = await res.json()
   return data.invoice
 }
 
-export const deleteInvoice = async (invoiceId: number, cookieHeader?: string) => {
+export const deleteInvoice = async (invoiceId: number, cookieHeader?: string, teamSlug?: string) => {
+  const slug = resolveSlug(teamSlug)
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (cookieHeader) headers['Cookie'] = cookieHeader
 
-  const headers: Record <string, string> = { 'Content-Type': 'application/json' }
-  if(cookieHeader) headers['Cookie'] = cookieHeader
-
-  const res = await fetch (`${API_BASE}/invoice/${invoiceId}`, {
-    credentials:'include',
+  const res = await fetch(`${API_BASE}/teams/${slug}/invoices/${invoiceId}`, {
+    credentials: 'include',
     method: 'DELETE',
     headers
   })
 
-  if (!res.ok) throw new Error (`Failed to remove invoice: ${res.status}`)
-
-  return{ success: true }
+  if (!res.ok) throw new Error(`Failed to remove invoice: ${res.status}`)
+  return { success: true }
 }

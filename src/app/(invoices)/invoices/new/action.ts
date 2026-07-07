@@ -1,5 +1,9 @@
+'use server'
+
 import { createInvoice } from '@/lib/api/invoices';
 import type { Invoice } from '@/lib/api/invoices';
+import { cookies } from 'next/headers';
+import { getActiveTeamSlug } from '@/lib/utils/team';
 
 type CreateInvoiceState = {
   error?: string;
@@ -22,6 +26,10 @@ export const handleCreateInvoice = async (
   }
 
   try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore.toString();
+    const teamSlug = await getActiveTeamSlug(cookieHeader);
+
     const invoice = await createInvoice({
       amount,
       status,
@@ -29,7 +37,7 @@ export const handleCreateInvoice = async (
       projectId,
       paidAt: null,
       dueDate: new Date(dueDate),
-    });
+    }, cookieHeader, teamSlug);
     return { success: true, invoice };
   } catch (err: any) {
     return { error: err.message || 'Create invoice failed' };

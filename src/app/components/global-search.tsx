@@ -37,10 +37,11 @@ const fetchData = useCallback(async () => {
     try {
 
       const [c, p, t] = await Promise.all([
+        
+        // auto-reads team from cookie
         getAllClients(),
-        getAllProjects(),
-        getAllTasks(),
-
+        getAllProjects(),   
+        getAllTasks(),      
       ]);
 
       setClients(c);

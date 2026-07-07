@@ -5,6 +5,7 @@ import { getDashboard } from "@/lib/api/dashboard"
 import { cookies } from "next/headers"
 import { TaskPageContent } from "../components/TaskPageContent"
 import { isOverdue } from "@/lib/utils/date"
+import { getActiveTeamSlug } from "@/lib/utils/team"
 
 
 
@@ -17,10 +18,12 @@ const TaskPage = async () => {
   const cookieStore = await cookies()
   const cookieHeader = cookieStore.toString()
   
+  const teamSlug = await getActiveTeamSlug(cookieHeader)
+
   const [{tasks, totalHours}, lastWeekDashboard, projects] = await Promise.all([
-    getAllTasks(cookieHeader),
-    getDashboard(cookieHeader, '7days'),
-    getAllProjects(cookieHeader),
+    getAllTasks(cookieHeader, teamSlug),
+    getDashboard(cookieHeader, '7days', teamSlug),
+    getAllProjects(cookieHeader, teamSlug),
   ])
   
   // Last week's total hours

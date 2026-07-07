@@ -1,5 +1,6 @@
 import { Project } from "./projects"
 import { Tag } from "./tags"
+import { getClientTeamSlug } from "../utils/team-client"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
@@ -17,6 +18,7 @@ export type Task = {
     completedAt: Date | null | string,
     projectId: number,
     ownerId: string,
+    teamId?: number,
     createdAt: string,
     updatedAt: string | null,
     deletedAt: Date | null,
@@ -41,18 +43,15 @@ export interface TaskResponse {
     totalHours: number
 }
 
-
+const resolveSlug = (provided?: string) => provided || getClientTeamSlug() || ''
 
 // ----------------------Mission---------------
-export const getMissions = async (taskId: number, cookieHeaders?: string): Promise<Mission[]> => {
-
+export const getMissions = async (taskId: number, cookieHeaders?: string, teamSlug?: string): Promise<Mission[]> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeaders) headers['Cookie'] = cookieHeaders
 
-
-
-    const res = await fetch(`${API_BASE}/tasks/${taskId}/missions`, {
-
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks/${taskId}/missions`, {
         credentials: 'include',
         headers,
         method: 'GET'
@@ -62,12 +61,12 @@ export const getMissions = async (taskId: number, cookieHeaders?: string): Promi
     return data.missions
 }
 
-export const addMission = async (taskId: number, text: string, assigneeId?: number, cookieHeaders?: string): Promise<Mission> => {
-
+export const addMission = async (taskId: number, text: string, assigneeId?: number, cookieHeaders?: string, teamSlug?: string): Promise<Mission> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeaders) headers['Cookie'] = cookieHeaders
 
-    const res = await fetch(`${API_BASE}/tasks/${taskId}/missions`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks/${taskId}/missions`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ text, assigneeId }),
@@ -78,13 +77,12 @@ export const addMission = async (taskId: number, text: string, assigneeId?: numb
     return data.mission
 }
 
-export const toggleMission = async (missionId: number, taskId: number, cookieHeaders?: string): Promise<Mission> => {
-
-
+export const toggleMission = async (missionId: number, taskId: number, cookieHeaders?: string, teamSlug?: string): Promise<Mission> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeaders) headers['Cookie'] = cookieHeaders
 
-    const res = await fetch(`${API_BASE}/tasks/${taskId}/missions/${missionId}/toggle`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks/${taskId}/missions/${missionId}/toggle`, {
         method: 'PATCH',
         headers,
         credentials: 'include',
@@ -99,12 +97,13 @@ export const updateMission = async (
     missionId: number,
     data: Partial<Pick<Mission, 'name' | 'assigneeId' | 'position'>>,
     cookieHeaders?: string,
+    teamSlug?: string
 ): Promise<Mission> => {
-
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeaders) headers['Cookie'] = cookieHeaders
 
-    const res = await fetch(`${API_BASE}/tasks/${taskId}/missions/${missionId}`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks/${taskId}/missions/${missionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -115,12 +114,12 @@ export const updateMission = async (
     return json.mission
 }
 
-export const deleteMission = async (taskId: number, missionId: number, cookieHeaders?: string): Promise<void> => {
-
+export const deleteMission = async (taskId: number, missionId: number, cookieHeaders?: string, teamSlug?: string): Promise<void> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeaders) headers['Cookie'] = cookieHeaders
 
-    const res = await fetch(`${API_BASE}/tasks/${taskId}/missions/${missionId}`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks/${taskId}/missions/${missionId}`, {
         method: 'DELETE',
         credentials: 'include',
     })
@@ -129,13 +128,12 @@ export const deleteMission = async (taskId: number, missionId: number, cookieHea
 
 // --------------------Tasks-------------
 
-
-
-const getTotalTaskHours = async (cookieHeader?: string): Promise<number> => {
+const getTotalTaskHours = async (cookieHeader?: string, teamSlug?: string): Promise<number> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader
 
-    const res = await fetch(`${API_BASE}/tasks/total-hours`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks/total-hours`, {
         method: 'GET',
         headers,
         credentials: 'include'
@@ -147,19 +145,18 @@ const getTotalTaskHours = async (cookieHeader?: string): Promise<number> => {
     return Number(data.totalHours) || 0
 }
 
-
-
-export const getAllTasks = async (cookieHeader?: string): Promise<TaskResponse> => {
+export const getAllTasks = async (cookieHeader?: string, teamSlug?: string): Promise<TaskResponse> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader
 
     const [taskRes, totalHours] = await Promise.all([
-        fetch(`${API_BASE}/tasks`, {
+        fetch(`${API_BASE}/teams/${slug}/tasks`, {
             method: 'GET',
             headers,
             credentials: 'include'
         }),
-        getTotalTaskHours(cookieHeader)
+        getTotalTaskHours(cookieHeader, teamSlug)
     ])
 
     if (!taskRes.ok) throw new Error(`Failed to fetch tasks: ${taskRes.status}`)
@@ -169,12 +166,12 @@ export const getAllTasks = async (cookieHeader?: string): Promise<TaskResponse> 
     return { tasks: data.tasks, totalHours }
 }
 
-export const getTask = async (taskId: number, cookieHeader?: string): Promise<Task> => {
+export const getTask = async (taskId: number, cookieHeader?: string, teamSlug?: string): Promise<Task> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader
 
-
-    const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks/${taskId}`, {
         credentials: 'include',
         headers,
         method: 'GET'
@@ -186,12 +183,12 @@ export const getTask = async (taskId: number, cookieHeader?: string): Promise<Ta
     return data.task
 }
 
-export const createTask = async (taskData: { title: string, summary?: string | null, description?: string | null,status: Task['status'], priority: Task['priority'], deadline: Date | string, projectId: number, tagIds?: number[] }, cookieHeader?: string): Promise<Task> => {
-
+export const createTask = async (taskData: { title: string, summary?: string | null, description?: string | null,status: Task['status'], priority: Task['priority'], deadline: Date | string, projectId: number, tagIds?: number[] }, cookieHeader?: string, teamSlug?: string): Promise<Task> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader
 
-    const res = await fetch(`${API_BASE}/tasks`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks`, {
         method: 'POST',
         headers,
         body: JSON.stringify(taskData),
@@ -202,11 +199,12 @@ export const createTask = async (taskData: { title: string, summary?: string | n
     return data.task
 }
 
-export const updateTask = async (taskId: number, updates: Partial<Omit<Task, 'id' | 'ownerId'>> & { tagIds?: number[] }, cookieHeader?: string): Promise<Task> => {
+export const updateTask = async (taskId: number, updates: Partial<Omit<Task, 'id' | 'ownerId'>> & { tagIds?: number[] }, cookieHeader?: string, teamSlug?: string): Promise<Task> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader
 
-    const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks/${taskId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(updates),
@@ -217,11 +215,12 @@ export const updateTask = async (taskId: number, updates: Partial<Omit<Task, 'id
     return data.task
 }
 
-export const deleteTask = async (taskId: number, cookieHeader?: string): Promise<{ success: boolean }> => {
+export const deleteTask = async (taskId: number, cookieHeader?: string, teamSlug?: string): Promise<{ success: boolean }> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader
 
-    const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks/${taskId}`, {
         method: 'DELETE',
         headers,
         credentials: "include",
@@ -230,11 +229,12 @@ export const deleteTask = async (taskId: number, cookieHeader?: string): Promise
     return { success: true }
 }
 
-export const getTaskByProject = async (processId: number, cookieHeader?: string): Promise<Task[]> => {
+export const getTaskByProject = async (processId: number, cookieHeader?: string, teamSlug?: string): Promise<Task[]> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader
 
-    const res = await fetch(`${API_BASE}/tasks?projectId=${processId}`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks?projectId=${processId}`, {
         headers,
         credentials: 'include'
     })
@@ -245,11 +245,12 @@ export const getTaskByProject = async (processId: number, cookieHeader?: string)
     return data.tasks
 }
 
-export const updateTaskStatus = async (taskId: number, status: string, cookieHeader?: string): Promise<Task> => {
+export const updateTaskStatus = async (taskId: number, status: string, cookieHeader?: string, teamSlug?: string): Promise<Task> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeader) headers['Cookie'] = cookieHeader
 
-    const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/tasks/${taskId}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ status }),

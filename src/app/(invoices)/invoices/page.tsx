@@ -5,17 +5,21 @@ import React from 'react'
 import { InvoicesContent } from './components/InvoicesContent'
 import { cookies } from 'next/headers'
 
+import { getActiveTeamSlug } from '@/lib/utils/team'
+
 const InvoicesPage = async () => {
   const cookieStore = await cookies()
   const cookieHeader = cookieStore.toString()
 
+  const teamSlug = await getActiveTeamSlug(cookieHeader)
+
   const [invoices, clients, projects] = await Promise.all([
-    getAllInvoices(cookieHeader),
-    getAllClients(cookieHeader).catch((err) => {
+    getAllInvoices(cookieHeader, teamSlug),
+    getAllClients(cookieHeader, teamSlug).catch((err) => {
       console.error(err)
       return []
     }),
-    getAllProjects(cookieHeader).catch((err) => {
+    getAllProjects(cookieHeader, teamSlug).catch((err) => {
       console.error(err)
       return []
     })

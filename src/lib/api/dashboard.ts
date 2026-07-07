@@ -1,5 +1,8 @@
+import { getClientTeamSlug } from "../utils/team-client"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
+
+const resolveSlug = (provided?: string) => provided || getClientTeamSlug()
 
 export type MonthlyHealthMetric = {
     month: string
@@ -17,62 +20,52 @@ export interface DashboardData {
     pendingInvoices: number
     unpaidAmount: number
     projectProgress: Array<{ id: number, name: string, progress: number }>
-    recentActivity: Array<{ type: string, description: string, createdAt: string}>
+    recentActivity: Array<{ type: string, description: string, createdAt: string }>
     upcomingTasks: Array<{ id: number, title: string, deadline: string, projectName: string, priority: 'High' | 'Medium' | 'Low' }>
     atRiskProjects: Array<{ id: number, name: string, progress: number }>
     deadlines: Array<{ type: string, title: string, deadline: string }>
     mostActiveMember: { name: string, taskCount: number } | null
-    teamWorkload: Array<{ name:string, openTask: number }>
+    teamWorkload: Array<{ name: string, openTask: number }>
     tasksCompletedThisWeek: number
 }
 
+export async function getDashboard(cookieHeader?: string, period?: string, teamSlug?: string): Promise<DashboardData> {
+    const slug = resolveSlug(teamSlug)
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (cookieHeader) headers['Cookie'] = cookieHeader
 
-export async function getDashboard(cookieHeader?: string, period?: string): Promise<DashboardData> {
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
-    if (cookieHeader) {
-        headers['Cookie'] = cookieHeader;
-    }
+    const url = new URL(`${API_BASE}/teams/${slug}/dashboard`)
+    if (period) url.searchParams.set('period', period)
 
-    const url = new URL(`${API_BASE}/dashboard`)
-    if (period) {
-        url.searchParams.set('period', period)
-    }
-
-    const res = await fetch(url.toString(), {
-        credentials: "include",
-        headers,
-    });
+    const res = await fetch(url.toString(), { credentials: "include", headers })
     if (!res.ok) {
-        if (res.status === 401) {
-            throw new Error("Unauthorized");
-        }
-        throw new Error(`Failed to fetch dashboard ${res.status}`);
+        const body = await res.text().catch(() => '')
+        console.error(`getDashboard failed: ${res.status}`, body)
+        // Return empty dashboard instead of crashing the page
+        return {
+            totalRevenue: 0, activeProject: 0, totalHours: 0, pendingInvoices: 0,
+            unpaidAmount: 0, projectProgress: [], recentActivity: [], upcomingTasks: [],
+            atRiskProjects: [], deadlines: [], mostActiveMember: null, teamWorkload: [],
+            tasksCompletedThisWeek: 0
+        } as DashboardData
     }
 
     const json = await res.json()
-
     return json.data as DashboardData
 }
 
-export const getMonthlyHealthMetric = async (cookieHeader?: string): Promise<MonthlyHealthMetric[]> => {
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
+export const getMonthlyHealthMetric = async (cookieHeader?: string, teamSlug?: string): Promise<MonthlyHealthMetric[]> => {
+    const slug = resolveSlug(teamSlug)
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (cookieHeader) headers['Cookie'] = cookieHeader
 
-    if (cookieHeader) headers['Cookie'] = cookieHeader;
-
-    const res = await fetch(`${API_BASE}/dashboard/monthly-health`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/dashboard/monthly-health`, {
         credentials: "include",
         headers,
-    });
+    })
 
     if (!res.ok) {
-        if (res.status === 401) {
-            throw new Error("Unauthorized")
-        }
-        // Return empty array on any other error rather than crashing the page
+        if (res.status === 401) throw new Error("Unauthorized")
         return []
     }
 
@@ -90,19 +83,15 @@ export interface LastMonthKPIs {
     unpaidAmount: number
 }
 
-export async function getLastMonthKPIs(cookieHeader?: string): Promise<LastMonthKPIs> {
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
+export async function getLastMonthKPIs(cookieHeader?: string, teamSlug?: string): Promise<LastMonthKPIs> {
+    const slug = resolveSlug(teamSlug)
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (cookieHeader) headers['Cookie'] = cookieHeader
 
-    if (cookieHeader) {
-        headers['Cookie'] = cookieHeader;
-    }
-
-    const res = await fetch(`${API_BASE}/dashboard/trends`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/dashboard/trends`, {
         credentials: "include",
         headers,
-    });
+    })
 
     if (!res.ok) {
         // Return zeros on error so dashboard still renders

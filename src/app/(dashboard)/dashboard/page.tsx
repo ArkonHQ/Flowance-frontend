@@ -4,6 +4,8 @@ import { cookies } from 'next/headers';
 import { getDashboard, getMonthlyHealthMetric, getLastMonthKPIs, DashboardData, LastMonthKPIs } from "@/lib/api/dashboard";
 import { DashboardContent } from "./components/DashboardContent";
 
+import { getActiveTeamSlug } from "@/lib/utils/team";
+
 // Compute real month-over-month percentage change
 const computeTrends = (dashboard: DashboardData, lastMonth: LastMonthKPIs) => {
   const pct = (curr: number, prev: number) => {
@@ -25,10 +27,12 @@ const DashboardPage = async () => {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
+  const teamSlug = await getActiveTeamSlug(cookieHeader);
+
   const [dashboard, healthMetrics, lastMonth] = await Promise.all([
-    getDashboard(cookieHeader),
-    getMonthlyHealthMetric(cookieHeader),
-    getLastMonthKPIs(cookieHeader),
+    getDashboard(cookieHeader, undefined, teamSlug),
+    getMonthlyHealthMetric(cookieHeader, teamSlug),
+    getLastMonthKPIs(cookieHeader, teamSlug),
   ]);
 
   const trends = computeTrends(dashboard, lastMonth);

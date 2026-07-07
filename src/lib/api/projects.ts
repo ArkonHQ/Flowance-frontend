@@ -1,6 +1,7 @@
 import { Client } from "./clients";
 import { Tag } from "./tags"
 import { Task } from "./tasks";
+import { getClientTeamSlug } from "../utils/team-client"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
@@ -17,6 +18,7 @@ export type Project = {
     clientId: number;
     isArchived: boolean;
     ownerId: string;
+    teamId?: number;
     tags?: Tag[];
     createdAt: Date;
     updatedAt: Date;
@@ -33,32 +35,35 @@ export type Project = {
     attachmentDeletedAt: string |  null
 }   
 
-// keep API helpers minimal and consistent
+const resolveSlug = (provided?: string) => provided || getClientTeamSlug() || ''
 
 // GET all projects
-export const getAllProjects = async (cookieHeader?: string): Promise<Project[]> => {
-
+export const getAllProjects = async (cookieHeader?: string, teamSlug?: string): Promise<Project[]> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> ={'Content-Type': 'application/json'}
     if (cookieHeader) headers['Cookie'] = cookieHeader;
     
-
-    const res = await fetch(`${API_BASE}/projects`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/projects`, {
         method: "GET",
         headers,
         credentials: 'include'
     })
 
-    if (!res.ok) throw new Error(`Failed to fetch projects: ${res.status}`);
+    if (!res.ok) {
+        console.error(`getAllProjects failed: ${res.status}`, await res.text().catch(() => ''));
+        return [];
+    }
     const data = await res.json();
     return data.projects;
 } 
 
 // GET single project
-export const getProject = async (projectId: number, cookieHeader?: string): Promise<Project> => {
+export const getProject = async (projectId: number, cookieHeader?: string, teamSlug?: string): Promise<Project> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = {'Content-Type': 'application/json'}
     if (cookieHeader) headers['Cookie'] = cookieHeader
 
-    const res = await fetch(`${API_BASE}/projects/${projectId}`,{
+    const res = await fetch(`${API_BASE}/teams/${slug}/projects/${projectId}`,{
         headers,
         credentials: 'include'
     });
@@ -68,12 +73,12 @@ export const getProject = async (projectId: number, cookieHeader?: string): Prom
 }
 
 // POST create project
-export const createProject = async (data: Partial<Project> & { tagIds?: number[] }, cookieHeaders?: string): Promise<Project> => {
+export const createProject = async (data: Partial<Project> & { tagIds?: number[] }, cookieHeaders?: string, teamSlug?: string): Promise<Project> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeaders) headers['Cookie'] = cookieHeaders
     
-    
-    const res = await fetch(`${API_BASE}/projects`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/projects`, {
         method: 'POST',
         headers,
         credentials: 'include',
@@ -85,12 +90,12 @@ export const createProject = async (data: Partial<Project> & { tagIds?: number[]
 }
 
 // PUT update project
-export const updateProject = async (id: number, data: Partial<Omit<Project, 'id' | 'ownerId'>> & { tagIds?: number[] }, cookieHeaders?: string): Promise<Project> => {
+export const updateProject = async (id: number, data: Partial<Omit<Project, 'id' | 'ownerId'>> & { tagIds?: number[] }, cookieHeaders?: string, teamSlug?: string): Promise<Project> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
     if (cookieHeaders) headers['Cookie'] = cookieHeaders
     
-    
-    const res = await fetch(`${API_BASE}/projects/${id}`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/projects/${id}`, {
         method: 'PUT',
         headers,
         credentials: 'include',
@@ -102,12 +107,12 @@ export const updateProject = async (id: number, data: Partial<Omit<Project, 'id'
 }
 
 // DELETE project
-export const deleteProject = async (projectId: number, cookieHeader?: string): Promise<{ success: boolean }> => {
+export const deleteProject = async (projectId: number, cookieHeader?: string, teamSlug?: string): Promise<{ success: boolean }> => {
+    const slug = resolveSlug(teamSlug)
     const headers: Record<string, string> = {'Content-Type': 'application/json'}
     if (cookieHeader) headers['Cookie'] = cookieHeader
     
-    
-    const res = await fetch(`${API_BASE}/projects/${projectId}`, {
+    const res = await fetch(`${API_BASE}/teams/${slug}/projects/${projectId}`, {
         method: 'DELETE',
         headers,
         credentials: 'include',
@@ -117,8 +122,9 @@ export const deleteProject = async (projectId: number, cookieHeader?: string): P
 }
 
 // GET time chart data (daily minutes for last 7 days)
-export const getProjectTimeChart = async (projectId: number): Promise<{ day: string; minutes: number }[]> => {
-    const res = await fetch(`${API_BASE}/projects/${projectId}/time-chart`, {
+export const getProjectTimeChart = async (projectId: number, teamSlug?: string): Promise<{ day: string; minutes: number }[]> => {
+    const slug = resolveSlug(teamSlug)
+    const res = await fetch(`${API_BASE}/teams/${slug}/projects/${projectId}/time-chart`, {
         credentials: 'include',
     });
     if (!res.ok) return [];
