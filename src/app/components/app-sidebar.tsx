@@ -34,6 +34,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { GlobalTimerDisplay } from "@/components/GlobalTimerDisplay";
 import { PinnedProjectsDisplay } from "@/components/PinnedProjectsDisplay";
 import { TeamSwitcher } from "./team-switcher";
+import { Invitations } from "./invitations";
 
 
 
@@ -91,7 +92,7 @@ const AppSidebar = () => {
 
             <SidebarFooter className="border-sidebar-border/30 border-t p-3">
                 <div className="flex items-center justify-between">
-
+                    <Invitations />
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">

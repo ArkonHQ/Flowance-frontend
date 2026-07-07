@@ -29,6 +29,7 @@ export const InvoicesBulkActions = ({
         </div>
 
         <div className="flex items-center gap-3">
+          {/* @ts-ignore */}
           <Select onValueChange={onBulkStatusChange}>
             <SelectTrigger className="h-9 px-3 bg-muted/50 border-border hover:bg-muted text-xs font-semibold text-foreground w-40 rounded-xl transition-all focus:ring-0 border-none ring-offset-0">
               <div className="flex items-center gap-2">

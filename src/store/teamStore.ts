@@ -1,6 +1,7 @@
 import { Team } from "@/lib/api/teams"
+import { create } from 'zustand'
+import { getUserTeams } from '@/lib/api/teams'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
 interface TeamState {
   teams: Team[]
@@ -38,9 +39,6 @@ const getCookie = (name: string) => {
   }
   return null
 }
-
-import { create } from 'zustand'
-import { getUserTeams } from '@/lib/api/teams'
 
 export const useTeamStore = create<TeamState>((set, get) => ({
   teams: [],
