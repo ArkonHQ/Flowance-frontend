@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { addTodaySeconds } from '@/lib/utils/todayHours';
+import { getClientTeamSlug } from '@/lib/utils/team-client';
 
 export interface SingleTimer {
   taskId: number;
@@ -38,6 +39,8 @@ interface MultiTimerState {
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api';
+const getBaseUrl = () => `${API_BASE}/teams/${getClientTeamSlug() || 'personal'}`;
+
 const LS_KEY = 'fcc_timer_cache';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -45,7 +48,7 @@ const LS_KEY = 'fcc_timer_cache';
 /* Fetch total past logged hours for a task and return as seconds */
 const fetchPastLoggedSeconds = async (taskId: number): Promise<number> => {
   try {
-    const res = await fetch(`${API_BASE}/tasks/${taskId}/timer/hours`, {
+    const res = await fetch(`${getBaseUrl()}/tasks/${taskId}/timer/hours`, {
       credentials: 'include',
     });
     if (!res.ok) return 0;
@@ -147,7 +150,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
       get()._saveToLocalStorage()
 
       try{
-        await fetch(`${API_BASE}/tasks/${taskId}/timer/start`, {
+        await fetch(`${getBaseUrl()}/tasks/${taskId}/timer/start`, {
           method: "POST",
           headers: {'Content-Type': 'application/json'},
           credentials: 'include',
@@ -181,7 +184,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
     get()._saveToLocalStorage();
 
     try {
-      const res = await fetch(`${API_BASE}/tasks/${taskId}/timer/start`, {
+      const res = await fetch(`${getBaseUrl()}/tasks/${taskId}/timer/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -225,7 +228,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
     get()._saveToLocalStorage();
 
     try {
-      const res = await fetch(`${API_BASE}/tasks/${taskId}/timer/pause`, {
+      const res = await fetch(`${getBaseUrl()}/tasks/${taskId}/timer/pause`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -296,7 +299,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
     get()._saveToLocalStorage();
 
     try {
-      await fetch(`${API_BASE}/tasks/${taskId}/timer/start`, {
+      await fetch(`${getBaseUrl()}/tasks/${taskId}/timer/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -365,7 +368,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
     }
 
     try{
-      const res = await fetch(`${API_BASE}/tasks/${taskId}/timer/stop`, {
+      const res = await fetch(`${getBaseUrl()}/tasks/${taskId}/timer/stop`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -418,7 +421,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
   //
   loadSession: async () => {
     try {
-      const res = await fetch(`${API_BASE}/timer/session`, { credentials: 'include' });
+      const res = await fetch(`${getBaseUrl()}/timer/session`, { credentials: 'include' });
 
       if (!res.ok) {
         // Backend unreachable — trust localStorage, unblock UI
@@ -480,7 +483,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
       const t = Object.values(get().timers).find((t) => t.status === 'running');
       if (!t) return;
 
-      await fetch(`${API_BASE}/timer/session`, {
+      await fetch(`${getBaseUrl()}/timer/session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -499,7 +502,7 @@ export const useTimerStore = create<MultiTimerState>((set, get) => ({
 
   deleteSession: async () => {
     try {
-      await fetch(`${API_BASE}/timer/session`, {
+      await fetch(`${getBaseUrl()}/timer/session`, {
         method: 'DELETE',
         credentials: 'include',
       });
