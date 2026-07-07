@@ -415,9 +415,9 @@ export const SidePanel: React.FC<SidePanelProps> = ({ open, onClose, project, on
         <>
             <Sheet open={open} onOpenChange={onClose} modal={!isLargeScreen}>
                 <SheetContent
-                    className={cn('w-full !max-w-none !w-[100vw] sm:!w-fit sm:min-w-[450px] sm:!max-w-[600px] overflow-y-auto rounded-lg border-2 border-card shadow-lg p-0')}
+                    className={cn('w-full !max-w-none !w-[100vw] sm:!w-fit sm:min-w-[450px] sm:!max-w-[600px] overflow-y-auto rounded-tl-lg border-l-2 border-t-2 border-b-0 border-r-0 border-card shadow-2xl p-0')}
                     side="right"
-                    style={{ bottom: 0, height: 'calc(100vh)', position: 'fixed' }}
+                    style={{ top: 56, bottom: 0, height: 'calc(100vh - 56px)', position: 'fixed' }}
                     onPointerDownOutside={(e) => {
                         if (isLargeScreen) {
                             e.preventDefault()
