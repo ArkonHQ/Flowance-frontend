@@ -3,7 +3,7 @@ import { Tag } from "./tags"
 import { Task } from "./tasks";
 import { getClientTeamSlug } from "../utils/team-client"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
+const API_BASE = process.env.API_BASE_INTERNAL || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
 
 
@@ -26,6 +26,7 @@ export type Project = {
     progress: number;
     tasks: Task[];
     taskCount?: number
+    membersCount?: number
     totalTimeTracked?: number
     health?: string
     attachmentPath?: string | null
@@ -101,7 +102,10 @@ export const updateProject = async (id: number, data: Partial<Omit<Project, 'id'
         credentials: 'include',
         body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error(`Failed to update project: ${res.status}`);
+    if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.message ? `Failed: ${errData.message}` : `Failed to update project: ${res.status}`);
+    }
     const responseData = await res.json();
     return responseData.project;
 }

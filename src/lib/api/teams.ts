@@ -18,7 +18,7 @@ export type Team = {
   updatedAt: string
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
+const API_BASE = process.env.API_BASE_INTERNAL || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
 export const getUserTeams = async (cookieHeader?: string): Promise<Team[]> => {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }

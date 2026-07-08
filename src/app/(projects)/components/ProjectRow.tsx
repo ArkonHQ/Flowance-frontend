@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Archive, ExternalLink, MoreHorizontal, Pencil, Trash2, ZapIcon } from "lucide-react";
+import { Archive, ExternalLink, MoreHorizontal, Pencil, Trash2, ZapIcon, Users } from "lucide-react";
 import DeleteButton from "./DeleteProject"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -240,8 +240,9 @@ export const ProjectRow = ({ project, clientName, onDelete, onArchive, isSelecet
       </div>
 
       {/* 9. Members */}
-      <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:flex items-center">
-        <span className="hidden md:inline text-muted-foreground/50">-</span>
+      <div className="w-full md:w-auto text-sm text-muted-foreground truncate hidden md:flex items-center gap-1.5">
+        <Users className="h-4 w-4 text-muted-foreground/70" />
+        <span className="font-medium text-muted-foreground">{project.membersCount || 1}</span>
       </div>
 
       {/* 10. Actions Dropdown */}

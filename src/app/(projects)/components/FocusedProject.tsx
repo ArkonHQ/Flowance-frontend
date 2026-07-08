@@ -9,7 +9,7 @@ import { Invoice } from '@/lib/api/invoices'
 import { Project } from '@/lib/api/projects'
 import { PROJECT_PROGRESS_MESSAGES } from '@/lib/constants/project-messages'
 import { cn } from '@/lib/utils'
-import { Calendar, CheckCircle, Flame, Lightbulb, List, PauseCircle, Rocket, Sparkles, Target, TrendingUp, X, XCircle, ZapIcon } from 'lucide-react'
+import { Calendar, CheckCircle, Flame, Lightbulb, List, PauseCircle, Rocket, Sparkles, Target, TrendingUp, X, XCircle, ZapIcon, Users } from 'lucide-react'
 import { getProjectTimeChart } from '@/lib/api/projects'
 import { useEffect, useState } from 'react'
 
@@ -246,15 +246,8 @@ export const FocusedProject = ({ project, invoices, onToggleFocus, onEditProject
                     {project.description}
                   </p>
                 )}
-                {project && (
-                  <div className='mt-2'>
-                  <p className='text-xs text-muted-foreground'>
-                    Members Count TODO here
-                  </p>
-                  </div>
-                )}
 
-                <div className='flex flex-row flex-wrap gap-4 items-center'>
+                <div className='flex flex-row flex-wrap gap-4 items-center mt-2'>
                 {tasks > 0 && (
                   <p className='text-xs text-muted-foreground flex'>
                     <List className='h-4.5 w-4.5 mr-1.5' />
@@ -267,8 +260,11 @@ export const FocusedProject = ({ project, invoices, onToggleFocus, onEditProject
                     {dueDateFotmatter(dueDate)}
                   </p>
 
-                //TODO: Add members count here once we have the members feature implemented
-                )} 
+                )}
+                  <p className='text-xs text-muted-foreground flex'>
+                    <Users className='h-4 w-4 mr-1.5' />
+                    {project.membersCount || 1} {(project.membersCount || 1) === 1 ? 'Member' : 'Members'}
+                  </p>
                 </div>
               </div>
             </div>

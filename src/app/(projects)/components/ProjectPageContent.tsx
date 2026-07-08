@@ -465,7 +465,10 @@ export const ProjectPageContent = ({ initialProjects, clientNames, stats, invoic
             onToggleFocus={() => handleToggleFocus(focusedProjectObj.id)}
             onEditProject={() => handleEditProject(focusedProjectObj)}
             onDeleteProject={() => handleDeleteProject(focusedProjectObj.id)}
-            onToggleSidePanel={() => setSidePanelOpen(prev => !prev)}
+            onToggleSidePanel={() => {
+              setSelectedProjectForPanel(focusedProjectObj)
+              setSidePanelOpen(true)
+            }}
             onClose={() => setFocusedProjectId(null)}
           />
         )

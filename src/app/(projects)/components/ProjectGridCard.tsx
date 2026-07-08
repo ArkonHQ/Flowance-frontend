@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { Archive, CheckCircle2, Clock, ExternalLink, List, MoreHorizontal, Pencil, Pin, Trash2, ZapIcon } from "lucide-react"
+import { Archive, CheckCircle2, Clock, ExternalLink, List, MoreHorizontal, Pencil, Pin, Trash2, ZapIcon, Users } from "lucide-react"
 import DeleteButton from "./DeleteProject"
 import { ProjectIcon } from "@/components/ui/project-icon"
 import { Task } from "@/lib/api/tasks"
@@ -274,9 +274,15 @@ export const ProjectGridCard = ({
 
         {/* Stats row */}
         <div className="flex items-center justify-between pt-1 border-t border-border/30">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>{taskCount} tasks</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span>{taskCount}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Users className="h-3.5 w-3.5" />
+              <span>{project.membersCount || 1}</span>
+            </div>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Clock className="h-3.5 w-3.5" />

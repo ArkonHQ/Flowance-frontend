@@ -2,7 +2,7 @@ import { Project } from "./projects"
 import { Tag } from "./tags"
 import { getClientTeamSlug } from "../utils/team-client"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
+const API_BASE = process.env.API_BASE_INTERNAL || process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:5501/api'
 
 export type Task = {
     id: number,
