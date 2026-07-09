@@ -3,121 +3,146 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { TrendingUp, ChevronDown, Minus, TrendingDown } from 'lucide-react'
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts'
+import { TrendingUp, TrendingDown, Minus, ChevronDown, Timer } from 'lucide-react'
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell,
+} from 'recharts'
+import { CardPeriodSelector } from './CardPeriodSelector'
 
 interface TimeTrackingCardProps {
   totalHours: number
-  trendPercent?: number   
+  trendPercent?: number
   trendLabel?: string
-  weeklyHours: { name: string, hours: number }[]
+  weeklyHours: { name: string; hours: number }[]
+  selectPeriod?: string
+  onPeriodChange?: (period: string) => void
+  periodLabel?: string
 }
+
+const formatHours = (totalHours: number) => {
+  const h = Math.floor(totalHours)
+  const m = Math.round((totalHours - h) * 60)
+  if (h === 0 && m === 0 && totalHours > 0) return '< 1m'
+  if (h === 0) return `${m}m`
+  return `${h}h ${m}m`
+}
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card/95 border border-border/50 p-3 rounded-xl shadow-xl flex flex-col gap-1 backdrop-blur-xl transition-all">
+        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{label}</span>
+        <div className="flex items-center gap-2">
+          <div className="h-2.5 w-2.5 rounded-full shadow-sm" style={{ backgroundColor: payload[0].color || payload[0].payload?.fill || '#f97316' }} />
+          <span className="text-base font-black text-foreground">
+            {formatHours(Number(payload[0].value))}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export function TimeTrackingCard({
   totalHours,
   trendPercent = 0,
   trendLabel = 'vs last month',
   weeklyHours,
+  selectPeriod,
+  onPeriodChange,
+  periodLabel = 'This Week',
 }: TimeTrackingCardProps) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
+  const hasData = weeklyHours && weeklyHours.length > 0 && weeklyHours.some(w => w.hours > 0)
+  const chartData = weeklyHours && weeklyHours.length > 0 ? weeklyHours : [
+    { name: 'Mon', hours: 0 }, { name: 'Tue', hours: 0 }, { name: 'Wed', hours: 0 },
+    { name: 'Thu', hours: 0 }, { name: 'Fri', hours: 0 }, { name: 'Sat', hours: 0 }, { name: 'Sun', hours: 0 },
+  ]
+
+  const maxHours = Math.max(...chartData.map(d => d.hours), 1)
+
+  const TrendIcon = trendPercent > 0 ? TrendingUp : trendPercent < 0 ? TrendingDown : Minus
+  const trendClass = trendPercent > 0
+    ? 'text-emerald-500 bg-emerald-500/10'
+    : trendPercent < 0
+    ? 'text-rose-500 bg-rose-500/10'
+    : 'text-muted-foreground bg-muted/30'
+
   return (
-    <Card className="relative overflow-hidden border border-border/30 bg-card/50 backdrop-blur-md shadow-sm hover:shadow-lg transition-all duration-200">
-
-      <CardHeader className="pb-3 flex flex-row items-center justify-between pt-5">
-        <div className="space-y-0.5">
-          <CardTitle className="text-base font-bold text-foreground">
-            Time Tracking Summary
-          </CardTitle>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-2xl font-bold text-foreground">
-              {(() => {
-                const h = Math.floor(totalHours);
-                const m = Math.round((totalHours - h) * 60);
-                if (h === 0 && m === 0 && totalHours > 0) return "< 1m";
-                if (h === 0) return `${m}m`;
-                return `${h}h ${m}m`;
-              })()}
+    <Card className="relative overflow-hidden border border-border/30 bg-card/50 backdrop-blur-md shadow-sm hover:shadow-md transition-all duration-300">
+      <CardHeader className="pb-2 pt-5 border-b border-border/10 flex flex-row items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="p-1.5 rounded-lg bg-orange-500/10">
+              <Timer className="h-4 w-4 text-orange-500" />
+            </div>
+            <CardTitle className="text-base font-bold">Time Tracking</CardTitle>
+          </div>
+          <div className="flex items-baseline gap-2.5 mt-2">
+            <span className="text-3xl font-black tracking-tight">{formatHours(totalHours)}</span>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${trendClass}`}>
+              <TrendIcon className="h-3 w-3" strokeWidth={2.5} />
+              {trendPercent === 0 ? '0%' : `${Math.abs(trendPercent)}%`}
             </span>
-            {trendPercent > 0 ? (
-            <span className="text-xs font-semibold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.5} />
-              +{trendPercent}%
-            </span>
-
-            ) :  trendPercent === 0 ? (
-            <span className="text-xs font-semibold text-muted-foreground bg-muted/10 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              <Minus className="h-3.5 w-3.5" strokeWidth={2.5} />
-              0%
-            </span>
-            ) : (
-            <span className="text-xs font-semibold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              <TrendingDown className="h-3.5 w-3.5" strokeWidth={2.5} />
-              -{trendPercent}%
-            </span>
-            
-            )}
-            <span className="text-[10px] text-muted-foreground font-medium">
-              {trendLabel}
-            </span>
+            <span className="text-[11px] text-muted-foreground">{trendLabel}</span>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 text-[10px] px-2 rounded-lg border-border/40 bg-card/30 flex items-center gap-1"
-        >
-          <span>This Week</span>
-          <ChevronDown className="h-2.5 w-2.5" />
-        </Button>
+        <CardPeriodSelector
+          selectPeriod={selectPeriod}
+          onPeriodChange={onPeriodChange}
+          periodLabel={periodLabel || 'This Week'}
+        />
       </CardHeader>
 
-      <CardContent className="pt-2">
+      <CardContent className="pt-4">
         <div className="h-44 w-full">
           {mounted && (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={weeklyHours}
-                margin={{ top: 5, right: 5, left: -25, bottom: 5 }}
-              >
+              <BarChart data={chartData} margin={{ top: 4, right: 4, left: -22, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.4} />
+                  <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f97316" stopOpacity={0.85} />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.5} />
                   </linearGradient>
                 </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
                 <XAxis
                   dataKey="name"
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: '#888888', fontSize: 9 }}
+                  tick={{ fill: '#888', fontSize: 9 }}
                 />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: '#888888', fontSize: 9 }}
+                  tick={{ fill: '#888', fontSize: 9 }}
+                  tickFormatter={(v) => v === 0 ? '' : `${v}h`}
                 />
                 <Tooltip
-                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                  contentStyle={{
-                    backgroundColor: 'rgba(23, 23, 23, 0.85)',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#fff',
-                    fontSize: 11,
-                  }}
+                  content={<CustomTooltip />}
+                  cursor={{ fill: 'rgba(120,120,120,0.08)' }}
                 />
-                <Bar
-                  dataKey="hours"
-                  fill="url(#barGradient)"
-                  radius={[4, 4, 0, 0]}
-                  barSize={18}
-                />
+                <Bar dataKey="hours" radius={[5, 5, 0, 0]} barSize={20}>
+                  {chartData.map((entry, i) => (
+                    <Cell
+                      key={i}
+                      fill={entry.hours === maxHours && hasData ? '#f97316' : 'url(#barGrad)'}
+                      opacity={entry.hours === 0 ? 0.15 : 1}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
+        {!hasData && (
+          <p className="text-center text-xs text-muted-foreground/60 mt-2">
+            Time will appear once tasks are logged
+          </p>
+        )}
       </CardContent>
     </Card>
   )

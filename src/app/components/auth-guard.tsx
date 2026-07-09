@@ -9,7 +9,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     const pathname = usePathname();
     const { data: session, isPending } = useSession();
 
-    const isAuthPage = pathname === '/login' || pathname === '/signup';
+    const isAuthPage = pathname === '/login' || pathname === '/register';
 
     useEffect(() => {
         if (!isPending && !session && !isAuthPage) {

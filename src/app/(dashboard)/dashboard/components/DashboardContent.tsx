@@ -10,8 +10,13 @@ import { TopClientsCard } from "./TopClientsCard"
 import { TimeTrackingCard } from "./TimeTrackingCard"
 import { ProjectHealthCard } from "./ProjectHealthCard"
 import { TasksDueCard } from "./TaskDueCard"
-import { QuickActionsCard } from "./QuickActionsCard"
 import UpcomingTasks from "./UpcomingTasks"
+import { TodaysFocusCard } from "./TodaysFocusCard"
+import { TeamOverviewCard } from "./TeamOverviewCard"
+import { ProductivitySummaryCard } from "./ProductivitySummaryCard"
+import { RecentInvoicesCard } from "./RecentInvoicesCard"
+import { ProjectPerformanceCard } from "./ProjectPerformanceCard"
+import { RecentActivityCard } from "./RecentActivityCard"
 
 
 interface DashboardContentProps {
@@ -28,8 +33,13 @@ interface DashboardContentProps {
   topClients: any[]
   sourceData: any[]
   weeklyHours: any[]
+  hoursChartData?: any[]
   pieData: any[]
   userName?: string
+  recentInvoices?: any[]
+  teamMembers?: any[]
+  allClientInsights?: any[]
+  allInvoices?: any[]
 }
 
 // Map a selected period to the comparison period (the "previous" window)
@@ -104,8 +114,13 @@ export const DashboardContent = ({
   topClients,
   sourceData,
   weeklyHours,
+  hoursChartData = [],
   pieData,
   userName,
+  recentInvoices = [],
+  teamMembers = [],
+  allClientInsights = [],
+  allInvoices = [],
 }: DashboardContentProps) => {
 
   const [selectPeriod, setSelectPeriod] = useState<string>("all")
@@ -113,8 +128,98 @@ export const DashboardContent = ({
   const [prevDashboard, setPrevDashboard] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(false)
 
+  // Independent card periods
+  const [revenuePeriod, setRevenuePeriod] = useState<string>("all")
+  const [timePeriod, setTimePeriod] = useState<string>("all")
+  const [clientsPeriod, setClientsPeriod] = useState<string>("all")
+
+  const [revenueDashboard, setRevenueDashboard] = useState<DashboardData | null>(null)
+  const [timeDashboard, setTimeDashboard] = useState<DashboardData | null>(null)
+  const [clientsDashboard, setClientsDashboard] = useState<DashboardData | null>(null)
+
   const periodLabel = getPeriodLabel(selectPeriod)
   const trendLabel  = getTrendLabel(selectPeriod)
+
+  const dynamicRevenueChart = useMemo(() => {
+    const now = Date.now();
+    let start = 0;
+    if (revenuePeriod === '7days') start = now - 7 * 24 * 60 * 60 * 1000;
+    else if (revenuePeriod === '30days') start = now - 30 * 24 * 60 * 60 * 1000;
+    else if (revenuePeriod === '90days') start = now - 90 * 24 * 60 * 60 * 1000;
+    else if (revenuePeriod === 'thisyear') start = new Date(new Date().getFullYear(), 0, 1).getTime();
+
+    const filtered = allInvoices.filter(inv => {
+      if (inv.status !== 'paid') return false;
+      if (start > 0 && new Date(inv.createdAt).getTime() < start) return false;
+      return true;
+    });
+
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const map: Record<string, number> = {};
+    for (const inv of filtered) {
+      const d = new Date(inv.createdAt);
+      let key;
+      if (revenuePeriod === '7days') {
+          key = days[d.getDay()];
+      } else if (revenuePeriod === '30days') {
+          key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      } else {
+          key = d.toLocaleDateString('en-US', { month: 'short' });
+      }
+      map[key] = (map[key] || 0) + (Number(inv.amount) || 0);
+    }
+    
+    // For 7days we should map over the last 7 days so empty days show 0 like TimeTrackingCard
+    if (revenuePeriod === '7days') {
+        const weeklyData = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now - i * 24 * 60 * 60 * 1000);
+            const name = days[d.getDay()];
+            weeklyData.push({ name, revenue: map[name] || 0 });
+        }
+        return weeklyData;
+    }
+
+    // Sort keys by actual date for chronological order for the rest
+    const sortedKeys = Object.keys(map).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+    return sortedKeys.slice(-8).map(name => ({ name, revenue: map[name] }));
+  }, [allInvoices, revenuePeriod]);
+
+  const dynamicTopClients = useMemo(() => {
+    const now = Date.now();
+    let start = 0;
+    if (clientsPeriod === '7days') start = now - 7 * 24 * 60 * 60 * 1000;
+    else if (clientsPeriod === '30days') start = now - 30 * 24 * 60 * 60 * 1000;
+    else if (clientsPeriod === '90days') start = now - 90 * 24 * 60 * 60 * 1000;
+    else if (clientsPeriod === 'thisyear') start = new Date(new Date().getFullYear(), 0, 1).getTime();
+
+    const filtered = allInvoices.filter(inv => {
+      if (inv.status !== 'paid') return false;
+      if (start > 0 && new Date(inv.createdAt).getTime() < start) return false;
+      return true;
+    });
+
+    const revenueByClient: Record<string, number> = {};
+    for (const inv of filtered) {
+        revenueByClient[inv.clientId] = (revenueByClient[inv.clientId] || 0) + (Number(inv.amount) || 0);
+    }
+
+    const clients = allClientInsights.map(c => {
+        const revenue = clientsPeriod === 'all' ? (c.totalRevenue || 0) : (revenueByClient[c.clientId] || 0);
+        return {
+            name: c.name,
+            revenue,
+            percent: 0,
+            color: 'text-blue-500',
+            balance: c.unpaidAmount ?? 0,
+        };
+    });
+
+    return clients.sort((a, b) => b.revenue - a.revenue).slice(0, 5).map((c, i, arr) => {
+        c.percent = Math.round((c.revenue / (arr[0]?.revenue || 1)) * 100);
+        return c;
+    });
+  }, [allInvoices, allClientInsights, clientsPeriod]);
 
   // Compute live trends from current vs previous period data
   const trends = useMemo(() => {
@@ -154,6 +259,29 @@ export const DashboardContent = ({
     load()
     return () => { active = false }
   }, [selectPeriod, initialDashboard])
+
+  // Sync global period to local periods when global changes
+  useEffect(() => {
+    setRevenuePeriod(selectPeriod)
+    setTimePeriod(selectPeriod)
+    setClientsPeriod(selectPeriod)
+  }, [selectPeriod])
+
+  // Independent fetches
+  useEffect(() => {
+    if (revenuePeriod === selectPeriod) return;
+    getDashboard(undefined, revenuePeriod).then(setRevenueDashboard).catch(console.error)
+  }, [revenuePeriod, selectPeriod])
+
+  useEffect(() => {
+    if (timePeriod === selectPeriod) return;
+    getDashboard(undefined, timePeriod).then(setTimeDashboard).catch(console.error)
+  }, [timePeriod, selectPeriod])
+
+  useEffect(() => {
+    if (clientsPeriod === selectPeriod) return;
+    getDashboard(undefined, clientsPeriod).then(setClientsDashboard).catch(console.error)
+  }, [clientsPeriod, selectPeriod])
 
   // Reload on time-log events
   useEffect(() => {
@@ -205,38 +333,93 @@ export const DashboardContent = ({
             trendLabel={trendLabel}
           />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-5 space-y-6">
-              <RevenueOverviewCard
-                totalRevenue={dashboard.totalRevenue}
-                sourceData={sourceData}
-                weeklyHours={weeklyHours}
-                trends={trends.totalRevenue}
-                periodLabel={periodLabel}
-                trendLabel={trendLabel}
-              />
-              <UpcomingTasks
-                upcomingTasks={dashboard.upcomingTasks}
-              />
+          <div className="flex flex-col space-y-6">
+            {/* Today's Focus */}
+            <TodaysFocusCard 
+              highPriorityTasks={dashboard.upcomingTasks?.filter(t => t.priority === 'High')?.length || 0}
+              pendingInvoices={dashboard.pendingInvoices}
+              atRiskProjects={dashboard.atRiskProjects?.length || 0}
+              unpaidAmount={dashboard.unpaidAmount}
+            />
+
+            {/* Main Content Split */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Main Analytics Section */}
+              <div className="lg:col-span-8 flex flex-col space-y-6">
+                <RevenueOverviewCard
+                  totalRevenue={(revenuePeriod === selectPeriod ? dashboard : revenueDashboard || dashboard).totalRevenue}
+                  weeklyHours={dynamicRevenueChart.length > 0 ? dynamicRevenueChart : weeklyHours}
+                  trends={trends.totalRevenue}
+                  periodLabel={getPeriodLabel(revenuePeriod)}
+                  trendLabel={getTrendLabel(revenuePeriod)}
+                  selectPeriod={revenuePeriod}
+                  onPeriodChange={setRevenuePeriod}
+                />
+                <TimeTrackingCard 
+                  totalHours={(timePeriod === selectPeriod ? dashboard : timeDashboard || dashboard).totalHours}
+                  trendPercent={trends.totalHours}
+                  weeklyHours={timePeriod === selectPeriod
+                    ? (dashboard.weeklyHours?.length > 0 ? dashboard.weeklyHours : hoursChartData)
+                    : (timeDashboard?.weeklyHours?.length > 0 ? timeDashboard.weeklyHours : hoursChartData)
+                  }
+                  trendLabel={getTrendLabel(timePeriod)}
+                  selectPeriod={timePeriod}
+                  onPeriodChange={setTimePeriod}
+                  periodLabel={getPeriodLabel(timePeriod)}
+                />
+              </div>
+
+              {/* Sidebar */}
+              <div className="lg:col-span-4 flex flex-col space-y-6 h-full">
+                <ProjectHealthCard 
+                  activeCount={dashboard.activeProject}
+                  total={dashboard.activeProject}
+                  pieData={pieData}
+                />
+                <TasksDueCard tasks={dashboard.upcomingTasks} />
+              </div>
             </div>
-            <div className="lg:col-span-4 space-y-6">
-              <TopClientsCard clients={topClients} />
-              <TimeTrackingCard 
-                totalHours={dashboard.totalHours}
-                weeklyHours={weeklyHours}
-                trendPercent={trends.totalHours}
-                trendLabel={trendLabel}
-              />
+
+            {/* Performance Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-4 h-full">
+                <TopClientsCard 
+                  clients={dynamicTopClients.length > 0 ? dynamicTopClients : topClients} 
+                  selectPeriod={clientsPeriod}
+                  onPeriodChange={setClientsPeriod}
+                  periodLabel={getPeriodLabel(clientsPeriod)}
+                />
+              </div>
+              <div className="lg:col-span-4 h-full">
+                <TeamOverviewCard workload={dashboard.teamWorkload} members={teamMembers} />
+              </div>
+              <div className="lg:col-span-4 h-full">
+                <ProductivitySummaryCard 
+                  tasksCompleted={dashboard.tasksCompletedThisWeek}
+                  totalHours={dashboard.totalHours}
+                  trendPercent={trends.tasksCompletedThisWeek}
+                  trendLabel={trendLabel}
+                />
+              </div>
             </div>
-            <div className="lg:col-span-3 space-y-6">
-              <ProjectHealthCard 
-                total={dashboard.activeProject}
-                pieData={pieData}
-              />
-              <TasksDueCard tasks={dashboard.upcomingTasks} />
-              <QuickActionsCard />
+
+            {/* Bottom Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-4 h-full">
+                <RecentInvoicesCard invoices={recentInvoices} />
+              </div>
+              <div className="lg:col-span-4 h-full">
+                <RecentActivityCard activity={dashboard.recentActivity} />
+              </div>
+              <div className="lg:col-span-4 h-full">
+                <ProjectPerformanceCard 
+                  totalProjects={dashboard.activeProject}
+                  atRiskProjects={dashboard.atRiskProjects?.length || 0}
+                  completedTasks={dashboard.tasksCompletedThisWeek}
+                />
+              </div>
+            </div>
           </div>
-        </div>
         </>
       )}
     </div>

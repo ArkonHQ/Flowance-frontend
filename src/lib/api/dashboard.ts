@@ -27,6 +27,7 @@ export interface DashboardData {
     mostActiveMember: { name: string, taskCount: number } | null
     teamWorkload: Array<{ name: string, openTask: number }>
     tasksCompletedThisWeek: number
+    weeklyHours: Array<{ name: string, hours: number }>
 }
 
 export async function getDashboard(cookieHeader?: string, period?: string, teamSlug?: string): Promise<DashboardData> {

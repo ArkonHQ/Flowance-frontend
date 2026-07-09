@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     loadTiemrSession()
   }, [loadTiemrSession])
 
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isAuthPage = pathname === '/login' || pathname === '/register';
 
   // ⌘K / Ctrl+K to toggle the search dialog
   useEffect(() => {
