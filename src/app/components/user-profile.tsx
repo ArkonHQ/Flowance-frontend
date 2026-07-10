@@ -4,6 +4,7 @@ import { useState } from "react"
 import { ChevronsUpDown, LogOut, Moon, Sun, User as UserIcon, Settings } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AvatarUpload } from "@/components/ui/avatar-upload"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -43,7 +44,7 @@ export function UserProfile() {
           className="relative size-8 rounded-full overflow-hidden hover:ring-2 hover:ring-primary/20 hover:ring-offset-2 hover:ring-offset-background transition-all"
         >
           <Avatar className="size-full">
-            <AvatarImage src={user.image || ""} alt={user.name} />
+            <AvatarImage src={user.image || undefined} alt={user.name} />
             <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
               {user.name?.substring(0, 2).toUpperCase() || "US"}
             </AvatarFallback>
@@ -53,12 +54,20 @@ export function UserProfile() {
       <DropdownMenuContent className="w-64 p-2 rounded-xl shadow-2xl border-border/40 backdrop-blur-xl bg-background/95" align="start" side="right" sideOffset={8}>
         <DropdownMenuLabel className="font-normal p-2">
           <div className="flex items-center gap-3">
-            <Avatar className="size-10 rounded-full border shadow-xs">
-              <AvatarImage src={user.image || ""} alt={user.name} />
-              <AvatarFallback className="rounded-full bg-primary/10 text-primary font-semibold">
-                {user.name?.substring(0, 2).toUpperCase() || "US"}
-              </AvatarFallback>
-            </Avatar>
+            <AvatarUpload
+              currentImage={user.image || undefined}
+              fallback={user.name?.substring(0, 2).toUpperCase() || "US"}
+              onUpload={async (url) => {
+                try {
+                  await authClient.updateUser({ image: url })
+                } catch (error) {
+                  console.error("Failed to update avatar", error)
+                }
+              }}
+              size="sm"
+              bucket="avatars"
+              folder="users"
+            />
             <div className="flex flex-col flex-1 overflow-hidden">
               <span className="text-sm font-semibold tracking-tight truncate">{user.name}</span>
               <span className="text-xs text-muted-foreground truncate">{user.email}</span>
